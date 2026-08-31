@@ -108,8 +108,8 @@ export default async function MatchPage({ params }) {
   }
 
   const incidents = [...automaticIncidents, ...manualEvents].sort((a, b) => {
-    const minuteA = a.minuteValue ?? parseInt(String(a.minute || "0"), 10) || 0;
-    const minuteB = b.minuteValue ?? parseInt(String(b.minute || "0"), 10) || 0;
+    const minuteA = a.minuteValue ?? (parseInt(String(a.minute || "0"), 10) || 0);
+    const minuteB = b.minuteValue ?? (parseInt(String(b.minute || "0"), 10) || 0);
     return minuteA - minuteB;
   });
 
