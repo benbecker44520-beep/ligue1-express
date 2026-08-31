@@ -11,7 +11,7 @@ export const metadata = {
     default: "Ligue 1 Express — Le football français en un clin d'œil",
     template: "%s | Ligue 1 Express"
   },
-  description: "Actualités, mercato, pronostics, résultats, classements et statistiques du football français : Ligue 1, Ligue 2 et National.",
+  description: "Actualités, mercato, pronostics, résultats, classements et statistiques du football français : Ligue 1, Ligue 2 et Ligue 3.",
   applicationName: "Ligue 1 Express",
   category: "sports",
   openGraph: {

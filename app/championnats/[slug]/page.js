@@ -1,24 +1,29 @@
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { CHAMPIONSHIPS, getChampionshipConfig, getChampionshipSnapshot } from "@/lib/championships";
+import { notFound, redirect } from "next/navigation";
+import {
+  CHAMPIONSHIPS,
+  getChampionshipConfig,
+  getChampionshipSnapshot,
+  normalizeChampionshipSlug
+} from "@/lib/championships";
 
 export const revalidate = 0;
 
 function formatMatchDate(match) {
-  if (match.dateLabel) {
-    const date = new Date(`${match.dateLabel}T12:00:00`);
-    const label = new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short" }).format(date);
-    return match.timeLabel ? `${label} · ${match.timeLabel}` : label;
-  }
   if (!match.utcDate) return "Horaire à confirmer";
   return new Intl.DateTimeFormat("fr-FR", {
-    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris"
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Paris"
   }).format(new Date(match.utcDate));
 }
 
 function MatchLine({ match }) {
   const hasScore = match.score?.home !== null && match.score?.away !== null;
+  const isLive = match.status === "IN_PLAY";
   return (
     <div className="champ-match-row">
       <div className="champ-match-team home">
@@ -27,7 +32,7 @@ function MatchLine({ match }) {
       </div>
       <div className="champ-match-center">
         <strong>{hasScore ? `${match.score.home} - ${match.score.away}` : "vs"}</strong>
-        <small>{formatMatchDate(match)}</small>
+        <small>{isLive ? "● En direct" : formatMatchDate(match)}</small>
       </div>
       <div className="champ-match-team away">
         <span>{match.away?.shortName || match.away?.name}</span>
@@ -44,21 +49,24 @@ export async function generateMetadata({ params }) {
   return {
     title: config.name,
     description: `${config.name} : classement, résultats et prochains matchs sur Ligue 1 Express.`,
-    alternates: { canonical: `/championnats/${slug}` }
+    alternates: { canonical: `/championnats/${config.slug}` }
   };
 }
 
 export default async function ChampionshipPage({ params }) {
   const { slug } = await params;
-  const config = getChampionshipConfig(slug);
+  if (slug === "national") redirect("/championnats/ligue-3");
+
+  const normalizedSlug = normalizeChampionshipSlug(slug);
+  const config = getChampionshipConfig(normalizedSlug);
   if (!config) notFound();
-  const result = await getChampionshipSnapshot(slug);
+  const result = await getChampionshipSnapshot(normalizedSlug);
 
   return (
     <div className="page-shell listing-page championship-page">
       <nav className="championship-tabs" aria-label="Choisir un championnat">
         {Object.values(CHAMPIONSHIPS).map((champ) => (
-          <Link key={champ.slug} href={`/championnats/${champ.slug}`} className={champ.slug === slug ? "active" : ""}>
+          <Link key={champ.slug} href={`/championnats/${champ.slug}`} className={champ.slug === normalizedSlug ? "active" : ""}>
             {champ.name}
           </Link>
         ))}
@@ -77,13 +85,24 @@ export default async function ChampionshipPage({ params }) {
         <div className="football-setup-box"><h2>Données temporairement indisponibles</h2><p>{result.error}</p></div>
       ) : (
         <>
-          {result.note && <div className="championship-data-note">ℹ️ {result.note}</div>}
+          {result.note && <div className={`championship-data-note ${result.limited ? "is-warning" : ""}`}>ℹ️ {result.note}</div>}
+
+          <div className="championship-source-line">
+            <span>Actualisation automatique</span>
+            <b>Source : {result.source}</b>
+          </div>
 
           <div className="championship-dashboard">
             <section className="championship-panel championship-table-panel">
               <div className="panel-heading">
-                <h2>Classement</h2>
-                <span>{result.standings.length ? `${result.standings.length} équipes affichées` : "Indisponible"}</span>
+                <h2>{result.limited ? "Aperçu du classement" : "Classement"}</h2>
+                <span>
+                  {result.standings.length
+                    ? result.limited
+                      ? `${result.standings.length} / ${config.teamCount} équipes`
+                      : `${result.standings.length} équipes`
+                    : "Indisponible"}
+                </span>
               </div>
               {result.standings.length ? (
                 <div className="championship-table">
@@ -93,7 +112,7 @@ export default async function ChampionshipPage({ params }) {
                       <strong>{row.rank}</strong>
                       <div className="champ-table-team">
                         {row.logo && <Image src={row.logo} alt="" width={26} height={26} unoptimized />}
-                        {slug === "ligue-1" && row.teamId ? <Link href={`/club/${row.teamId}`}>{row.shortName || row.team}</Link> : <span>{row.shortName || row.team}</span>}
+                        {normalizedSlug === "ligue-1" && row.teamId ? <Link href={`/club/${row.teamId}`}>{row.shortName || row.team}</Link> : <span>{row.shortName || row.team}</span>}
                       </div>
                       <span>{row.played}</span>
                       <span>{row.diff > 0 ? `+${row.diff}` : row.diff}</span>
@@ -101,13 +120,13 @@ export default async function ChampionshipPage({ params }) {
                     </div>
                   ))}
                 </div>
-              ) : <div className="champ-empty">Classement non fourni par l’API gratuite pour le moment.</div>}
+              ) : <div className="champ-empty">Classement indisponible pour le moment.</div>}
             </section>
 
             <div className="championship-side-stack">
               <section className="championship-panel">
                 <div className="panel-heading"><h2>Derniers résultats</h2></div>
-                {result.recent.length ? result.recent.slice(0, 5).map((m) => <MatchLine key={`r-${m.id}`} match={m} />) : <div className="champ-empty">Aucun résultat disponible.</div>}
+                {result.recent.length ? result.recent.slice(0, 5).map((m) => <MatchLine key={`r-${m.id}`} match={m} />) : <div className="champ-empty">Aucun résultat terminé disponible.</div>}
               </section>
 
               <section className="championship-panel">
@@ -117,7 +136,7 @@ export default async function ChampionshipPage({ params }) {
             </div>
           </div>
 
-          {slug === "ligue-1" && result.scorers.length > 0 && (
+          {normalizedSlug === "ligue-1" && result.scorers.length > 0 && (
             <section className="championship-panel championship-scorers">
               <div className="panel-heading"><h2>Meilleurs buteurs</h2><Link href="/stats">Toutes les stats →</Link></div>
               <div className="champ-scorer-grid">

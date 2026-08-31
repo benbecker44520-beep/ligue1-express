@@ -86,7 +86,7 @@ export default async function HomePage() {
       <nav className="media-shortcuts" aria-label="Accès rapides Ligue 1">
         <Link href="/actualites" className="media-shortcut"><div><span>À LA UNE</span><strong>Dernières actualités</strong></div><b>→</b></Link>
         <Link href="/resultats" className="media-shortcut"><div><span>MATCHS</span><strong>Résultats & calendrier</strong></div><b>→</b></Link>
-        <Link href="/championnats" className="media-shortcut"><div><span>FRANCE</span><strong>L1 · L2 · National</strong></div><b>→</b></Link>
+        <Link href="/championnats" className="media-shortcut"><div><span>FRANCE</span><strong>L1 · L2 · Ligue 3</strong></div><b>→</b></Link>
         <Link href="/stats" className="media-shortcut"><div><span>DATA</span><strong>Stats & buteurs</strong></div><b>→</b></Link>
       </nav>
 

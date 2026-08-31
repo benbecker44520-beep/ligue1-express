@@ -3,7 +3,7 @@ import { CHAMPIONSHIPS } from "@/lib/championships";
 
 export const metadata = {
   title: "Championnats",
-  description: "Ligue 1, Ligue 2 et National : classements, matchs et informations essentielles."
+  description: "Ligue 1, Ligue 2 et Ligue 3 : classements, matchs et informations essentielles."
 };
 
 export default function ChampionshipsPage() {
