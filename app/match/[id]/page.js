@@ -1,4 +1,4 @@
-﻿import Image from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMatchById, getStandings } from "@/lib/football";
@@ -17,13 +17,13 @@ export async function generateMetadata({ params }) {
   const score = m.score.home != null && m.score.away != null ? ` ${m.score.home}-${m.score.away}` : "";
   return {
     title: `${m.home.shortName || m.home.name} - ${m.away.shortName || m.away.name}${score}`,
-    description: `Fiche du match ${m.home.name} - ${m.away.name}, journÃ©e ${m.matchday || ""} de Ligue 1.`,
+    description: `Fiche du match ${m.home.name} - ${m.away.name}, journée ${m.matchday || ""} de Ligue 1.`,
     alternates: { canonical: `/match/${id}` }
   };
 }
 
 function formatDate(utcDate) {
-  if (!utcDate) return "Date Ã  confirmer";
+  if (!utcDate) return "Date à confirmer";
   return new Intl.DateTimeFormat("fr-FR", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
     hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris"
@@ -31,11 +31,11 @@ function formatDate(utcDate) {
 }
 
 function statusLabel(status) {
-  if (status === "FINISHED") return "Match terminÃ©";
-  if (["IN_PLAY", "PAUSED", "LIVE"].includes(status)) return "ðŸ”´ En direct";
-  if (status === "POSTPONED") return "Match reportÃ©";
-  if (status === "CANCELLED") return "Match annulÃ©";
-  return "Ã€ venir";
+  if (status === "FINISHED") return "Match terminé";
+  if (["IN_PLAY", "PAUSED", "LIVE"].includes(status)) return "🔴 En direct";
+  if (status === "POSTPONED") return "Match reporté";
+  if (status === "CANCELLED") return "Match annulé";
+  return "À venir";
 }
 
 export default async function MatchPage({ params }) {
@@ -44,7 +44,7 @@ export default async function MatchPage({ params }) {
   if (matchResult.notFound) notFound();
 
   if (!matchResult.ok) {
-    return <div className="page-shell listing-page"><span className="eyebrow">LIGUE 1 Â· MATCH</span><h1>Fiche match</h1><div className="football-setup-box"><h2>DonnÃ©es indisponibles</h2><p>{matchResult.error}</p></div></div>;
+    return <div className="page-shell listing-page"><span className="eyebrow">LIGUE 1 · MATCH</span><h1>Fiche match</h1><div className="football-setup-box"><h2>Données indisponibles</h2><p>{matchResult.error}</p></div></div>;
   }
 
   const match = matchResult.data;
@@ -83,13 +83,13 @@ export default async function MatchPage({ params }) {
       .order("created_at", { ascending: true });
     manualEvents = (data || []).map((event) => {
       const labels = {
-        goal: ["âš½", "But"],
-        disallowed_goal: ["ðŸš«", "But refusÃ© / VAR"],
-        yellow_card: ["ðŸŸ¨", "Carton jaune"],
-        red_card: ["ðŸŸ¥", "Carton rouge"],
-        substitution: ["ðŸ”„", "Remplacement"]
+        goal: ["⚽", "But"],
+        disallowed_goal: ["🚫", "But refusé / VAR"],
+        yellow_card: ["🟨", "Carton jaune"],
+        red_card: ["🟥", "Carton rouge"],
+        substitution: ["🔄", "Remplacement"]
       };
-      const [icon, label] = labels[event.event_type] || ["â€¢", "Fait de match"];
+      const [icon, label] = labels[event.event_type] || ["•", "Fait de match"];
       return {
         id: `manual-${event.id}`,
         minute: `${event.minute}'`,
@@ -108,15 +108,15 @@ export default async function MatchPage({ params }) {
   }
 
   const incidents = [...automaticIncidents, ...manualEvents].sort((a, b) => {
-    const minuteA = a.minuteValue ?? (parseInt(String(a.minute || "0"), 10) || 0);
-    const minuteB = b.minuteValue ?? (parseInt(String(b.minute || "0"), 10) || 0);
+    const minuteA = a.minuteValue ?? parseInt(String(a.minute || "0"), 10) || 0;
+    const minuteB = b.minuteValue ?? parseInt(String(b.minute || "0"), 10) || 0;
     return minuteA - minuteB;
   });
 
   return (
     <div className="page-shell listing-page match-detail-page">
-      <span className="eyebrow">LIGUE 1 Â· JOURNÃ‰E {match.matchday || "â€”"}</span>
-      <div className="match-back"><Link href={`/resultats${match.matchday ? `?journee=${match.matchday}` : ""}`}>â† Retour aux rÃ©sultats</Link></div>
+      <span className="eyebrow">LIGUE 1 · JOURNÉE {match.matchday || "—"}</span>
+      <div className="match-back"><Link href={`/resultats${match.matchday ? `?journee=${match.matchday}` : ""}`}>← Retour aux résultats</Link></div>
 
       <section className="match-hero-card">
         <div className="match-meta"><span>{statusLabel(match.status)}</span><strong>{formatDate(match.utcDate)}</strong></div>
@@ -124,7 +124,7 @@ export default async function MatchPage({ params }) {
           <div className="match-club match-club-home">
             {match.home.logo && <Image src={match.home.logo} alt="" width={96} height={96} unoptimized />}
             <h1>{match.home.id ? <Link className="match-club-link" href={`/club/${match.home.id}`}>{match.home.name}</Link> : match.home.name}</h1>
-            {homeStanding && <p>{homeStanding.rank}<sup>e</sup> Â· {homeStanding.points} pts</p>}
+            {homeStanding && <p>{homeStanding.rank}<sup>e</sup> · {homeStanding.points} pts</p>}
           </div>
           <div className="match-big-score">
             {hasScore ? <strong>{displayScore.home}<span>-</span>{displayScore.away}</strong> : <strong className="match-vs">VS</strong>}
@@ -133,7 +133,7 @@ export default async function MatchPage({ params }) {
           <div className="match-club match-club-away">
             {match.away.logo && <Image src={match.away.logo} alt="" width={96} height={96} unoptimized />}
             <h1>{match.away.id ? <Link className="match-club-link" href={`/club/${match.away.id}`}>{match.away.name}</Link> : match.away.name}</h1>
-            {awayStanding && <p>{awayStanding.rank}<sup>e</sup> Â· {awayStanding.points} pts</p>}
+            {awayStanding && <p>{awayStanding.rank}<sup>e</sup> · {awayStanding.points} pts</p>}
           </div>
         </div>
       </section>
@@ -141,13 +141,13 @@ export default async function MatchPage({ params }) {
       {scorers.length > 0 && (
         <section className="match-scorers-card">
           <div className="match-scorers-title">
-            <span>âš½ BUTEURS</span>
+            <span>⚽ BUTEURS</span>
             <strong>{scorers.length} but{scorers.length > 1 ? "s" : ""}</strong>
           </div>
           <div className="match-scorers-grid">
             <div className="match-scorer-team home">
               <h2>{match.home.shortName || match.home.name}</h2>
-              {homeScorers.length === 0 ? <p>â€”</p> : homeScorers.map((scorer) => (
+              {homeScorers.length === 0 ? <p>—</p> : homeScorers.map((scorer) => (
                 <div className="match-scorer-line" key={scorer.id}>
                   <strong>{scorer.player_name}</strong>
                   <span>{scorer.minute}'</span>
@@ -159,7 +159,7 @@ export default async function MatchPage({ params }) {
             <div className="match-scorers-divider" />
             <div className="match-scorer-team away">
               <h2>{match.away.shortName || match.away.name}</h2>
-              {awayScorers.length === 0 ? <p>â€”</p> : awayScorers.map((scorer) => (
+              {awayScorers.length === 0 ? <p>—</p> : awayScorers.map((scorer) => (
                 <div className="match-scorer-line" key={scorer.id}>
                   <strong>{scorer.player_name}</strong>
                   <span>{scorer.minute}'</span>
@@ -173,26 +173,26 @@ export default async function MatchPage({ params }) {
       )}
 
       <section className="match-info-grid">
-        <div className="match-info-card"><span>COMPÃ‰TITION</span><strong>Ligue 1</strong></div>
-        <div className="match-info-card"><span>JOURNÃ‰E</span><strong>{match.matchday || "â€”"}</strong></div>
+        <div className="match-info-card"><span>COMPÉTITION</span><strong>Ligue 1</strong></div>
+        <div className="match-info-card"><span>JOURNÉE</span><strong>{match.matchday || "—"}</strong></div>
         <div className="match-info-card"><span>STATUT</span><strong>{statusLabel(match.status)}</strong></div>
       </section>
 
       <section className="match-timeline-card">
         <div className="match-timeline-heading">
-          <div><span className="eyebrow">RÃ‰SULTAT Â· FIL DU MATCH</span><h2>Les faits marquants</h2></div>
-          <div className="match-event-legend"><span>âš½ But</span><span>ðŸš« But refusÃ©</span><span>ðŸŸ¨ Jaune</span><span>ðŸŸ¥ Rouge</span><span>ðŸ”„ Remplacement</span></div>
+          <div><span className="eyebrow">RÉSULTAT · FIL DU MATCH</span><h2>Les faits marquants</h2></div>
+          <div className="match-event-legend"><span>⚽ But</span><span>🚫 But refusé</span><span>🟨 Jaune</span><span>🟥 Rouge</span><span>🔄 Remplacement</span></div>
         </div>
         {incidents.length ? (
           <div className="match-timeline-list">
             {incidents.map((incident) => (
               <div className={`match-timeline-row ${incident.isHome ? "home" : "away"} ${incident.type}`} key={incident.id}>
-                <div className="match-event-minute">{incident.minute || "â€”"}</div>
+                <div className="match-event-minute">{incident.minute || "—"}</div>
                 <div className="match-event-icon">{incident.icon}</div>
                 <div className="match-event-copy">
-                  <strong>{incident.label}{incident.manual && <small className="match-event-manual-badge">Ajout rÃ©daction</small>}</strong>
+                  <strong>{incident.label}{incident.manual && <small className="match-event-manual-badge">Ajout rédaction</small>}</strong>
                   {incident.type === "substitution" ? (
-                    <span>{incident.playerOut ? `${incident.playerOut} sort` : "Sortie"} Â· {incident.playerIn ? `${incident.playerIn} entre` : "EntrÃ©e"}</span>
+                    <span>{incident.playerOut ? `${incident.playerOut} sort` : "Sortie"} · {incident.playerIn ? `${incident.playerIn} entre` : "Entrée"}</span>
                   ) : (
                     <span>{incident.player || incident.reason || (incident.isHome ? match.home.shortName || match.home.name : match.away.shortName || match.away.name)}</span>
                   )}
@@ -203,10 +203,9 @@ export default async function MatchPage({ params }) {
             ))}
           </div>
         ) : (
-          <div className="match-timeline-empty">Les cartons, remplacements et dÃ©cisions VAR ne sont pas encore disponibles pour ce match.</div>
+          <div className="match-timeline-empty">Les cartons, remplacements et décisions VAR ne sont pas encore disponibles pour ce match.</div>
         )}
       </section>
     </div>
   );
 }
-
