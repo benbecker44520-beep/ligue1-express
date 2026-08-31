@@ -15,11 +15,11 @@ function slugify(value) {
 }
 
 const emptyPredictionForm = {
-  id: null,
-  match_id: "",
-  selection: "1",
-  comment: "",
-  status: "published"
+  id: null, match_id: "", selection: "1", comment: "", secondary_bet: "", confidence: 7, status: "published"
+};
+
+const emptyTransferForm = {
+  id: null, player_name: "", from_club: "", to_club: "", position: "", transfer_type: "transfer", transfer_status: "rumour", fee: "", note: "", occurred_at: ""
 };
 
 const emptyForm = {
@@ -56,6 +56,9 @@ export default function AdminPage() {
   const [predictions, setPredictions] = useState([]);
   const [predictionForm, setPredictionForm] = useState(emptyPredictionForm);
   const [predictionMessage, setPredictionMessage] = useState("");
+  const [transfers, setTransfers] = useState([]);
+  const [transferForm, setTransferForm] = useState(emptyTransferForm);
+  const [transferMessage, setTransferMessage] = useState("");
   const [clubOptions, setClubOptions] = useState([]);
   const [adminSection, setAdminSection] = useState("articles");
   const [newsletterSubscribers, setNewsletterSubscribers] = useState([]);
@@ -89,6 +92,7 @@ export default function AdminPage() {
       loadPredictions();
       loadClubs();
       loadNewsletterSubscribers();
+      loadTransfers();
     }
   }, [session]);
 
@@ -127,6 +131,7 @@ export default function AdminPage() {
     else {
       setNewsletterMessage("Abonné supprimé.");
       loadNewsletterSubscribers();
+      loadTransfers();
     }
   }
 
@@ -175,6 +180,8 @@ export default function AdminPage() {
       match_id: String(prediction.match_id),
       selection: prediction.selection,
       comment: prediction.comment || "",
+      secondary_bet: prediction.secondary_bet || "",
+      confidence: prediction.confidence || 7,
       status: prediction.status || "draft"
     });
     setPredictionMessage("Mode modification du prono activé.");
@@ -201,6 +208,8 @@ export default function AdminPage() {
       match_date: match?.utcDate || existing.match_date,
       selection: predictionForm.selection,
       comment: predictionForm.comment.trim() || null,
+      secondary_bet: predictionForm.secondary_bet.trim() || null,
+      confidence: Number(predictionForm.confidence) || null,
       status: predictionForm.status,
       updated_at: new Date().toISOString()
     };
@@ -232,6 +241,21 @@ export default function AdminPage() {
       await loadPredictions();
     }
   }
+
+  async function loadTransfers() {
+    const { data, error } = await supabase.from("transfers").select("*").order("created_at", { ascending: false });
+    if (error) setTransferMessage(error.message); else setTransfers(data || []);
+  }
+
+  function editTransfer(t) { setTransferForm({ ...emptyTransferForm, ...t, occurred_at: t.occurred_at || "" }); setTransferMessage("Mode modification activé."); }
+  function resetTransferForm() { setTransferForm(emptyTransferForm); }
+  async function saveTransfer(e) {
+    e.preventDefault();
+    const payload = { player_name:transferForm.player_name.trim(), from_club:transferForm.from_club.trim()||null, to_club:transferForm.to_club.trim()||null, position:transferForm.position.trim()||null, transfer_type:transferForm.transfer_type, transfer_status:transferForm.transfer_status, fee:transferForm.fee.trim()||null, note:transferForm.note.trim()||null, occurred_at:transferForm.occurred_at||null, updated_at:new Date().toISOString() };
+    let error; if (transferForm.id) ({error}=await supabase.from("transfers").update(payload).eq("id",transferForm.id)); else ({error}=await supabase.from("transfers").insert(payload));
+    if(error){setTransferMessage(error.message);return;} setTransferMessage(transferForm.id?"Mouvement modifié ✅":"Mouvement ajouté ✅"); resetTransferForm(); await loadTransfers();
+  }
+  async function removeTransfer(id){ if(!window.confirm("Supprimer ce mouvement mercato ?")) return; const {error}=await supabase.from("transfers").delete().eq("id",id); if(error)setTransferMessage(error.message); else {setTransferMessage("Mouvement supprimé."); await loadTransfers();} }
 
   async function loadFinishedMatches() {
     try {
@@ -578,6 +602,7 @@ export default function AdminPage() {
       <nav className="admin-dashboard-menu" aria-label="Menu administration">
         <button className={adminSection === "articles" ? "active" : ""} onClick={() => setAdminSection("articles")}><span>📰</span><strong>Articles</strong><small>Publier, modifier et mettre à la Une</small></button>
         <button className={adminSection === "predictions" ? "active" : ""} onClick={() => setAdminSection("predictions")}><span>🎯</span><strong>Pronostics</strong><small>Pronostics de la rédaction</small></button>
+        <button className={adminSection === "transfers" ? "active" : ""} onClick={() => setAdminSection("transfers")}><span>🔁</span><strong>Mercato</strong><small>Arrivées, départs et rumeurs</small></button>
         <button className={adminSection === "scorers" ? "active" : ""} onClick={() => setAdminSection("scorers")}><span>⚽</span><strong>Buteurs</strong><small>Buteurs des matchs terminés</small></button>
         <button className={adminSection === "events" ? "active" : ""} onClick={() => setAdminSection("events")}><span>🟨</span><strong>Faits marquants</strong><small>Cartons, VAR et remplacements</small></button>
         <button className={adminSection === "newsletter" ? "active" : ""} onClick={() => setAdminSection("newsletter")}><span>📩</span><strong>Newsletter</strong><small>Voir et gérer les abonnés</small></button>
@@ -753,6 +778,15 @@ export default function AdminPage() {
             </label>
 
             <label>
+              Pari complémentaire
+              <input value={predictionForm.secondary_bet} onChange={e => setPredictionForm({...predictionForm, secondary_bet:e.target.value})} placeholder="Ex. Plus de 1,5 but dans le match" />
+            </label>
+            <label>
+              Indice de confiance : <strong>{predictionForm.confidence}/10</strong>
+              <input type="range" min="1" max="10" value={predictionForm.confidence} onChange={e => setPredictionForm({...predictionForm, confidence:e.target.value})} />
+            </label>
+
+            <label>
               Publication
               <select value={predictionForm.status} onChange={e => setPredictionForm({...predictionForm, status:e.target.value})}>
                 <option value="draft">Brouillon</option>
@@ -780,6 +814,19 @@ export default function AdminPage() {
             ))}
           </div>
         </div>
+      </section>}
+
+      {adminSection === "transfers" && <section className="predictions-admin-panel admin-panel-standalone">
+        <div className="panel-heading scorers-admin-heading"><div><span className="eyebrow">CENTRE MERCATO</span><h2>Mouvements & rumeurs</h2></div>{transferForm.id && <button className="mini-button" onClick={resetTransferForm}>Nouveau mouvement</button>}</div>
+        {transferMessage && <div className="admin-message-box">{transferMessage}</div>}
+        <div className="predictions-admin-grid"><form className="admin-form" onSubmit={saveTransfer}>
+          <label>Joueur<input required value={transferForm.player_name} onChange={e=>setTransferForm({...transferForm,player_name:e.target.value})} placeholder="Ex. Paul Pogba" /></label>
+          <div className="admin-two-cols"><label>Club de départ<input value={transferForm.from_club} onChange={e=>setTransferForm({...transferForm,from_club:e.target.value})} placeholder="Ex. Juventus" /></label><label>Club d'arrivée<input value={transferForm.to_club} onChange={e=>setTransferForm({...transferForm,to_club:e.target.value})} placeholder="Ex. AS Monaco" /></label></div>
+          <div className="admin-two-cols"><label>Statut<select value={transferForm.transfer_status} onChange={e=>setTransferForm({...transferForm,transfer_status:e.target.value})}><option value="official">✅ Officiel</option><option value="advanced">🔥 Dossier avancé</option><option value="rumour">👀 Rumeur</option></select></label><label>Type<select value={transferForm.transfer_type} onChange={e=>setTransferForm({...transferForm,transfer_type:e.target.value})}><option value="transfer">Transfert</option><option value="loan">Prêt</option><option value="free">Libre</option><option value="return">Retour de prêt</option></select></label></div>
+          <div className="admin-two-cols"><label>Poste<input value={transferForm.position} onChange={e=>setTransferForm({...transferForm,position:e.target.value})} placeholder="Milieu" /></label><label>Montant<input value={transferForm.fee} onChange={e=>setTransferForm({...transferForm,fee:e.target.value})} placeholder="25 M€ / Libre" /></label></div>
+          <label>Date<input type="date" value={transferForm.occurred_at} onChange={e=>setTransferForm({...transferForm,occurred_at:e.target.value})} /></label><label>Note<textarea value={transferForm.note} onChange={e=>setTransferForm({...transferForm,note:e.target.value})} placeholder="Contexte du dossier..." /></label>
+          <button className="primary-button">{transferForm.id?"Enregistrer":"Ajouter au Centre Mercato"}</button>
+        </form><div className="predictions-admin-list"><h3>Mouvements suivis</h3>{transfers.length===0?<p>Aucun mouvement.</p>:transfers.map(t=><div className="prediction-admin-card" key={t.id}><div className="prediction-admin-main"><div><span className="tag">{t.transfer_status}</span><strong>{t.player_name}</strong></div><small>{t.from_club||"Libre"} → {t.to_club||"?"}</small>{t.note&&<p>{t.note}</p>}</div><div className="admin-actions"><button className="mini-button" onClick={()=>editTransfer(t)}>Modifier</button><button className="mini-button danger" onClick={()=>removeTransfer(t.id)}>Supprimer</button></div></div>)}</div></div>
       </section>}
 
       {adminSection === "scorers" && <section className="scorers-admin-panel admin-panel-standalone">
