@@ -6,9 +6,10 @@ import { getPlayerPhoto } from "@/lib/player-media";
 
 export const revalidate = 0;
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params, searchParams }) {
   const { id } = await params;
-  const result = await getPersonDetails(id);
+  const query = await searchParams;
+  const result = await getPersonDetails(id, query?.club);
   if (!result.ok) return { title: "Joueur Ligue 1", robots: result.notFound ? { index: false } : undefined };
   const p = result.data;
   return {
@@ -39,11 +40,12 @@ function birthFr(value) {
   return new Intl.DateTimeFormat("fr-FR", {day:"numeric",month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(value));
 }
 
-export default async function PlayerPage({ params }) {
+export default async function PlayerPage({ params, searchParams }) {
   const { id } = await params;
-  const result = await getPersonDetails(id);
+  const query = await searchParams;
+  const result = await getPersonDetails(id, query?.club);
   if (result.notFound) notFound();
-  if (!result.ok) return <div className="page-shell listing-page"><span className="eyebrow">LIGUE 1 · JOUEUR</span><h1>Fiche joueur</h1><div className="football-setup-box"><h2>Données indisponibles</h2><p>{result.error}</p></div></div>;
+  if (!result.ok) return <div className="page-shell listing-page"><span className="eyebrow">LIGUE 1 · JOUEUR</span><h1>Fiche joueur</h1><div className="football-setup-box"><h2>Données indisponibles</h2><p>Les données du joueur sont temporairement indisponibles. Réessaie dans quelques instants.</p></div></div>;
   const p = result.data;
   const photoResult = await getPlayerPhoto(p.name);
   const playerPhoto = photoResult.ok ? photoResult.data?.image : null;

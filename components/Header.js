@@ -7,9 +7,10 @@ import { useState } from "react";
 const links = [
   ["Accueil", "/"],
   ["Actualités", "/actualites"],
+  ["Championnats", "/championnats"],
   ["Résultats", "/resultats"],
-  ["Classement", "/classement"],
   ["Stats", "/stats"],
+  ["Prono", "/prono"],
   ["Mercato", "/mercato"],
   ["Analyses", "/analyses"]
 ];

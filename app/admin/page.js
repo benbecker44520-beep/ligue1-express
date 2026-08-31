@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createSupabaseClient, hasSupabaseConfig } from "@/lib/supabase";
+import ShareButtons from "@/components/ShareButtons";
 
 function slugify(value) {
   return value
@@ -11,6 +12,14 @@ function slugify(value) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 }
+
+const emptyPredictionForm = {
+  id: null,
+  match_id: "",
+  selection: "1",
+  comment: "",
+  status: "published"
+};
 
 const emptyForm = {
   id: null,
@@ -41,6 +50,10 @@ export default function AdminPage() {
   const [scorers, setScorers] = useState([]);
   const [scorerForm, setScorerForm] = useState({ team_side: "home", player_name: "", minute: "", goal_type: "normal" });
   const [scorerMessage, setScorerMessage] = useState("");
+  const [upcomingMatches, setUpcomingMatches] = useState([]);
+  const [predictions, setPredictions] = useState([]);
+  const [predictionForm, setPredictionForm] = useState(emptyPredictionForm);
+  const [predictionMessage, setPredictionMessage] = useState("");
 
   useEffect(() => {
     if (!supabase) return;
@@ -52,7 +65,12 @@ export default function AdminPage() {
   }, [supabase]);
 
   useEffect(() => {
-    if (session) { loadArticles(); loadFinishedMatches(); }
+    if (session) {
+      loadArticles();
+      loadFinishedMatches();
+      loadUpcomingMatches();
+      loadPredictions();
+    }
   }, [session]);
 
   useEffect(() => {
@@ -67,6 +85,91 @@ export default function AdminPage() {
     if (session && selectedMatchId) loadScorers(selectedMatchId);
     else setScorers([]);
   }, [session, selectedMatchId]);
+
+  async function loadUpcomingMatches() {
+    try {
+      const response = await fetch("/api/football/matches?status=UPCOMING", { cache: "no-store" });
+      const json = await response.json();
+      const matches = json?.data || [];
+      setUpcomingMatches(matches);
+      setPredictionForm((current) => current.match_id || !matches.length ? current : { ...current, match_id: String(matches[0].id) });
+    } catch {
+      setPredictionMessage("Impossible de charger les prochains matchs.");
+    }
+  }
+
+  async function loadPredictions() {
+    const { data, error } = await supabase
+      .from("predictions")
+      .select("*")
+      .order("match_date", { ascending: false });
+    if (error) setPredictionMessage(error.message);
+    else setPredictions(data || []);
+  }
+
+  function editPrediction(prediction) {
+    setPredictionForm({
+      id: prediction.id,
+      match_id: String(prediction.match_id),
+      selection: prediction.selection,
+      comment: prediction.comment || "",
+      status: prediction.status || "draft"
+    });
+    setPredictionMessage("Mode modification du prono activé.");
+  }
+
+  function resetPredictionForm() {
+    setPredictionForm({ ...emptyPredictionForm, match_id: upcomingMatches[0]?.id ? String(upcomingMatches[0].id) : "" });
+  }
+
+  async function savePrediction(e) {
+    e.preventDefault();
+    const match = upcomingMatches.find((m) => String(m.id) === String(predictionForm.match_id));
+    const existing = predictions.find((p) => String(p.id) === String(predictionForm.id));
+    if (!match && !existing) {
+      setPredictionMessage("Sélectionne un match à venir.");
+      return;
+    }
+
+    const payload = {
+      match_id: String(match?.id || existing.match_id),
+      competition: "Ligue 1",
+      home_team: match?.home?.name || existing.home_team,
+      away_team: match?.away?.name || existing.away_team,
+      match_date: match?.utcDate || existing.match_date,
+      selection: predictionForm.selection,
+      comment: predictionForm.comment.trim() || null,
+      status: predictionForm.status,
+      updated_at: new Date().toISOString()
+    };
+
+    let error;
+    if (predictionForm.id) {
+      ({ error } = await supabase.from("predictions").update(payload).eq("id", predictionForm.id));
+    } else {
+      ({ error } = await supabase.from("predictions").insert(payload));
+    }
+
+    if (error) {
+      setPredictionMessage(error.code === "23505" ? "Un prono existe déjà pour ce match." : error.message);
+      return;
+    }
+
+    setPredictionMessage(predictionForm.id ? "Prono modifié ✅" : "Prono enregistré ✅");
+    resetPredictionForm();
+    await loadPredictions();
+  }
+
+  async function removePrediction(id) {
+    if (!window.confirm("Supprimer ce prono ?")) return;
+    const { error } = await supabase.from("predictions").delete().eq("id", id);
+    if (error) setPredictionMessage(error.message);
+    else {
+      if (predictionForm.id === id) resetPredictionForm();
+      setPredictionMessage("Prono supprimé.");
+      await loadPredictions();
+    }
+  }
 
   async function loadFinishedMatches() {
     try {
@@ -434,10 +537,93 @@ export default function AdminPage() {
                 </button>
                 <button className="mini-button danger" onClick={() => removeArticle(article)}>Supprimer</button>
               </div>
+              {article.status === "published" && (
+                <div className="admin-share-row">
+                  <span>Partager l'article :</span>
+                  <ShareButtons compact title={article.title} path={`/article/${article.slug}`} />
+                </div>
+              )}
             </div>
           ))}
         </div>
       </div>
+
+      <section className="predictions-admin-panel">
+        <div className="panel-heading scorers-admin-heading">
+          <div>
+            <span className="eyebrow">PRONO 1 / N / 2</span>
+            <h2>Pronostics de la rédaction</h2>
+          </div>
+          <div className="admin-top-actions">
+            {predictionForm.id && <button className="mini-button" onClick={resetPredictionForm}>Nouveau prono</button>}
+            <button className="mini-button" onClick={() => { loadUpcomingMatches(); loadPredictions(); }}>Actualiser</button>
+          </div>
+        </div>
+
+        {predictionMessage && <div className="admin-message-box">{predictionMessage}</div>}
+
+        <div className="predictions-admin-grid">
+          <form className="admin-form prediction-form" onSubmit={savePrediction}>
+            <label>
+              Match Ligue 1
+              <select value={predictionForm.match_id} onChange={e => setPredictionForm({...predictionForm, match_id:e.target.value})} required>
+                <option value="">Sélectionner un match</option>
+                {predictionForm.id && !upcomingMatches.some((m) => String(m.id) === String(predictionForm.match_id)) && (() => {
+                  const current = predictions.find((p) => String(p.id) === String(predictionForm.id));
+                  return current ? <option value={current.match_id}>{current.home_team} - {current.away_team}</option> : null;
+                })()}
+                {upcomingMatches.map(match => (
+                  <option key={match.id} value={match.id}>
+                    J{match.matchday || "—"} · {match.home.shortName || match.home.name} - {match.away.shortName || match.away.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div>
+              <span className="admin-field-label">Pronostic</span>
+              <div className="prediction-choice-buttons">
+                {["1","N","2"].map(choice => (
+                  <button type="button" key={choice} className={predictionForm.selection === choice ? "active" : ""} onClick={() => setPredictionForm({...predictionForm, selection:choice})}>{choice}</button>
+                ))}
+              </div>
+              <small className="prediction-help">1 = domicile · N = nul · 2 = extérieur</small>
+            </div>
+
+            <label>
+              Commentaire / analyse
+              <textarea value={predictionForm.comment} onChange={e => setPredictionForm({...predictionForm, comment:e.target.value})} placeholder="Ex. Monaco est solide à domicile et reste sur une bonne dynamique..." />
+            </label>
+
+            <label>
+              Publication
+              <select value={predictionForm.status} onChange={e => setPredictionForm({...predictionForm, status:e.target.value})}>
+                <option value="draft">Brouillon</option>
+                <option value="published">Publié</option>
+              </select>
+            </label>
+
+            <button className="primary-button">{predictionForm.id ? "Enregistrer le prono" : "Publier le prono"}</button>
+          </form>
+
+          <div className="predictions-admin-list">
+            <h3>Historique des pronos</h3>
+            {predictions.length === 0 ? <p className="scorers-empty">Aucun prono enregistré.</p> : predictions.map(prediction => (
+              <div className="prediction-admin-card" key={prediction.id}>
+                <div className="prediction-admin-main">
+                  <div><span className="tag">{prediction.selection}</span><strong>{prediction.home_team} - {prediction.away_team}</strong></div>
+                  <small>{prediction.status === "published" ? "Publié" : "Brouillon"}</small>
+                  {prediction.comment && <p>{prediction.comment}</p>}
+                </div>
+                <div className="admin-actions">
+                  <button className="mini-button" onClick={() => editPrediction(prediction)}>Modifier</button>
+                  <button className="mini-button danger" onClick={() => removePrediction(prediction.id)}>Supprimer</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <section className="scorers-admin-panel">
         <div className="panel-heading scorers-admin-heading">

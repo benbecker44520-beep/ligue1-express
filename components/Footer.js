@@ -7,11 +7,11 @@ export default function Footer() {
       <div className="footer-grid">
         <div>
           <Image src="/logo-ligue1-express.png" width={131} height={54} alt="Ligue 1 Express" />
-          <p>L'actualité de la Ligue 1, en un clin d'œil.</p>
+          <p>L'actualité du football français, en un clin d'œil.</p>
         </div>
         <div>
           <h3>Navigation</h3>
-          <p><Link href="/actualites">Actualités</Link> · <Link href="/mercato">Mercato</Link> · <Link href="/analyses">Analyses</Link></p>
+          <p><Link href="/actualites">Actualités</Link> · <Link href="/championnats">Championnats</Link> · <Link href="/prono">Prono</Link> · <Link href="/mercato">Mercato</Link></p>
         </div>
         <div>
           <h3>Newsletter</h3>
@@ -21,7 +21,7 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="footer-bottom">© Ligue 1 Express · Prototype V1</div>
+      <div className="footer-bottom">© Ligue 1 Express · Football français</div>
     </footer>
   );
 }

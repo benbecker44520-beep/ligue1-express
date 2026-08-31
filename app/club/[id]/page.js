@@ -96,7 +96,7 @@ export default async function ClubPage({ params }) {
       </section>
       <section className="club-squad-card">
         <div className="club-section-title"><span>EFFECTIF</span><strong>{details.squad.length} joueurs</strong></div>
-        <div className="squad-groups">{groups.map(group => <div className="squad-group" key={group.label}><h2>{group.label}</h2><div className="squad-list">{group.players.map(player => <Link href={`/joueur/${player.id}`} className="squad-player" key={player.id}><strong>{player.name}</strong><span>{nationalityFr(player.nationality)}</span><b>{ageOf(player.dateOfBirth) != null ? `${ageOf(player.dateOfBirth)} ans` : "Âge —"}</b></Link>)}</div></div>)}</div>
+        <div className="squad-groups">{groups.map(group => <div className="squad-group" key={group.label}><h2>{group.label}</h2><div className="squad-list">{group.players.map(player => <Link href={`/joueur/${player.id}?club=${id}`} className="squad-player" key={player.id}><strong>{player.name}</strong><span>{nationalityFr(player.nationality)}</span><b>{ageOf(player.dateOfBirth) != null ? `${ageOf(player.dateOfBirth)} ans` : "Âge —"}</b></Link>)}</div></div>)}</div>
       </section>
     </>}
   </div>;

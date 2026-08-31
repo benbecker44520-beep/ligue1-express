@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getPublishedArticles, getFeaturedArticle } from "@/lib/articles";
 import ArticleCard from "@/components/ArticleCard";
 import { ResultsPanel, StandingsPanel } from "@/components/ScorePanel";
+import { getPublishedPredictions } from "@/lib/predictions";
 
 export const revalidate = 0;
 
@@ -21,6 +22,10 @@ export default async function HomePage() {
   const featuredArticle = await getFeaturedArticle();
   const mercato = await getPublishedArticles({ category: "MERCATO", limit: 3 });
   const analyses = await getPublishedArticles({ category: "ANALYSES", limit: 3 });
+  const predictions = await getPublishedPredictions();
+  const featuredPrediction = [...predictions]
+    .filter((prediction) => prediction.verdict === "pending")
+    .sort((a, b) => new Date(a.match_date || 0) - new Date(b.match_date || 0))[0] || predictions[0] || null;
 
   const hero = featuredArticle || allArticles[0] || {
     slug: "debrief-express-journee",
@@ -81,9 +86,24 @@ export default async function HomePage() {
       <nav className="media-shortcuts" aria-label="Accès rapides Ligue 1">
         <Link href="/actualites" className="media-shortcut"><div><span>À LA UNE</span><strong>Dernières actualités</strong></div><b>→</b></Link>
         <Link href="/resultats" className="media-shortcut"><div><span>MATCHS</span><strong>Résultats & calendrier</strong></div><b>→</b></Link>
-        <Link href="/classement" className="media-shortcut"><div><span>LIGUE 1</span><strong>Classement complet</strong></div><b>→</b></Link>
+        <Link href="/championnats" className="media-shortcut"><div><span>FRANCE</span><strong>L1 · L2 · National</strong></div><b>→</b></Link>
         <Link href="/stats" className="media-shortcut"><div><span>DATA</span><strong>Stats & buteurs</strong></div><b>→</b></Link>
       </nav>
+
+      {featuredPrediction && (
+        <section className="home-prono-card">
+          <div>
+            <span className="eyebrow">LE PRONO LIGUE 1 EXPRESS</span>
+            <h2>{featuredPrediction.home_team} - {featuredPrediction.away_team}</h2>
+            <p>{featuredPrediction.comment || "Le choix de la rédaction pour ce match."}</p>
+          </div>
+          <div className="home-prono-choice">
+            <span>Notre prono</span>
+            <strong>{featuredPrediction.selection}</strong>
+            <Link href="/prono">Voir les pronos →</Link>
+          </div>
+        </section>
+      )}
 
       <section className="content-section">
         <div className="section-title">

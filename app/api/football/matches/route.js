@@ -11,8 +11,19 @@ export async function GET(request) {
   }
 
   let matches = result.data;
-  if (status) matches = matches.filter((match) => match.status === status);
-  matches = [...matches].sort((a, b) => b.timestamp - a.timestamp);
+  const now = Math.floor(Date.now() / 1000);
+
+  if (status === "UPCOMING") {
+    matches = matches
+      .filter((match) => match.status !== "FINISHED" && !["CANCELLED", "POSTPONED"].includes(match.status) && match.timestamp >= now)
+      .sort((a, b) => a.timestamp - b.timestamp);
+  } else if (status) {
+    matches = matches
+      .filter((match) => match.status === status)
+      .sort((a, b) => status === "FINISHED" ? b.timestamp - a.timestamp : a.timestamp - b.timestamp);
+  } else {
+    matches = [...matches].sort((a, b) => b.timestamp - a.timestamp);
+  }
 
   return NextResponse.json({ ok: true, data: matches });
 }

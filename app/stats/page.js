@@ -50,7 +50,7 @@ export default async function StatsPage() {
       {scorers.length ? scorers.map((s,i)=><div className="stats-scorer-row stats-scorer-row-v48" key={`${s.name}-${s.teamId ?? i}`}>
         <b>{i+1}</b>
         <div className="stats-scorer-player">
-          <strong>{s.name}</strong>
+          {s.playerId ? <Link href={`/joueur/${s.playerId}${s.teamId ? `?club=${s.teamId}` : ""}`}><strong>{s.name}</strong></Link> : <strong>{s.name}</strong>}
           <span className="stats-scorer-club">
             {s.logo && <Image src={s.logo} alt="" width={22} height={22} unoptimized />}
             {s.teamId ? <Link href={`/club/${s.teamId}`}>{s.teamName}</Link> : <span>{s.teamName}</span>}

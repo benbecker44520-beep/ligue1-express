@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getArticleBySlug } from "@/lib/articles";
+import ShareButtons from "@/components/ShareButtons";
 
 export const revalidate = 0;
 
@@ -57,7 +58,8 @@ export default async function ArticlePage({ params }) {
         <aside className="article-side-v3">
           <div className="share-box">
             <strong>Partager l'article</strong>
-            <p>Ligue 1 Express</p>
+            <p>Envoie cette info à tes proches.</p>
+            <ShareButtons title={article.title} path={`/article/${article.slug}`} />
           </div>
 
           {article.tiktok_url && (

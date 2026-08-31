@@ -8,10 +8,10 @@ const siteUrl = getSiteUrl();
 export const metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Ligue 1 Express — L'actu Ligue 1 en un clin d'œil",
+    default: "Ligue 1 Express — Le football français en un clin d'œil",
     template: "%s | Ligue 1 Express"
   },
-  description: "Actualités, mercato, analyses, résultats, classement, statistiques, clubs et joueurs de Ligue 1.",
+  description: "Actualités, mercato, pronostics, résultats, classements et statistiques du football français : Ligue 1, Ligue 2 et National.",
   applicationName: "Ligue 1 Express",
   category: "sports",
   openGraph: {
@@ -19,13 +19,13 @@ export const metadata = {
     locale: "fr_FR",
     siteName: "Ligue 1 Express",
     title: "Ligue 1 Express",
-    description: "Toute la Ligue 1 en un clin d'œil : actualités, résultats, classement, statistiques, clubs et joueurs.",
+    description: "Le football français en un clin d'œil : actualités, championnats, pronostics, résultats et statistiques.",
     images: [{ url: "/logo-ligue1-express.png", width: 131, height: 54, alt: "Ligue 1 Express" }]
   },
   twitter: {
     card: "summary_large_image",
     title: "Ligue 1 Express",
-    description: "Toute la Ligue 1 en un clin d'œil."
+    description: "Le football français en un clin d'œil."
   },
   icons: {
     icon: "/icon-192.png",
