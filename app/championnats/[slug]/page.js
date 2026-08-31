@@ -46,6 +46,7 @@ export default async function ChampionshipPage({ params }) {
       {!result.ok ? <div className="football-setup-box"><h2>Données temporairement indisponibles</h2><p>{result.error}</p></div> : <>
         {result.note && <div className={`championship-data-note ${result.limited ? "is-warning" : ""}`}>ℹ️ {result.note}</div>}
         <div className="championship-source-line"><span>Actualisation automatique</span>{result.currentMatchday && <strong>Journée actuelle : {result.currentMatchday}</strong>}<b>Source : {result.source}</b></div>
+        {result.currentMatchday && <Link className="matchday-cta" href={`/championnats/${normalizedSlug}/journee/${result.currentMatchday}`}><span>⚡ CENTRE JOURNÉE</span><strong>Voir tous les matchs de la J{result.currentMatchday}</strong><b>Scores · horaires · fiches match →</b></Link>}
 
         {result.metrics && <section className="champ-metrics-grid">
           <div><span>LEADER</span><strong>{result.metrics.leader?.shortName || result.metrics.leader?.team || "—"}</strong><small>{result.metrics.leader?.points ?? 0} pts</small></div>
