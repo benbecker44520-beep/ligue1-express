@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CHAMPIONSHIPS, getChampionshipConfig, getChampionshipSnapshot, normalizeChampionshipSlug } from "@/lib/championships";
+import { secondaryMatchHref, secondaryTeamHref } from "@/lib/futpythontrader";
 
 export const revalidate = 0;
 
@@ -10,15 +11,15 @@ function formatMatchDate(match) {
   return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).format(new Date(match.utcDate));
 }
 
-function MatchLine({ match }) {
+function MatchLine({ match, championshipSlug }) {
   const hasScore = match.score?.home !== null && match.score?.away !== null;
   const isLive = match.status === "IN_PLAY";
   return (
-    <div className="champ-match-row">
+    <Link href={championshipSlug === "ligue-1" ? `/match/${match.id}` : secondaryMatchHref(championshipSlug, match.id)} className="champ-match-row champ-match-link">
       <div className="champ-match-team home">{match.home?.logo && <Image src={match.home.logo} alt="" width={25} height={25} unoptimized />}<span>{match.home?.shortName || match.home?.name}</span></div>
       <div className="champ-match-center"><strong>{hasScore ? `${match.score.home} - ${match.score.away}` : "vs"}</strong><small>{isLive ? "● En direct" : formatMatchDate(match)}</small></div>
       <div className="champ-match-team away"><span>{match.away?.shortName || match.away?.name}</span>{match.away?.logo && <Image src={match.away.logo} alt="" width={25} height={25} unoptimized />}</div>
-    </div>
+    </Link>
   );
 }
 
@@ -60,15 +61,15 @@ export default async function ChampionshipPage({ params }) {
               <div className="champ-table-row champ-table-row-full head"><span>#</span><span>Équipe</span><span>J</span><span>G</span><span>N</span><span>P</span><span>BP</span><span>BC</span><span>Diff</span><span>Pts</span><span>Forme</span></div>
               {result.standings.map((row) => <div className={`champ-table-row champ-table-row-full ${row.rank <= 2 ? "zone-promotion" : row.rank >= config.teamCount - 2 ? "zone-relegation" : ""}`} key={`${row.teamId}-${row.rank}`}>
                 <strong>{row.rank}</strong>
-                <div className="champ-table-team">{row.logo && <Image src={row.logo} alt="" width={26} height={26} unoptimized />}{normalizedSlug === "ligue-1" && row.teamId ? <Link href={`/club/${row.teamId}`}>{row.shortName || row.team}</Link> : <span>{row.shortName || row.team}</span>}</div>
+                <div className="champ-table-team">{row.logo && <Image src={row.logo} alt="" width={26} height={26} unoptimized />}{normalizedSlug === "ligue-1" && row.teamId ? <Link href={`/club/${row.teamId}`}>{row.shortName || row.team}</Link> : <Link href={secondaryTeamHref(normalizedSlug, row.team)}>{row.shortName || row.team}</Link>}</div>
                 <span>{row.played}</span><span>{row.win}</span><span>{row.draw}</span><span>{row.lose}</span><span>{row.goalsFor}</span><span>{row.goalsAgainst}</span><span>{row.diff > 0 ? `+${row.diff}` : row.diff}</span><b>{row.points}</b><div className="champ-form">{(row.form || []).map((f, i) => <i className={`form-${f.toLowerCase()}`} key={`${row.teamId}-form-${i}`}>{f}</i>)}</div>
               </div>)}
             </div> : <div className="champ-empty">Classement indisponible pour le moment.</div>}<div className="champ-zone-legend"><span className="promotion-dot" /> Montée directe <span className="relegation-dot" /> Relégation</div>
           </section>
 
           <div className="championship-side-stack">
-            <section className="championship-panel"><div className="panel-heading"><h2>Derniers résultats</h2></div>{result.recent.length ? result.recent.slice(0, 6).map((m) => <MatchLine key={`r-${m.id}`} match={m} />) : <div className="champ-empty">Aucun résultat terminé disponible.</div>}</section>
-            <section className="championship-panel"><div className="panel-heading"><h2>Prochains matchs</h2></div>{result.upcoming.length ? result.upcoming.slice(0, 6).map((m) => <MatchLine key={`u-${m.id}`} match={m} />) : <div className="champ-empty">Aucun match à venir disponible.</div>}</section>
+            <section className="championship-panel"><div className="panel-heading"><h2>Derniers résultats</h2></div>{result.recent.length ? result.recent.slice(0, 6).map((m) => <MatchLine key={`r-${m.id}`} match={m} championshipSlug={normalizedSlug} />) : <div className="champ-empty">Aucun résultat terminé disponible.</div>}</section>
+            <section className="championship-panel"><div className="panel-heading"><h2>Prochains matchs</h2></div>{result.upcoming.length ? result.upcoming.slice(0, 6).map((m) => <MatchLine key={`u-${m.id}`} match={m} championshipSlug={normalizedSlug} />) : <div className="champ-empty">Aucun match à venir disponible.</div>}</section>
           </div>
         </div>
 
