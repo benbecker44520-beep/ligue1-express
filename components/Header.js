@@ -6,6 +6,7 @@ import { useState } from "react";
 
 const links = [
   ["Accueil", "/"],
+  ["🔴 LIVE", "/live"],
   ["Actualités", "/actualites"],
   ["Championnats", "/championnats"],
   ["Résultats", "/resultats"],
