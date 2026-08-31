@@ -93,7 +93,7 @@ export default async function ClubPage({ params }) {
       </section>
       <section className="club-squad-card" id="effectif">
         <div className="club-section-title"><span>👥 EFFECTIF</span><strong>{details.squad.length} joueurs</strong></div>
-        <div className="squad-groups">{groups.map(group => <div className="squad-group" key={group.label}><h2>{group.label}</h2><div className="squad-list">{group.players.map(player => {const scorer=clubScorers.find(s=>String(s.playerId)===String(player.id)); return <Link href={`/joueur/${player.id}?club=${id}`} className="squad-player squad-player-v7" key={player.id}><strong>{player.name}</strong><span>{nationalityFr(player.nationality)}</span><b>{scorer ? `${scorer.goals} but${scorer.goals>1?"s":""}` : ageOf(player.dateOfBirth) != null ? `${ageOf(player.dateOfBirth)} ans` : "Voir la fiche →"}</b></Link>})}</div></div>)}</div>
+        <div className="squad-groups">{groups.map(group => <section className="squad-group" key={group.label} aria-label={group.label}><h2>{group.label}</h2><div className="squad-list">{group.players.map(player => {const scorer=clubScorers.find(s=>String(s.playerId)===String(player.id)); return <Link href={`/joueur/${player.id}?club=${id}`} className="squad-player squad-player-v7" key={`${group.label}-${player.id}`}><strong>{player.name}</strong><span>{nationalityFr(player.nationality)}</span><b>{scorer ? `${scorer.goals} but${scorer.goals>1?"s":""}` : ageOf(player.dateOfBirth) != null ? `${ageOf(player.dateOfBirth)} ans` : "Voir la fiche →"}</b></Link>})}</div></section>)}</div>
       </section>
     </>}
 
