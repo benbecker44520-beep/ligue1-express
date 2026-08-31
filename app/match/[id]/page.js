@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getMatchById, getStandings } from "@/lib/football";
+import { getMatchById, getStandings, getTeamById } from "@/lib/football";
 import { createSupabaseClient } from "@/lib/supabase";
 import { scoreWithScorerFallback } from "@/lib/match-score";
 import { getEspnMatchIncidents } from "@/lib/espn";
@@ -113,6 +113,41 @@ export default async function MatchPage({ params }) {
     return minuteA - minuteB;
   });
 
+  // V8.1 · Centre Match : contexte avant/après match sans inventer de données.
+  const [homeContext, awayContext] = await Promise.all([
+    match.home.id ? getTeamById(match.home.id) : Promise.resolve({ ok: false }),
+    match.away.id ? getTeamById(match.away.id) : Promise.resolve({ ok: false })
+  ]);
+
+  function formFor(context, teamId) {
+    if (!context?.ok) return [];
+    return (context.data?.recent || []).slice(0, 5).reverse().map((m) => {
+      const isHome = String(m.home.id) === String(teamId);
+      const gf = isHome ? m.score.home : m.score.away;
+      const ga = isHome ? m.score.away : m.score.home;
+      return gf > ga ? "V" : gf < ga ? "D" : "N";
+    });
+  }
+
+  const homeForm = formFor(homeContext, match.home.id);
+  const awayForm = formFor(awayContext, match.away.id);
+  const homeRecent = homeContext?.ok ? (homeContext.data?.recent || []).filter((m) => String(m.id) !== String(match.id)).slice(0, 3) : [];
+  const awayRecent = awayContext?.ok ? (awayContext.data?.recent || []).filter((m) => String(m.id) !== String(match.id)).slice(0, 3) : [];
+  const isUpcoming = !["FINISHED", "IN_PLAY", "PAUSED", "LIVE"].includes(match.status);
+
+  function compactDate(utcDate) {
+    return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short", timeZone: "Europe/Paris" }).format(new Date(utcDate));
+  }
+
+  function contextMatchRow(m, teamId) {
+    const isHome = String(m.home.id) === String(teamId);
+    const opponent = isHome ? m.away : m.home;
+    const gf = isHome ? m.score.home : m.score.away;
+    const ga = isHome ? m.score.away : m.score.home;
+    const result = gf > ga ? "V" : gf < ga ? "D" : "N";
+    return { opponent, gf, ga, result };
+  }
+
   return (
     <div className="page-shell listing-page match-detail-page">
       <span className="eyebrow">LIGUE 1 · JOURNÉE {match.matchday || "—"}</span>
@@ -176,6 +211,39 @@ export default async function MatchPage({ params }) {
         <div className="match-info-card"><span>COMPÉTITION</span><strong>Ligue 1</strong></div>
         <div className="match-info-card"><span>JOURNÉE</span><strong>{match.matchday || "—"}</strong></div>
         <div className="match-info-card"><span>STATUT</span><strong>{statusLabel(match.status)}</strong></div>
+      </section>
+
+      <section className="match-center-v81">
+        <div className="match-center-head-v81">
+          <div><span className="eyebrow">CENTRE MATCH</span><h2>{isUpcoming ? "Avant-match" : "Le match en contexte"}</h2></div>
+          <Link href={`/resultats${match.matchday ? `?journee=${match.matchday}` : ""}`}>Voir la journée →</Link>
+        </div>
+        <div className="match-context-grid-v81">
+          {[
+            { team: match.home, standing: homeStanding, form: homeForm, recent: homeRecent },
+            { team: match.away, standing: awayStanding, form: awayForm, recent: awayRecent }
+          ].map((side) => (
+            <article className="match-team-context-v81" key={side.team.id || side.team.name}>
+              <div className="match-context-team-v81">
+                {side.team.logo && <Image src={side.team.logo} alt="" width={44} height={44} unoptimized />}
+                <div><strong>{side.team.shortName || side.team.name}</strong><span>{side.standing ? `${side.standing.rank}e · ${side.standing.points} pts` : "Classement indisponible"}</span></div>
+              </div>
+              <div className="match-form-v81"><span>FORME</span><div>{side.form.length ? side.form.map((r, i) => <i className={`form-${r.toLowerCase()}`} key={`${r}-${i}`}>{r}</i>) : <small>À venir</small>}</div></div>
+              <div className="match-recent-v81">
+                <span>3 DERNIERS MATCHS</span>
+                {side.recent.length ? side.recent.map((m) => { const row = contextMatchRow(m, side.team.id); return (
+                  <Link href={`/match/${m.id}`} key={m.id}>
+                    <b className={`form-${row.result.toLowerCase()}`}>{row.result}</b>
+                    {row.opponent.logo && <Image src={row.opponent.logo} alt="" width={22} height={22} unoptimized />}
+                    <strong>{row.opponent.shortName || row.opponent.name}</strong>
+                    <em>{row.gf} - {row.ga}</em><small>{compactDate(m.utcDate)}</small>
+                  </Link>
+                )}) : <p>Aucun résultat récent.</p>}
+              </div>
+              {side.team.id && <Link className="match-context-club-link-v81" href={`/club/${side.team.id}`}>Voir la fiche du club →</Link>}
+            </article>
+          ))}
+        </div>
       </section>
 
       <section className="match-timeline-card">
