@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getFixtures } from "@/lib/football";
+import { reconcileFinishedMatchScores } from "@/lib/match-score";
 
 export const revalidate = 0;
 
@@ -37,7 +38,7 @@ export default async function Page({ searchParams }) {
   const index = roundNumbers.indexOf(selected);
   const previous = index > 0 ? roundNumbers[index-1] : null;
   const next = index >= 0 && index < roundNumbers.length-1 ? roundNumbers[index+1] : null;
-  const matches = rounds.get(selected) || [];
+  const matches = await reconcileFinishedMatchScores(rounds.get(selected) || []);
 
   return (
     <div className="page-shell listing-page">

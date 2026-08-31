@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getHomeSnapshot, getStandings } from "@/lib/football";
+import { reconcileFinishedMatchScores } from "@/lib/match-score";
 
 function MatchScore({ match }) {
   const hasScore = match.score.home !== null && match.score.away !== null;
@@ -30,6 +31,15 @@ function MatchScore({ match }) {
 
 export async function ResultsPanel() {
   const snapshot = await getHomeSnapshot();
+  if (snapshot.ok) {
+    const reconciled = await reconcileFinishedMatchScores([
+      snapshot.data.latest,
+      snapshot.data.live,
+      snapshot.data.next
+    ]);
+    const [latest, live, next] = reconciled;
+    snapshot.data = { latest: latest || null, live: live || null, next: next || null };
+  }
 
   return (
     <section className="side-panel">

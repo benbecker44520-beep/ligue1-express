@@ -13,3 +13,7 @@ Avant de lancer :
 - `npm.cmd run dev`
 
 Aucun nouveau SQL Supabase.
+
+## V5.5.2 — Live & Scores
+
+La V5.5.2 sépare désormais le calendrier de saison des matchs récents : les rencontres autour de la date du jour sont rafraîchies toutes les 60 secondes et remplacent les anciennes valeurs du cache long. Les fiches de matchs récents sont également rafraîchies de manière ciblée.

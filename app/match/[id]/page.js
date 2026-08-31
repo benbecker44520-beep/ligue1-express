@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMatchById, getStandings } from "@/lib/football";
 import { createSupabaseClient } from "@/lib/supabase";
+import { scoreWithScorerFallback } from "@/lib/match-score";
 
 export const revalidate = 0;
 
@@ -48,7 +49,6 @@ export default async function MatchPage({ params }) {
   const standings = await getStandings();
   const homeStanding = standings.ok ? standings.data.find((r) => r.team === match.home.name || r.shortName === match.home.shortName) : null;
   const awayStanding = standings.ok ? standings.data.find((r) => r.team === match.away.name || r.shortName === match.away.shortName) : null;
-  const hasScore = match.score.home !== null && match.score.away !== null;
   let scorers = [];
   const supabase = createSupabaseClient();
   if (supabase && match.status === "FINISHED") {
@@ -62,6 +62,8 @@ export default async function MatchPage({ params }) {
   }
   const homeScorers = scorers.filter((s) => s.team_side === "home");
   const awayScorers = scorers.filter((s) => s.team_side === "away");
+  const displayScore = scoreWithScorerFallback(match, scorers);
+  const hasScore = displayScore.home !== null && displayScore.away !== null;
 
   return (
     <div className="page-shell listing-page match-detail-page">
@@ -77,7 +79,7 @@ export default async function MatchPage({ params }) {
             {homeStanding && <p>{homeStanding.rank}<sup>e</sup> · {homeStanding.points} pts</p>}
           </div>
           <div className="match-big-score">
-            {hasScore ? <strong>{match.score.home}<span>-</span>{match.score.away}</strong> : <strong className="match-vs">VS</strong>}
+            {hasScore ? <strong>{displayScore.home}<span>-</span>{displayScore.away}</strong> : <strong className="match-vs">VS</strong>}
             <small>{match.status === "FINISHED" ? "Score final" : match.status === "SCHEDULED" || match.status === "TIMED" ? "Ligue 1" : statusLabel(match.status)}</small>
           </div>
           <div className="match-club match-club-away">
