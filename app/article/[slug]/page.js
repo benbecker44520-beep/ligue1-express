@@ -3,7 +3,8 @@ import Link from "next/link";
 import { getArticleBySlug } from "@/lib/articles";
 import ShareButtons from "@/components/ShareButtons";
 import Image from "next/image";
-import { getStandings } from "@/lib/football";
+import { getStandings, getScorers } from "@/lib/football";
+import { articleMentions } from "@/lib/content-links";
 
 export const revalidate = 0;
 
@@ -36,11 +37,14 @@ export default async function ArticlePage({ params }) {
     : (article.content || "").split(/\n\n+/).filter(Boolean);
 
   let relatedClubs = [];
+  let relatedPlayers = [];
   const relatedIds = (article.related_club_ids || []).map(String);
   if (relatedIds.length) {
     const standings = await getStandings();
     if (standings.ok) relatedClubs = standings.data.filter((club) => relatedIds.includes(String(club.teamId)));
   }
+  const scorers = await getScorers();
+  if (scorers.ok) relatedPlayers = scorers.data.filter((player) => articleMentions(article, player.name)).slice(0, 5);
 
   return (
     <div className="article-page article-page-v3 page-shell">
@@ -69,6 +73,19 @@ export default async function ArticlePage({ params }) {
                   <Link href={`/club/${club.teamId}`} key={club.teamId}>
                     {club.logo && <Image src={club.logo} alt="" width={22} height={22} unoptimized />}
                     {club.shortName || club.team}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+          {relatedPlayers.length > 0 && (
+            <div className="article-related-clubs article-related-players">
+              <span>JOUEURS CITÉS</span>
+              <div className="article-related-club-list">
+                {relatedPlayers.map((player) => (
+                  <Link href={`/joueur/${player.playerId}${player.teamId ? `?club=${player.teamId}` : ""}`} key={player.playerId}>
+                    {player.logo && <Image src={player.logo} alt="" width={22} height={22} unoptimized />}
+                    {player.name}
                   </Link>
                 ))}
               </div>
