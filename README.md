@@ -24,3 +24,6 @@ La V5.5.2 sépare désormais le calendrier de saison des matchs récents : les r
 - Clubs concernés sur les articles avec liens vers fiches clubs.
 - Match Center : buts refusés, cartons jaunes/rouges et remplacements.
 - Migration : `supabase-v5-6-related-clubs.sql`.
+
+## V5.6.2
+Ligue 2 et Ligue 3 alimentées par FutPythonTrader via variable serveur `FUTPYTHONTRADER_API_KEY`.
