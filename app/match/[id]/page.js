@@ -71,7 +71,47 @@ export default async function MatchPage({ params }) {
     const sofaFallback = await getSofaMatchIncidents(match, 34);
     if (sofaFallback.ok && sofaFallback.data?.length) incidentsResult = sofaFallback;
   }
-  const incidents = incidentsResult.ok ? incidentsResult.data : [];
+  const automaticIncidents = incidentsResult.ok ? incidentsResult.data : [];
+
+  let manualEvents = [];
+  if (supabase) {
+    const { data } = await supabase
+      .from("match_events")
+      .select("*")
+      .eq("match_id", String(match.id))
+      .order("minute", { ascending: true })
+      .order("created_at", { ascending: true });
+    manualEvents = (data || []).map((event) => {
+      const labels = {
+        goal: ["⚽", "But"],
+        disallowed_goal: ["🚫", "But refusé / VAR"],
+        yellow_card: ["🟨", "Carton jaune"],
+        red_card: ["🟥", "Carton rouge"],
+        substitution: ["🔄", "Remplacement"]
+      };
+      const [icon, label] = labels[event.event_type] || ["•", "Fait de match"];
+      return {
+        id: `manual-${event.id}`,
+        minute: `${event.minute}'`,
+        minuteValue: Number(event.minute) || 0,
+        type: event.event_type,
+        icon,
+        label,
+        isHome: event.team_side === "home",
+        player: event.player_name,
+        playerIn: event.player_in,
+        playerOut: event.player_out,
+        reason: event.reason,
+        manual: true
+      };
+    });
+  }
+
+  const incidents = [...automaticIncidents, ...manualEvents].sort((a, b) => {
+    const minuteA = a.minuteValue ?? parseInt(String(a.minute || "0"), 10) || 0;
+    const minuteB = b.minuteValue ?? parseInt(String(b.minute || "0"), 10) || 0;
+    return minuteA - minuteB;
+  });
 
   return (
     <div className="page-shell listing-page match-detail-page">
@@ -150,7 +190,7 @@ export default async function MatchPage({ params }) {
                 <div className="match-event-minute">{incident.minute || "—"}</div>
                 <div className="match-event-icon">{incident.icon}</div>
                 <div className="match-event-copy">
-                  <strong>{incident.label}</strong>
+                  <strong>{incident.label}{incident.manual && <small className="match-event-manual-badge">Ajout rédaction</small>}</strong>
                   {incident.type === "substitution" ? (
                     <span>{incident.playerOut ? `${incident.playerOut} sort` : "Sortie"} · {incident.playerIn ? `${incident.playerIn} entre` : "Entrée"}</span>
                   ) : (

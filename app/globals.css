@@ -811,3 +811,34 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 /* V5.6 - Match Center / incidents */
 .match-timeline-card{margin-top:18px;background:white;border:1px solid #e6eaf1;border-radius:18px;box-shadow:0 8px 24px rgba(10,27,68,.055);overflow:hidden}.match-timeline-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:19px 22px;border-bottom:1px solid var(--line)}.match-timeline-heading .eyebrow{margin:0 0 4px}.match-timeline-heading h2{margin:0;color:var(--navy);font-size:20px}.match-event-legend{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.match-event-legend span{padding:5px 7px;border-radius:999px;background:#f4f6fa;color:#5f6878;font-size:9px;font-weight:900}.match-timeline-list{display:grid}.match-timeline-row{display:grid;grid-template-columns:56px 36px minmax(0,1fr) 150px;align-items:center;gap:10px;padding:13px 20px;border-bottom:1px solid var(--line)}.match-timeline-row:last-child{border-bottom:0}.match-event-minute{font-size:13px;font-weight:900;color:#687386}.match-event-icon{font-size:20px;text-align:center}.match-event-copy{display:flex;flex-direction:column;gap:2px}.match-event-copy strong{font-size:13px;color:var(--navy)}.match-event-copy span{font-size:12px;color:#687386}.match-event-copy small{font-size:10px;color:#9a6b25}.match-event-team{text-align:right;font-size:10px;font-weight:900;color:#7b8495;text-transform:uppercase}.match-timeline-row.red_card{background:#fff8f8}.match-timeline-row.disallowed_goal{background:#fffaf0}.match-timeline-empty{padding:22px;color:#7b8495;font-size:13px}
 @media(max-width:700px){.match-timeline-heading{align-items:flex-start;flex-direction:column}.match-event-legend{justify-content:flex-start}.match-timeline-row{grid-template-columns:42px 30px minmax(0,1fr);padding:12px 12px}.match-event-team{grid-column:3;text-align:left}.match-event-copy span{font-size:11px}}
+
+
+/* V5.6.3 - résultats plus compacts + championnats enrichis */
+.results-page-v4{gap:10px}
+.match-card-v4{padding:15px 20px;min-height:72px}
+.match-card-v4 .match-team strong{font-size:21px;line-height:1.15}
+.match-card-v4 .match-team img{width:30px;height:30px;object-fit:contain}
+.match-card-v4 .match-center b{font-size:18px}
+.match-card-v4 .match-center small{font-size:12px}
+.champ-table-row-full{grid-template-columns:44px minmax(180px,1fr) repeat(8,48px) 126px!important;min-width:900px;position:relative}
+.champ-table-row-full.zone-promotion{box-shadow:inset 4px 0 0 #1f9d55}
+.champ-table-row-full.zone-relegation{box-shadow:inset 4px 0 0 #d64545}
+.champ-form{display:flex;justify-content:center;gap:3px}
+.champ-form i{font-style:normal;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:900;color:white}
+.champ-form .form-v{background:#1f9d55}.champ-form .form-n{background:#8b94a4}.champ-form .form-d{background:#d64545}
+.champ-zone-legend{display:flex;align-items:center;gap:7px;padding:10px 16px;border-top:1px solid var(--line);font-size:10px;font-weight:800;color:#717b8d}
+.champ-zone-legend span{width:9px;height:9px;border-radius:3px;margin-left:7px}.champ-zone-legend span:first-child{margin-left:0}
+.promotion-dot{background:#1f9d55}.relegation-dot{background:#d64545}
+@media(max-width:760px){.match-card-v4{padding:12px 8px;min-height:64px}.match-card-v4 .match-team strong{font-size:14px}.match-card-v4 .match-center b{font-size:16px}.match-card-v4 .match-team img{width:24px;height:24px}}
+
+/* V5.6.4 - Administration organisée + faits marquants manuels */
+.admin-dashboard-subtitle{margin:6px 0 0;color:#7b8495;font-size:14px}
+.admin-dashboard-menu{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0 26px}
+.admin-dashboard-menu button{display:grid;grid-template-columns:42px 1fr;grid-template-rows:auto auto;column-gap:10px;align-items:center;text-align:left;padding:15px 16px;border:1px solid #dfe4ec;border-radius:14px;background:white;color:var(--navy);cursor:pointer;box-shadow:0 6px 18px rgba(10,27,68,.04);transition:.15s ease}
+.admin-dashboard-menu button:hover{transform:translateY(-2px);border-color:#d9bb25}.admin-dashboard-menu button.active{border-color:#d9bb25;background:#fffbea;box-shadow:0 8px 22px rgba(10,27,68,.08)}
+.admin-dashboard-menu button>span{grid-row:1/3;font-size:25px;text-align:center}.admin-dashboard-menu strong{font-size:14px}.admin-dashboard-menu small{font-size:10px;color:#7b8495;margin-top:3px;line-height:1.3}
+.admin-section-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 14px}.admin-section-heading h2{margin:3px 0 0;font-size:26px;color:var(--navy)}
+.admin-panel-standalone{margin-top:0!important}.scorers-admin-heading p{margin:6px 0 0;color:#7b8495;font-size:12px;max-width:680px}
+.match-event-admin-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.match-event-admin-row:last-child{border-bottom:0}.match-event-admin-row>div{min-width:0}.match-event-admin-row strong{margin-left:7px;color:var(--navy);font-size:13px}.match-event-admin-row p{margin:5px 0 0 50px;color:#596274;font-size:12px}.match-event-admin-row small{display:block;margin:3px 0 0 50px;color:#8a6b00;font-size:10px}.match-event-manual-badge{display:inline-block;margin-left:7px;padding:2px 6px;border-radius:999px;background:#fff2b8;color:#795d00!important;font-size:8px!important;text-transform:uppercase;vertical-align:middle}
+@media(max-width:900px){.admin-dashboard-menu{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.admin-dashboard-menu{grid-template-columns:1fr}.admin-section-heading{align-items:flex-start;flex-direction:column}.admin-dashboard-menu button{padding:13px}.match-event-admin-row{align-items:flex-start}.match-event-admin-row p,.match-event-admin-row small{margin-left:0;margin-top:5px}}

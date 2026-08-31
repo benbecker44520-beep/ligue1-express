@@ -57,13 +57,13 @@ export default async function ChampionshipPage({ params }) {
           <section className="championship-panel championship-table-panel">
             <div className="panel-heading"><h2>{result.limited ? "Aperçu du classement" : "Classement complet"}</h2><span>{result.standings.length ? `${result.standings.length} / ${config.teamCount} équipes` : "Indisponible"}</span></div>
             {result.standings.length ? <div className="championship-table champ-full-table">
-              <div className="champ-table-row champ-table-row-full head"><span>#</span><span>Équipe</span><span>J</span><span>G</span><span>N</span><span>P</span><span>BP</span><span>BC</span><span>Diff</span><span>Pts</span></div>
-              {result.standings.map((row) => <div className="champ-table-row champ-table-row-full" key={`${row.teamId}-${row.rank}`}>
+              <div className="champ-table-row champ-table-row-full head"><span>#</span><span>Équipe</span><span>J</span><span>G</span><span>N</span><span>P</span><span>BP</span><span>BC</span><span>Diff</span><span>Pts</span><span>Forme</span></div>
+              {result.standings.map((row) => <div className={`champ-table-row champ-table-row-full ${row.rank <= 2 ? "zone-promotion" : row.rank >= config.teamCount - 2 ? "zone-relegation" : ""}`} key={`${row.teamId}-${row.rank}`}>
                 <strong>{row.rank}</strong>
                 <div className="champ-table-team">{row.logo && <Image src={row.logo} alt="" width={26} height={26} unoptimized />}{normalizedSlug === "ligue-1" && row.teamId ? <Link href={`/club/${row.teamId}`}>{row.shortName || row.team}</Link> : <span>{row.shortName || row.team}</span>}</div>
-                <span>{row.played}</span><span>{row.win}</span><span>{row.draw}</span><span>{row.lose}</span><span>{row.goalsFor}</span><span>{row.goalsAgainst}</span><span>{row.diff > 0 ? `+${row.diff}` : row.diff}</span><b>{row.points}</b>
+                <span>{row.played}</span><span>{row.win}</span><span>{row.draw}</span><span>{row.lose}</span><span>{row.goalsFor}</span><span>{row.goalsAgainst}</span><span>{row.diff > 0 ? `+${row.diff}` : row.diff}</span><b>{row.points}</b><div className="champ-form">{(row.form || []).map((f, i) => <i className={`form-${f.toLowerCase()}`} key={`${row.teamId}-form-${i}`}>{f}</i>)}</div>
               </div>)}
-            </div> : <div className="champ-empty">Classement indisponible pour le moment.</div>}
+            </div> : <div className="champ-empty">Classement indisponible pour le moment.</div>}<div className="champ-zone-legend"><span className="promotion-dot" /> Montée directe <span className="relegation-dot" /> Relégation</div>
           </section>
 
           <div className="championship-side-stack">
