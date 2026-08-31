@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createSupabaseClient, hasSupabaseConfig } from "@/lib/supabase";
 import ShareButtons from "@/components/ShareButtons";
+import NewsletterAdmin from "@/components/NewsletterAdmin";
 
 function slugify(value) {
   return value
@@ -113,7 +114,7 @@ export default function AdminPage() {
   async function loadNewsletterSubscribers() {
     const { data, error } = await supabase
       .from("newsletter_subscribers")
-      .select("id,email,subscribed_at,active")
+      .select("id,email,subscribed_at,active,unsubscribe_token")
       .order("subscribed_at", { ascending: false });
     if (error) setNewsletterMessage(error.message);
     else setNewsletterSubscribers(data || []);
@@ -937,16 +938,10 @@ export default function AdminPage() {
 
       {adminSection === "newsletter" && <section className="predictions-admin-panel admin-panel-standalone">
         <div className="panel-heading scorers-admin-heading">
-          <div><span className="eyebrow">NEWSLETTER</span><h2>Abonnés</h2><p>{newsletterSubscribers.length} adresse{newsletterSubscribers.length > 1 ? "s" : ""} enregistrée{newsletterSubscribers.length > 1 ? "s" : ""}.</p></div>
-          <button className="mini-button" onClick={loadNewsletterSubscribers}>Actualiser</button>
+          <div><span className="eyebrow">NEWSLETTER · V5.8</span><h2>Newsletter Ligue 1 Express</h2><p>Prépare, teste et envoie une édition aux abonnés actifs.</p></div>
         </div>
         {newsletterMessage && <div className="admin-message-box">{newsletterMessage}</div>}
-        <div className="newsletter-admin-list">
-          {newsletterSubscribers.length === 0 ? <p className="scorers-empty">Aucun abonné pour le moment.</p> : newsletterSubscribers.map((subscriber) => <div className="newsletter-admin-row" key={subscriber.id}>
-            <div><strong>{subscriber.email}</strong><small>{subscriber.subscribed_at ? new Date(subscriber.subscribed_at).toLocaleString("fr-FR") : "Date inconnue"}</small></div>
-            <button className="mini-button danger" onClick={() => removeNewsletterSubscriber(subscriber.id)}>Supprimer</button>
-          </div>)}
-        </div>
+        <NewsletterAdmin session={session} articles={articles} subscribers={newsletterSubscribers} onRefreshSubscribers={loadNewsletterSubscribers} onRemoveSubscriber={removeNewsletterSubscriber} />
       </section>}
     </div>
   );
