@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { getMatchById, getStandings } from "@/lib/football";
 import { createSupabaseClient } from "@/lib/supabase";
 import { scoreWithScorerFallback } from "@/lib/match-score";
-import { getMatchIncidents } from "@/lib/sofascore";
+import { getEspnMatchIncidents } from "@/lib/espn";
+import { getMatchIncidents as getSofaMatchIncidents } from "@/lib/sofascore";
 
 export const revalidate = 0;
 
@@ -65,7 +66,11 @@ export default async function MatchPage({ params }) {
   const awayScorers = scorers.filter((s) => s.team_side === "away");
   const displayScore = scoreWithScorerFallback(match, scorers);
   const hasScore = displayScore.home !== null && displayScore.away !== null;
-  const incidentsResult = await getMatchIncidents(match, 34);
+  let incidentsResult = await getEspnMatchIncidents(match, "fra.1");
+  if (!incidentsResult.ok || !incidentsResult.data?.length) {
+    const sofaFallback = await getSofaMatchIncidents(match, 34);
+    if (sofaFallback.ok && sofaFallback.data?.length) incidentsResult = sofaFallback;
+  }
   const incidents = incidentsResult.ok ? incidentsResult.data : [];
 
   return (
