@@ -12,6 +12,7 @@ create table if not exists public.articles (
   content text not null default '',
   image_url text,
   tiktok_url text,
+  related_club_ids bigint[] not null default '{}'::bigint[],
   status text not null default 'draft' check (status in ('draft', 'published')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),

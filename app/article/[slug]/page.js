@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getArticleBySlug } from "@/lib/articles";
 import ShareButtons from "@/components/ShareButtons";
+import Image from "next/image";
+import { getStandings } from "@/lib/football";
 
 export const revalidate = 0;
 
@@ -33,6 +35,13 @@ export default async function ArticlePage({ params }) {
     ? article.body
     : (article.content || "").split(/\n\n+/).filter(Boolean);
 
+  let relatedClubs = [];
+  const relatedIds = (article.related_club_ids || []).map(String);
+  if (relatedIds.length) {
+    const standings = await getStandings();
+    if (standings.ok) relatedClubs = standings.data.filter((club) => relatedIds.includes(String(club.teamId)));
+  }
+
   return (
     <div className="article-page article-page-v3 page-shell">
       <Link href="/" className="back-link">← Retour à l'accueil</Link>
@@ -52,6 +61,19 @@ export default async function ArticlePage({ params }) {
 
       <div className="article-layout-v3">
         <article className="article-copy article-copy-v3">
+          {relatedClubs.length > 0 && (
+            <div className="article-related-clubs">
+              <span>CLUBS CONCERNÉS</span>
+              <div className="article-related-club-list">
+                {relatedClubs.map((club) => (
+                  <Link href={`/club/${club.teamId}`} key={club.teamId}>
+                    {club.logo && <Image src={club.logo} alt="" width={22} height={22} unoptimized />}
+                    {club.shortName || club.team}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
           {paragraphs.map((p, i) => <p key={i}>{p}</p>)}
         </article>
 

@@ -30,6 +30,7 @@ const emptyForm = {
   content: "",
   tiktok_url: "",
   image_url: "",
+  related_club_ids: [],
   status: "draft"
 };
 
@@ -54,6 +55,7 @@ export default function AdminPage() {
   const [predictions, setPredictions] = useState([]);
   const [predictionForm, setPredictionForm] = useState(emptyPredictionForm);
   const [predictionMessage, setPredictionMessage] = useState("");
+  const [clubOptions, setClubOptions] = useState([]);
 
   useEffect(() => {
     if (!supabase) return;
@@ -70,6 +72,7 @@ export default function AdminPage() {
       loadFinishedMatches();
       loadUpcomingMatches();
       loadPredictions();
+      loadClubs();
     }
   }, [session]);
 
@@ -85,6 +88,25 @@ export default function AdminPage() {
     if (session && selectedMatchId) loadScorers(selectedMatchId);
     else setScorers([]);
   }, [session, selectedMatchId]);
+
+
+  async function loadClubs() {
+    try {
+      const response = await fetch("/api/football/standings", { cache: "no-store" });
+      const json = await response.json();
+      setClubOptions(json?.data || []);
+    } catch {
+      setClubOptions([]);
+    }
+  }
+
+  function toggleRelatedClub(teamId) {
+    const id = Number(teamId);
+    setForm((current) => {
+      const ids = (current.related_club_ids || []).map(Number);
+      return { ...current, related_club_ids: ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id] };
+    });
+  }
 
   async function loadUpcomingMatches() {
     try {
@@ -282,6 +304,7 @@ export default function AdminPage() {
       content: article.content || "",
       tiktok_url: article.tiktok_url || "",
       image_url: article.image_url || "",
+      related_club_ids: article.related_club_ids || [],
       status: article.status || "draft"
     });
     setImageFile(null);
@@ -316,6 +339,7 @@ export default function AdminPage() {
         content: form.content.trim(),
         tiktok_url: form.tiktok_url.trim() || null,
         image_url,
+        related_club_ids: (form.related_club_ids || []).map(Number),
         status: form.status,
         published_at: form.status === "published" ? new Date().toISOString() : null,
         updated_at: new Date().toISOString()
@@ -463,6 +487,23 @@ export default function AdminPage() {
               <option>ANALYSES</option>
             </select>
           </label>
+
+          <div className="admin-related-clubs">
+            <span className="admin-field-label">Clubs concernés</span>
+            <p>Sélectionne les clubs cités dans l'article. Ils seront cliquables vers leur fiche.</p>
+            <div className="admin-club-picker">
+              {clubOptions.map((club) => {
+                const checked = (form.related_club_ids || []).map(Number).includes(Number(club.teamId));
+                return (
+                  <label key={club.teamId} className={checked ? "selected" : ""}>
+                    <input type="checkbox" checked={checked} onChange={() => toggleRelatedClub(club.teamId)} />
+                    {club.logo && <img src={club.logo} alt="" width="22" height="22" />}
+                    <span>{club.shortName || club.team}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
 
           <label>
             Image de l'article

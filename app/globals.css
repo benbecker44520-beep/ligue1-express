@@ -791,3 +791,23 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 .championship-data-note.is-warning{background:#fff3e3;border-left-color:#e69b32;color:#7a4c13}
 .champ-match-center small{min-height:12px}
 @media(max-width:640px){.championship-source-line{justify-content:flex-start;margin-top:-4px}}
+
+/* V5.6 - Championnats complets */
+.champ-metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 18px}
+.champ-metrics-grid>div{background:white;border:1px solid #e6eaf1;border-radius:14px;padding:16px 18px;box-shadow:0 6px 18px rgba(10,27,68,.04);display:flex;flex-direction:column;gap:4px}
+.champ-metrics-grid span{font-size:9px;font-weight:900;letter-spacing:.09em;color:#7b8495}.champ-metrics-grid strong{font-size:18px;color:var(--navy)}.champ-metrics-grid small{font-size:11px;color:#7a8495;font-weight:800}
+.championship-dashboard-wide{grid-template-columns:minmax(0,1.55fr) minmax(330px,.7fr)}
+.champ-table-row-full{grid-template-columns:44px minmax(180px,1fr) repeat(8,52px)!important;min-width:760px}
+.champ-table-row-full.head span{text-align:center}.champ-table-row-full.head span:nth-child(2){text-align:left}.champ-table-row-full>span,.champ-table-row-full>b{text-align:center}
+@media(max-width:900px){.champ-metrics-grid{grid-template-columns:repeat(2,1fr)}.championship-dashboard-wide{grid-template-columns:1fr}}
+@media(max-width:520px){.champ-metrics-grid{grid-template-columns:1fr 1fr}.champ-metrics-grid strong{font-size:15px}}
+
+/* V5.6 - Clubs liés aux articles */
+.admin-related-clubs{display:grid;gap:8px}.admin-related-clubs>p{margin:0;color:#7b8495;font-size:12px}.admin-club-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:260px;overflow:auto;padding:8px;border:1px solid #dfe4ec;border-radius:12px;background:#fafbfe}
+.admin-club-picker label{display:flex;align-items:center;gap:8px;padding:8px 9px;border:1px solid transparent;border-radius:9px;background:white;font-size:12px;font-weight:800;color:var(--navy);cursor:pointer}.admin-club-picker label.selected{border-color:#d5b500;background:#fffbea}.admin-club-picker img{object-fit:contain}.admin-club-picker input{width:auto;margin:0}
+.article-related-clubs{margin:0 0 22px;padding:15px 18px;background:#f7f9fd;border:1px solid #e4e9f1;border-radius:13px}.article-related-clubs>span{display:block;font-size:9px;font-weight:900;letter-spacing:.09em;color:#7b8495;margin-bottom:9px}.article-related-club-list{display:flex;gap:8px;flex-wrap:wrap}.article-related-club-list a{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;background:white;border:1px solid #dfe4ec;border-radius:999px;color:var(--navy);font-size:12px;font-weight:900;text-decoration:none}.article-related-club-list a:hover{border-color:#d5b500}.article-related-club-list img{object-fit:contain}
+@media(max-width:600px){.admin-club-picker{grid-template-columns:1fr}}
+
+/* V5.6 - Match Center / incidents */
+.match-timeline-card{margin-top:18px;background:white;border:1px solid #e6eaf1;border-radius:18px;box-shadow:0 8px 24px rgba(10,27,68,.055);overflow:hidden}.match-timeline-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:19px 22px;border-bottom:1px solid var(--line)}.match-timeline-heading .eyebrow{margin:0 0 4px}.match-timeline-heading h2{margin:0;color:var(--navy);font-size:20px}.match-event-legend{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.match-event-legend span{padding:5px 7px;border-radius:999px;background:#f4f6fa;color:#5f6878;font-size:9px;font-weight:900}.match-timeline-list{display:grid}.match-timeline-row{display:grid;grid-template-columns:56px 36px minmax(0,1fr) 150px;align-items:center;gap:10px;padding:13px 20px;border-bottom:1px solid var(--line)}.match-timeline-row:last-child{border-bottom:0}.match-event-minute{font-size:13px;font-weight:900;color:#687386}.match-event-icon{font-size:20px;text-align:center}.match-event-copy{display:flex;flex-direction:column;gap:2px}.match-event-copy strong{font-size:13px;color:var(--navy)}.match-event-copy span{font-size:12px;color:#687386}.match-event-copy small{font-size:10px;color:#9a6b25}.match-event-team{text-align:right;font-size:10px;font-weight:900;color:#7b8495;text-transform:uppercase}.match-timeline-row.red_card{background:#fff8f8}.match-timeline-row.disallowed_goal{background:#fffaf0}.match-timeline-empty{padding:22px;color:#7b8495;font-size:13px}
+@media(max-width:700px){.match-timeline-heading{align-items:flex-start;flex-direction:column}.match-event-legend{justify-content:flex-start}.match-timeline-row{grid-template-columns:42px 30px minmax(0,1fr);padding:12px 12px}.match-event-team{grid-column:3;text-align:left}.match-event-copy span{font-size:11px}}
