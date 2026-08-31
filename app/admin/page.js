@@ -57,6 +57,8 @@ export default function AdminPage() {
   const [predictionMessage, setPredictionMessage] = useState("");
   const [clubOptions, setClubOptions] = useState([]);
   const [adminSection, setAdminSection] = useState("articles");
+  const [newsletterSubscribers, setNewsletterSubscribers] = useState([]);
+  const [newsletterMessage, setNewsletterMessage] = useState("");
   const [matchEvents, setMatchEvents] = useState([]);
   const [eventMessage, setEventMessage] = useState("");
   const [eventForm, setEventForm] = useState({
@@ -85,6 +87,7 @@ export default function AdminPage() {
       loadUpcomingMatches();
       loadPredictions();
       loadClubs();
+      loadNewsletterSubscribers();
     }
   }, [session]);
 
@@ -106,6 +109,25 @@ export default function AdminPage() {
     }
   }, [session, selectedMatchId]);
 
+
+  async function loadNewsletterSubscribers() {
+    const { data, error } = await supabase
+      .from("newsletter_subscribers")
+      .select("id,email,subscribed_at,active")
+      .order("subscribed_at", { ascending: false });
+    if (error) setNewsletterMessage(error.message);
+    else setNewsletterSubscribers(data || []);
+  }
+
+  async function removeNewsletterSubscriber(id) {
+    if (!window.confirm("Supprimer cet abonné de la newsletter ?")) return;
+    const { error } = await supabase.from("newsletter_subscribers").delete().eq("id", id);
+    if (error) setNewsletterMessage(error.message);
+    else {
+      setNewsletterMessage("Abonné supprimé.");
+      loadNewsletterSubscribers();
+    }
+  }
 
   async function loadClubs() {
     try {
@@ -557,6 +579,7 @@ export default function AdminPage() {
         <button className={adminSection === "predictions" ? "active" : ""} onClick={() => setAdminSection("predictions")}><span>🎯</span><strong>Pronostics</strong><small>Pronostics de la rédaction</small></button>
         <button className={adminSection === "scorers" ? "active" : ""} onClick={() => setAdminSection("scorers")}><span>⚽</span><strong>Buteurs</strong><small>Buteurs des matchs terminés</small></button>
         <button className={adminSection === "events" ? "active" : ""} onClick={() => setAdminSection("events")}><span>🟨</span><strong>Faits marquants</strong><small>Cartons, VAR et remplacements</small></button>
+        <button className={adminSection === "newsletter" ? "active" : ""} onClick={() => setAdminSection("newsletter")}><span>📩</span><strong>Newsletter</strong><small>Voir et gérer les abonnés</small></button>
       </nav>
 
       {adminSection === "articles" && <>
@@ -909,6 +932,20 @@ export default function AdminPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>}
+
+      {adminSection === "newsletter" && <section className="predictions-admin-panel admin-panel-standalone">
+        <div className="panel-heading scorers-admin-heading">
+          <div><span className="eyebrow">NEWSLETTER</span><h2>Abonnés</h2><p>{newsletterSubscribers.length} adresse{newsletterSubscribers.length > 1 ? "s" : ""} enregistrée{newsletterSubscribers.length > 1 ? "s" : ""}.</p></div>
+          <button className="mini-button" onClick={loadNewsletterSubscribers}>Actualiser</button>
+        </div>
+        {newsletterMessage && <div className="admin-message-box">{newsletterMessage}</div>}
+        <div className="newsletter-admin-list">
+          {newsletterSubscribers.length === 0 ? <p className="scorers-empty">Aucun abonné pour le moment.</p> : newsletterSubscribers.map((subscriber) => <div className="newsletter-admin-row" key={subscriber.id}>
+            <div><strong>{subscriber.email}</strong><small>{subscriber.subscribed_at ? new Date(subscriber.subscribed_at).toLocaleString("fr-FR") : "Date inconnue"}</small></div>
+            <button className="mini-button danger" onClick={() => removeNewsletterSubscriber(subscriber.id)}>Supprimer</button>
+          </div>)}
         </div>
       </section>}
     </div>

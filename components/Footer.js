@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import NewsletterForm from "@/components/NewsletterForm";
 
 export default function Footer() {
   return (
@@ -15,10 +16,7 @@ export default function Footer() {
         </div>
         <div>
           <h3>Newsletter</h3>
-          <div className="newsletter">
-            <input aria-label="Adresse e-mail" placeholder="Ton e-mail" />
-            <button>S'inscrire</button>
-          </div>
+          <NewsletterForm />
         </div>
       </div>
       <div className="footer-bottom">© Ligue 1 Express · Football français</div>
