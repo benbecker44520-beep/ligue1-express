@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { getPublishedPredictions } from "@/lib/predictions";
 
 export const revalidate = 0;
@@ -6,6 +7,16 @@ export const metadata = { title: "Pronostics", description: "Les pronostics foot
 function formatDate(value) { if (!value) return "Date à confirmer"; return new Intl.DateTimeFormat("fr-FR", { weekday:"short", day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit", timeZone:"Europe/Paris" }).format(new Date(value)); }
 function verdictLabel(v) { return v === "won" ? "✅ GAGNÉ" : v === "lost" ? "❌ PERDU" : "⏳ EN ATTENTE"; }
 function pickLabel(p) { return p.selection === "1" ? `Victoire de ${p.home_team}` : p.selection === "2" ? `Victoire de ${p.away_team}` : "Match nul"; }
+function legacySecondaryBet(p) {
+  if (p.secondary_bet) return p.secondary_bet;
+  const text = String(p.comment || "").trim();
+  if (/^(?:[+-]?\s*)?\d+(?:[,.]\d+)?\s*(?:but|buts)$/i.test(text) || /^(?:plus|moins) de \d+(?:[,.]\d+)?\s*buts?$/i.test(text)) return text;
+  return "";
+}
+function analysisText(p) {
+  const secondary = legacySecondaryBet(p);
+  return secondary && secondary === String(p.comment || "").trim() && !p.secondary_bet ? "" : String(p.comment || "").trim();
+}
 
 export default async function PronoPage() {
   const predictions = await getPublishedPredictions();
@@ -31,10 +42,10 @@ export default async function PronoPage() {
         const m=p.match, hs=m?.score?.home, as=m?.score?.away, has=Number.isFinite(hs)&&Number.isFinite(as);
         return <article className={`prono-card prono-card-v6 prono-${p.verdict}`} key={p.id}>
           <div className="prono-card-top"><span>{p.competition||"Ligue 1"}</span><strong className={`prono-verdict ${p.verdict}`}>{verdictLabel(p.verdict)}</strong></div>
-          <div className="prono-match"><strong>{p.home_team}</strong><div className="prono-score"><b>{has?`${hs} - ${as}`:"VS"}</b><small>{formatDate(p.match_date)}</small></div><strong>{p.away_team}</strong></div>
-          <div className="prono-main-pick"><span>🎯 NOTRE PRONOSTIC</span><h3>{pickLabel(p)}</h3><small>Choix {p.selection} · {p.selection==="1"?"équipe à domicile":p.selection==="2"?"équipe à l’extérieur":"aucun vainqueur"}</small></div>
-          {(p.confidence || p.secondary_bet) && <div className="prono-details">{p.confidence && <div><span>🔥 Indice de confiance</span><strong>{p.confidence}/10</strong><div className="confidence-track"><i style={{width:`${p.confidence*10}%`}} /></div></div>}{p.secondary_bet && <div><span>⚽ Pari complémentaire</span><strong>{p.secondary_bet}</strong></div>}</div>}
-          {p.comment && <div className="prono-analysis"><span>📝 L'ANALYSE EXPRESS</span><p>{p.comment}</p></div>}
+          <div className="prono-match prono-match-v601"><div className="prono-team">{m?.home?.logo && <Image src={m.home.logo} alt="" width={42} height={42} unoptimized />}<strong>{p.home_team}</strong></div><div className="prono-score"><b>{has?`${hs} - ${as}`:"VS"}</b><small>{formatDate(p.match_date)}</small></div><div className="prono-team">{m?.away?.logo && <Image src={m.away.logo} alt="" width={42} height={42} unoptimized />}<strong>{p.away_team}</strong></div></div>
+          <div className="prono-main-pick"><span>🎯 NOTRE PRONOSTIC</span><h3>{pickLabel(p)}</h3><small>Choix {p.selection} · {p.selection==="1"?"Victoire de l’équipe à domicile":p.selection==="2"?"Victoire de l’équipe à l’extérieur":"Aucun vainqueur"}</small></div>
+          <div className="prono-details prono-details-v601"><div className={!p.confidence ? "prono-detail-muted" : ""}><span>🔥 Indice de confiance</span>{p.confidence ? <><strong>{p.confidence}/10</strong><div className="confidence-track"><i style={{width:`${p.confidence*10}%`}} /></div></> : <small>À renseigner par la rédaction</small>}</div>{legacySecondaryBet(p) && <div><span>⚽ Pari complémentaire</span><strong>{legacySecondaryBet(p)}</strong></div>}</div>
+          {analysisText(p) ? <div className="prono-analysis"><span>📝 L'ANALYSE EXPRESS</span><p>{analysisText(p)}</p></div> : <div className="prono-analysis prono-analysis-empty"><span>📝 L'ANALYSE EXPRESS</span><p>Analyse à venir.</p></div>}
         </article>})}</div>}
     </section>
   </div>;
