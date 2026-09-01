@@ -96,6 +96,7 @@ export default async function HomePage() {
     excerpt: "L'actualité de la Ligue 1, en un clin d'œil."
   };
 
+  const heroImage = hero.image_url || allArticles.find((article) => article.image_url)?.image_url || null;
   const secondary = allArticles.filter((a) => a.slug !== hero.slug).slice(0, 3);
   const latest = allArticles.filter((a) => a.slug !== hero.slug).slice(3, 9);
   const latestTransfers = transfers.slice(0, 4);
@@ -135,11 +136,11 @@ export default async function HomePage() {
 
       <section className="top-grid v8-top-grid">
         <div
-          className={`hero v8-hero ${hero.image_url ? "has-hero-image" : ""}`}
-          style={hero.image_url ? { backgroundImage: `url("${hero.image_url}")` } : undefined}
+          className={`hero v8-hero ${heroImage ? "has-hero-image" : ""}`}
+          style={heroImage ? { backgroundImage: `url("${heroImage}")` } : undefined}
         >
           <div className="hero-overlay"></div>
-          {!hero.image_url && <div className="hero-ball">⚽</div>}
+          {!heroImage && <div className="hero-ball">⚽</div>}
           <div className="hero-content">
             <span className="tag tag-yellow">À LA UNE</span>
             <span className="eyebrow">LIGUE 1 · EXPRESS</span>
