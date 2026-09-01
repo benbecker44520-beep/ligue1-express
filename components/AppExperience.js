@@ -82,7 +82,7 @@ export default function AppExperience() {
         <Link href="/live"><span>●</span><strong>Live</strong></Link>
         <Link href="/fil-express"><span>⚡</span><strong>Fil</strong></Link>
         <Link href="/actualites"><span>▤</span><strong>Actus</strong></Link>
-        <Link href="/mes-alertes"><span>★</span><strong>Mon Club</strong></Link>
+        <Link href="/mon-club"><span>★</span><strong>Mon Club</strong></Link>
       </nav>
     </>
   );

@@ -84,14 +84,14 @@ async function detailResponse(request) {
     getTransfers(),
     getExpressFeed({ limit: 40 })
   ]);
-  const relatedArticles = articles.filter((article) => articleMentions(article, club.team) || articleMentions(article, club.shortName)).slice(0, 3);
-  const relatedTransfers = transfers.filter((transfer) => sameEntityName(transfer.from_club, club.team) || sameEntityName(transfer.to_club, club.team)).slice(0, 2);
+  const relatedArticles = articles.filter((article) => articleMentions(article, club.team) || articleMentions(article, club.shortName)).slice(0, 6);
+  const relatedTransfers = transfers.filter((transfer) => sameEntityName(transfer.from_club, club.team) || sameEntityName(transfer.to_club, club.team)).slice(0, 5);
   const relatedExpress = expressFeed.filter((item) =>
     sameEntityName(item.club_name, club.team) ||
     sameEntityName(item.club_name, club.shortName) ||
     articleMentions({ title: item.title, excerpt: item.body }, club.team) ||
     articleMentions({ title: item.title, excerpt: item.body }, club.shortName)
-  ).slice(0, 4);
+  ).slice(0, 8);
   const clubHref = league === "ligue-1" ? `/club/${club.teamId}` : `/championnats/${league}/club/${encodeURIComponent(club.team)}`;
 
   return NextResponse.json({

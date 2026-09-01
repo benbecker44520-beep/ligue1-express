@@ -6,7 +6,7 @@ import { getFixtures, getHomeSnapshot, getScorers, getStandings } from "@/lib/fo
 import { getPublishedPredictions } from "@/lib/predictions";
 import { getTransfers } from "@/lib/transfers";
 import { sameEntityName } from "@/lib/content-links";
-import MyClubHome from "@/components/MyClubHome";
+import MyClubCompact from "@/components/MyClubCompact";
 import { expressMeta, getExpressFeed } from "@/lib/express-feed";
 
 export const revalidate = 0;
@@ -127,7 +127,7 @@ export default async function HomePage() {
         <div className="home-express-list">{expressFeed.map(item => { const meta = expressMeta(item.category); return <Link href={item.link_url || "/fil-express"} key={item.id} className="home-express-item"><time>{new Intl.DateTimeFormat("fr-FR", {hour:"2-digit",minute:"2-digit",timeZone:"Europe/Paris"}).format(new Date(item.published_at))}</time><span>{meta.icon} {meta.label}</span><strong>{item.title}</strong><b>→</b></Link>; })}</div>
       </section>}
 
-      <MyClubHome />
+      <MyClubCompact />
 
       <section className="top-grid v8-top-grid">
         <div
