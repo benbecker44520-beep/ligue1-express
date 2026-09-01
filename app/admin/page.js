@@ -19,6 +19,10 @@ const emptyPredictionForm = {
   id: null, match_id: "", selection: "1", comment: "", secondary_bet: "", confidence: 7, status: "published"
 };
 
+const emptyExpressForm = {
+  id: null, category: "info", title: "", body: "", club_name: "", player_name: "", link_url: "", status: "published"
+};
+
 const emptyTransferForm = {
   id: null, player_name: "", from_club: "", to_club: "", position: "", transfer_type: "transfer", transfer_status: "rumour", fee: "", note: "", occurred_at: ""
 };
@@ -62,6 +66,9 @@ export default function AdminPage() {
   const [transferMessage, setTransferMessage] = useState("");
   const [clubOptions, setClubOptions] = useState([]);
   const [adminSection, setAdminSection] = useState("articles");
+  const [expressItems, setExpressItems] = useState([]);
+  const [expressForm, setExpressForm] = useState(emptyExpressForm);
+  const [expressMessage, setExpressMessage] = useState("");
   const [newsletterSubscribers, setNewsletterSubscribers] = useState([]);
   const [newsletterMessage, setNewsletterMessage] = useState("");
   const [matchEvents, setMatchEvents] = useState([]);
@@ -94,6 +101,7 @@ export default function AdminPage() {
       loadClubs();
       loadNewsletterSubscribers();
       loadTransfers();
+      loadExpressItems();
     }
   }, [session]);
 
@@ -241,6 +249,27 @@ export default function AdminPage() {
       setPredictionMessage("Prono supprimé.");
       await loadPredictions();
     }
+  }
+
+  async function loadExpressItems() {
+    const { data, error } = await supabase.from("express_feed").select("*").order("published_at", { ascending: false }).limit(100);
+    if (error) setExpressMessage(error.message); else setExpressItems(data || []);
+  }
+  function editExpressItem(item) { setExpressForm({ ...emptyExpressForm, ...item }); setExpressMessage("Mode modification activé."); }
+  function resetExpressForm() { setExpressForm(emptyExpressForm); }
+  async function saveExpressItem(e) {
+    e.preventDefault();
+    const payload = { category: expressForm.category, title: expressForm.title.trim(), body: expressForm.body.trim() || null, club_name: expressForm.club_name.trim() || null, player_name: expressForm.player_name.trim() || null, link_url: expressForm.link_url.trim() || null, status: expressForm.status, updated_at: new Date().toISOString() };
+    let error;
+    if (expressForm.id) ({ error } = await supabase.from("express_feed").update(payload).eq("id", expressForm.id));
+    else ({ error } = await supabase.from("express_feed").insert({ ...payload, published_at: new Date().toISOString() }));
+    if (error) { setExpressMessage(error.message); return; }
+    setExpressMessage(expressForm.id ? "Info Express modifiée ✅" : "Info Express publiée ✅"); resetExpressForm(); await loadExpressItems();
+  }
+  async function removeExpressItem(id) {
+    if (!window.confirm("Supprimer cette info du Fil Express ?")) return;
+    const { error } = await supabase.from("express_feed").delete().eq("id", id);
+    if (error) setExpressMessage(error.message); else { setExpressMessage("Info supprimée."); await loadExpressItems(); }
   }
 
   async function loadTransfers() {
@@ -602,6 +631,7 @@ export default function AdminPage() {
 
       <nav className="admin-dashboard-menu" aria-label="Menu administration">
         <button className={adminSection === "articles" ? "active" : ""} onClick={() => setAdminSection("articles")}><span>📰</span><strong>Articles</strong><small>Publier, modifier et mettre à la Une</small></button>
+        <button className={adminSection === "express" ? "active" : ""} onClick={() => setAdminSection("express")}><span>⚡</span><strong>Fil Express</strong><small>Publier une info en quelques secondes</small></button>
         <button className={adminSection === "predictions" ? "active" : ""} onClick={() => setAdminSection("predictions")}><span>🎯</span><strong>Pronostics</strong><small>Pronostics de la rédaction</small></button>
         <button className={adminSection === "transfers" ? "active" : ""} onClick={() => setAdminSection("transfers")}><span>🔁</span><strong>Mercato</strong><small>Arrivées, départs et rumeurs</small></button>
         <button className={adminSection === "scorers" ? "active" : ""} onClick={() => setAdminSection("scorers")}><span>⚽</span><strong>Buteurs</strong><small>Buteurs des matchs terminés</small></button>
@@ -816,6 +846,20 @@ export default function AdminPage() {
             ))}
           </div>
         </div>
+      </section>}
+
+      {adminSection === "express" && <section className="predictions-admin-panel admin-panel-standalone express-admin-panel">
+        <div className="panel-heading scorers-admin-heading"><div><span className="eyebrow">V8.7 · À LA MINUTE</span><h2>⚡ Fil Express</h2><p>Publie une brève en quelques secondes. Elle sera prête pour les futures notifications mobiles.</p></div>{expressForm.id && <button className="mini-button" onClick={resetExpressForm}>Nouvelle info</button>}</div>
+        {expressMessage && <div className="admin-message-box">{expressMessage}</div>}
+        <div className="predictions-admin-grid"><form className="admin-form" onSubmit={saveExpressItem}>
+          <label>Catégorie<select value={expressForm.category} onChange={e=>setExpressForm({...expressForm,category:e.target.value})}><option value="info">⚡ Info</option><option value="mercato">🔁 Mercato</option><option value="officiel">✅ Officiel</option><option value="match">⚽ Match</option><option value="blessure">🚑 Blessure</option><option value="declaration">🎙️ Déclaration</option><option value="coupe">🏆 Coupe de France</option><option value="club">🏟️ Club</option></select></label>
+          <label>Titre court<input required maxLength="140" value={expressForm.title} onChange={e=>setExpressForm({...expressForm,title:e.target.value})} placeholder="Ex. Le LOSC annonce une prolongation" /></label>
+          <label>Détail facultatif<textarea value={expressForm.body} onChange={e=>setExpressForm({...expressForm,body:e.target.value})} placeholder="Une ou deux phrases maximum..." /></label>
+          <div className="admin-two-cols"><label>Club concerné<input value={expressForm.club_name} onChange={e=>setExpressForm({...expressForm,club_name:e.target.value})} placeholder="Ex. Olympique de Marseille" /></label><label>Joueur concerné<input value={expressForm.player_name} onChange={e=>setExpressForm({...expressForm,player_name:e.target.value})} placeholder="Ex. Mason Greenwood" /></label></div>
+          <label>Lien interne facultatif<input value={expressForm.link_url} onChange={e=>setExpressForm({...expressForm,link_url:e.target.value})} placeholder="/mercato ou /article/mon-article" /></label>
+          <label>Statut<select value={expressForm.status} onChange={e=>setExpressForm({...expressForm,status:e.target.value})}><option value="published">Publié immédiatement</option><option value="draft">Brouillon</option></select></label>
+          <button className="primary-button">{expressForm.id ? "Enregistrer" : "⚡ Publier maintenant"}</button>
+        </form><div className="predictions-admin-list"><h3>Dernières infos</h3>{expressItems.length===0?<p>Aucune info publiée.</p>:expressItems.map(item=><div className="prediction-admin-card" key={item.id}><div className="prediction-admin-main"><div><span className="tag">{item.category}</span><strong>{item.title}</strong></div><small>{new Date(item.published_at).toLocaleString("fr-FR")}{item.status === "draft" ? " · BROUILLON" : ""}</small>{item.body&&<p>{item.body}</p>}</div><div className="admin-actions"><button className="mini-button" onClick={()=>editExpressItem(item)}>Modifier</button><button className="mini-button danger" onClick={()=>removeExpressItem(item.id)}>Supprimer</button></div></div>)}</div></div>
       </section>}
 
       {adminSection === "transfers" && <section className="predictions-admin-panel admin-panel-standalone">

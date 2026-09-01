@@ -7,6 +7,7 @@ import { getPublishedPredictions } from "@/lib/predictions";
 import { getTransfers } from "@/lib/transfers";
 import { sameEntityName } from "@/lib/content-links";
 import MyClubHome from "@/components/MyClubHome";
+import { expressMeta, getExpressFeed } from "@/lib/express-feed";
 
 export const revalidate = 0;
 
@@ -69,7 +70,7 @@ function formTable(fixtures = [], standings = []) {
 }
 
 export default async function HomePage() {
-  const [allArticles, featuredArticle, mercatoArticles, analyses, predictions, transfers, scorersResult, standingsResult, fixturesResult, snapshotResult] = await Promise.all([
+  const [allArticles, featuredArticle, mercatoArticles, analyses, predictions, transfers, scorersResult, standingsResult, fixturesResult, snapshotResult, expressFeed] = await Promise.all([
     getPublishedArticles({ limit: 14 }),
     getFeaturedArticle(),
     getPublishedArticles({ category: "MERCATO", limit: 3 }),
@@ -79,7 +80,8 @@ export default async function HomePage() {
     getScorers(),
     getStandings(),
     getFixtures(),
-    getHomeSnapshot()
+    getHomeSnapshot(),
+    getExpressFeed({ limit: 5 })
   ]);
 
   const standings = standingsResult.ok ? standingsResult.data : [];
@@ -119,6 +121,11 @@ export default async function HomePage() {
         </div>
         <Link href="/resultats" className="v8-live-more">Tout suivre →</Link>
       </section>
+
+      {expressFeed.length > 0 && <section className="home-express-feed">
+        <div className="home-express-head"><div><span>⚡ À LA MINUTE</span><strong>Fil Express</strong></div><Link href="/fil-express">Voir tout le fil →</Link></div>
+        <div className="home-express-list">{expressFeed.map(item => { const meta = expressMeta(item.category); return <Link href={item.link_url || "/fil-express"} key={item.id} className="home-express-item"><time>{new Intl.DateTimeFormat("fr-FR", {hour:"2-digit",minute:"2-digit",timeZone:"Europe/Paris"}).format(new Date(item.published_at))}</time><span>{meta.icon} {meta.label}</span><strong>{item.title}</strong><b>→</b></Link>; })}</div>
+      </section>}
 
       <MyClubHome />
 
