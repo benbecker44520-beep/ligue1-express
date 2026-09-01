@@ -40,6 +40,7 @@ export default function Header() {
         </nav>
 
         <div className="header-actions">
+          <Link href="/mes-alertes" className="alerts-header-link" aria-label="Mes alertes">🔔</Link>
           <Link href="/admin" className="admin-link">Admin</Link>
           <button
             className="mobile-menu-button"
@@ -58,6 +59,7 @@ export default function Header() {
           {links.map(([label, href]) => (
             <Link key={href} href={href} onClick={() => setOpen(false)}>{label}</Link>
           ))}
+          <Link href="/mes-alertes" onClick={() => setOpen(false)}>🔔 Mes alertes</Link>
           <Link href="/admin" onClick={() => setOpen(false)}>Administration</Link>
         </nav>
       )}

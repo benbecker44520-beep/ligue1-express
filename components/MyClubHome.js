@@ -86,7 +86,7 @@ export default function MyClubHome() {
             <div className="my-club-logo">{favorite.logo ? <img src={favorite.logo} alt="" /> : <span>⚽</span>}</div>
             <div><span>★ MON CLUB · {favorite.leagueName}</span><h2>{details?.club?.shortName || favorite.shortName || favorite.team}</h2><p>{details?.club ? `${details.club.rank}e · ${details.club.points} pts · ${details.club.played ?? "–"} matchs` : clubLoading ? "Chargement de ton espace supporter…" : "Ton club préféré"}</p></div>
           </div>
-          <div className="my-club-actions">{details?.club?.href && <Link href={details.club.href}>Voir la fiche club →</Link>}<button type="button" onClick={openPicker}>Changer</button></div>
+          <div className="my-club-actions">{details?.club?.href && <Link href={details.club.href}>Voir la fiche club →</Link>}<Link href="/mes-alertes" className="my-club-alert-link">🔔 Mes alertes</Link><button type="button" onClick={openPicker}>Changer</button></div>
         </div>
         {details?.club && <>
           <div className="my-club-kpis"><div><span>CLASSEMENT</span><strong>{details.club.rank}<small>e</small></strong></div><div><span>POINTS</span><strong>{details.club.points}</strong></div><div><span>VICTOIRES</span><strong>{details.club.win ?? "–"}</strong></div><div><span>FORME</span><div className="my-club-form">{details.club.form?.length ? details.club.form.map((r, i) => <i className={`is-${r}`} key={`${r}-${i}`}>{r}</i>) : <em>—</em>}</div></div></div>
@@ -94,8 +94,9 @@ export default function MyClubHome() {
             <MatchMini match={details.latest} label="DERNIER RÉSULTAT" />
             <MatchMini match={details.next} label="PROCHAIN MATCH" />
             <div className="my-club-feed">
-              <span>ACTU & MERCATO</span>
-              {details.articles?.[0] ? <Link href={`/article/${details.articles[0].slug}`}><b>{details.articles[0].category}</b><strong>{details.articles[0].title}</strong></Link> : details.transfers?.[0] ? <Link href="/mercato"><b>MERCATO</b><strong>{details.transfers[0].player_name} · {details.transfers[0].from_club || "Libre"} → {details.transfers[0].to_club || "À définir"}</strong></Link> : <p>Les prochaines informations liées à ton club apparaîtront ici.</p>}
+              <span>⚡ FIL DE TON CLUB</span>
+              {details.express?.[0] ? <Link href={details.express[0].link_url || "/fil-express"}><b>{String(details.express[0].category || "INFO").toUpperCase()}</b><strong>{details.express[0].title}</strong></Link> : details.articles?.[0] ? <Link href={`/article/${details.articles[0].slug}`}><b>{details.articles[0].category}</b><strong>{details.articles[0].title}</strong></Link> : details.transfers?.[0] ? <Link href="/mercato"><b>MERCATO</b><strong>{details.transfers[0].player_name} · {details.transfers[0].from_club || "Libre"} → {details.transfers[0].to_club || "À définir"}</strong></Link> : <p>Les prochaines informations liées à ton club apparaîtront ici.</p>}
+              <Link href="/mes-alertes" className="my-club-feed-alert">Configurer mes alertes →</Link>
             </div>
           </div>
         </>}
