@@ -38,7 +38,7 @@ export default function MyClubCompact() {
   const nextLabel = next ? `${next.home?.name} – ${next.away?.name}` : "Prochain match à venir";
 
   return <Link href="/mon-club" className="my-club-compact">
-    <div className="my-club-compact-logo">{favorite.logo ? <img src={favorite.logo} alt="" /> : <span>⚽</span>}</div>
+    <div className="my-club-compact-logo">{(club?.logo || favorite.logo) ? <img src={club?.logo || favorite.logo} alt="" /> : <span>⚽</span>}</div>
     <div className="my-club-compact-copy">
       <small>★ MON CLUB</small>
       <strong>{club?.shortName || favorite.shortName || favorite.team}</strong>

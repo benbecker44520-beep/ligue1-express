@@ -54,7 +54,7 @@ export default function MyClubSpace() {
   const club = details?.club;
   return <>
     <section className="club-space-hero">
-      <div className="club-space-identity"><div className="club-space-logo">{favorite.logo ? <img src={favorite.logo} alt="" /> : "⚽"}</div><div><span>★ MON CLUB · {club?.leagueName || favorite.leagueName}</span><h1>{club?.shortName || favorite.shortName || favorite.team}</h1><p>{club ? `${club.rank}e au classement · ${club.points} points · ${club.played ?? "–"} matchs` : "Chargement de ton espace supporter…"}</p></div></div>
+      <div className="club-space-identity"><div className="club-space-logo">{(club?.logo || favorite.logo) ? <img src={club?.logo || favorite.logo} alt="" /> : "⚽"}</div><div><span>★ MON CLUB · {club?.leagueName || favorite.leagueName}</span><h1>{club?.shortName || favorite.shortName || favorite.team}</h1><p>{club ? `${club.rank}e au classement · ${club.points} points · ${club.played ?? "–"} matchs` : "Chargement de ton espace supporter…"}</p></div></div>
       <div className="club-space-actions">{club?.href && <Link href={club.href}>Fiche club →</Link>}<Link href="/mes-alertes">🔔 Mes alertes</Link><button onClick={openPicker}>Changer de club</button></div>
     </section>
 

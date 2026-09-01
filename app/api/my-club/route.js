@@ -67,10 +67,14 @@ async function detailResponse(request) {
   const snapshot = await getChampionshipSnapshot(league);
   if (!snapshot?.ok) return NextResponse.json({ ok: false, error: snapshot?.error || "Données indisponibles" }, { status: 503 });
 
-  const club = (snapshot.standings || []).find((row) =>
-    (teamId && String(row.teamId) === String(teamId)) ||
-    (teamName && (sameEntityName(row.team, teamName) || sameEntityName(row.shortName, teamName)))
-  );
+  const standings = snapshot.standings || [];
+  // Le nom est prioritaire pour réparer les anciens favoris enregistrés avec un ID/logo erroné.
+  // L’ID reste le secours fiable quand aucun nom n’est disponible.
+  const clubByName = teamName ? standings.find((row) =>
+    sameEntityName(row.team, teamName) || sameEntityName(row.shortName, teamName)
+  ) : null;
+  const clubById = teamId ? standings.find((row) => String(row.teamId) === String(teamId)) : null;
+  const club = clubByName || clubById;
   if (!club) return NextResponse.json({ ok: false, error: "Club introuvable" }, { status: 404 });
 
   const allMatches = snapshot.matches || [...(snapshot.recent || []), ...(snapshot.upcoming || [])];

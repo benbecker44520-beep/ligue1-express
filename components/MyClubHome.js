@@ -83,7 +83,7 @@ export default function MyClubHome() {
       </> : <>
         <div className="my-club-main">
           <div className="my-club-identity">
-            <div className="my-club-logo">{favorite.logo ? <img src={favorite.logo} alt="" /> : <span>⚽</span>}</div>
+            <div className="my-club-logo">{(details?.club?.logo || favorite.logo) ? <img src={details?.club?.logo || favorite.logo} alt="" /> : <span>⚽</span>}</div>
             <div><span>★ MON CLUB · {favorite.leagueName}</span><h2>{details?.club?.shortName || favorite.shortName || favorite.team}</h2><p>{details?.club ? `${details.club.rank}e · ${details.club.points} pts · ${details.club.played ?? "–"} matchs` : clubLoading ? "Chargement de ton espace supporter…" : "Ton club préféré"}</p></div>
           </div>
           <div className="my-club-actions">{details?.club?.href && <Link href={details.club.href}>Voir la fiche club →</Link>}<Link href="/mes-alertes" className="my-club-alert-link">🔔 Mes alertes</Link><button type="button" onClick={openPicker}>Changer</button></div>
