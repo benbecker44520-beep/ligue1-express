@@ -18,6 +18,7 @@ const links = [
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   return (
     <header className="site-header">
@@ -39,6 +40,7 @@ export default function Header() {
         </nav>
 
         <div className="header-actions">
+          <button className="search-header-button" aria-label="Rechercher" onClick={() => setSearchOpen(!searchOpen)}>⌕</button>
           <Link href="/mes-alertes" className="alerts-header-link" aria-label="Mes alertes">🔔</Link>
           <Link href="/admin" className="admin-link">Admin</Link>
           <button
@@ -52,6 +54,16 @@ export default function Header() {
           </button>
         </div>
       </div>
+
+      {searchOpen && (
+        <div className="header-search-panel">
+          <form action="/recherche" className="header-search-form">
+            <span aria-hidden="true">⌕</span>
+            <input name="q" type="search" placeholder="Rechercher un joueur, un club, une actualité…" autoFocus aria-label="Recherche globale" />
+            <button type="submit">Rechercher</button>
+          </form>
+        </div>
+      )}
 
       {open && (
         <nav id="mobile-navigation" className="mobile-nav" aria-label="Navigation mobile">
