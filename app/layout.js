@@ -2,6 +2,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
+import AppExperience from "@/components/AppExperience";
 import { getSiteUrl } from "@/lib/site";
 
 const siteUrl = getSiteUrl();
@@ -50,6 +51,7 @@ export default function RootLayout({ children }) {
         <AnalyticsTracker />
         <main id="contenu">{children}</main>
         <Footer />
+        <AppExperience />
       </body>
     </html>
   );

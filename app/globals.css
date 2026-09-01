@@ -949,3 +949,70 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 .alerts-page{padding-top:24px;padding-bottom:42px}.alerts-center{display:flex;flex-direction:column;gap:18px}.alerts-hero{border-radius:24px;background:linear-gradient(135deg,#07162c 0%,#0e2748 70%,#173457 100%);color:#fff;padding:30px;display:flex;justify-content:space-between;gap:26px;align-items:center;position:relative;overflow:hidden;box-shadow:0 18px 50px rgba(7,22,44,.22)}.alerts-hero:after{content:"";position:absolute;width:300px;height:300px;border-radius:50%;right:-120px;top:-160px;background:rgba(255,214,0,.09)}.alerts-hero>div{position:relative;z-index:1}.alerts-hero span,.alerts-card-head span,.alerts-roadmap>span{display:block;color:#ffd600;font-size:11px;font-weight:900;letter-spacing:.12em}.alerts-hero h1{font-size:48px;line-height:1;margin:7px 0 10px}.alerts-hero p{margin:0;max-width:700px;color:#b7c7da;line-height:1.55}.alerts-summary{min-width:160px;text-align:center;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);border-radius:18px;padding:18px}.alerts-summary strong{display:block;color:#ffd600;font-size:36px;line-height:1}.alerts-summary span{margin-top:6px;color:#c4d1df;font-size:10px;letter-spacing:.05em}.alerts-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.alerts-card{border:1px solid #e3e8ef;background:#fff;border-radius:20px;padding:22px;box-shadow:0 10px 28px rgba(24,44,72,.07)}.alerts-card-head{margin-bottom:15px}.alerts-card-head span{color:#7a8aa1}.alerts-card-head strong{display:block;color:#0b1830;font-size:20px;margin-top:4px}.alerts-muted{color:#6f7d90;line-height:1.55;font-size:14px}.alerts-switch-row,.alerts-option{position:relative;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;cursor:pointer}.alerts-switch-row{border-top:1px solid #edf0f4;padding-top:16px}.alerts-switch-row strong,.alerts-option strong{color:#0b1830}.alerts-switch-row p,.alerts-option p{margin:4px 0 0;color:#7b8798;font-size:12px;line-height:1.45}.alerts-switch-row input,.alerts-option input{position:absolute;opacity:0;pointer-events:none}.alerts-switch-row i,.alerts-option i{width:48px;height:27px;border-radius:20px;background:#d9e0e8;position:relative;transition:.18s}.alerts-switch-row i:after,.alerts-option i:after{content:"";position:absolute;width:21px;height:21px;border-radius:50%;background:#fff;top:3px;left:3px;box-shadow:0 2px 6px rgba(0,0,0,.18);transition:.18s}.alerts-switch-row input:checked+i,.alerts-option input:checked+i{background:#0d2342}.alerts-switch-row input:checked+i:after,.alerts-option input:checked+i:after{left:24px;background:#ffd600}.alerts-text-link,.alerts-primary-link{display:inline-block;margin-top:15px;color:#0d2342;font-size:13px;font-weight:900;text-decoration:none}.alerts-primary-link{background:#ffd600;padding:10px 13px;border-radius:10px}.alerts-browser-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:15px}.alerts-browser-actions button,.alerts-save-row button{border:0;border-radius:11px;background:#ffd600;color:#07162c;padding:11px 14px;font-weight:900;cursor:pointer}.alerts-browser-actions button.is-secondary{background:#0d2342;color:#fff}.alerts-status{font-size:12px;font-weight:900;border-radius:999px;padding:8px 11px}.alerts-status.is-on{background:#e8f8ef;color:#147245}.alerts-status.is-off{background:#f2f4f7;color:#69778a}.alerts-types{padding:0;overflow:hidden}.alerts-types .alerts-card-head{padding:22px 22px 5px}.alerts-options{display:grid;grid-template-columns:repeat(2,1fr)}.alerts-option{padding:17px 22px;border-top:1px solid #edf0f4}.alerts-option:nth-child(odd){border-right:1px solid #edf0f4}.alerts-save-row{padding:18px 22px;border-top:1px solid #edf0f4;display:flex;gap:14px;align-items:center}.alerts-save-row span{color:#147245;font-size:12px;font-weight:900}.alerts-roadmap{border-radius:18px;background:#fff9d8;border:1px solid #ffe979;padding:20px 22px}.alerts-roadmap>span{color:#7c6500}.alerts-roadmap strong{display:block;color:#1b2230;margin:5px 0}.alerts-roadmap p{margin:0;color:#6c6650;font-size:13px}.my-club-alert-link{border:1px solid rgba(255,214,0,.4)!important;color:#ffd600!important;border-radius:10px;padding:8px 11px}.my-club-feed-alert{margin-top:10px!important;color:#ffd600!important;font-size:11px!important;font-weight:900!important;display:block!important}.my-club-feed-alert b,.my-club-feed-alert strong{display:none}
 @media(max-width:900px){.alerts-grid{grid-template-columns:1fr}.alerts-hero h1{font-size:40px}.alerts-options{grid-template-columns:1fr}.alerts-option:nth-child(odd){border-right:0}.alerts-header-link{display:none}.my-club-alert-link{display:none}}
 @media(max-width:620px){.alerts-page{padding-top:14px}.alerts-hero{padding:22px;align-items:flex-start;flex-direction:column}.alerts-hero h1{font-size:32px}.alerts-summary{min-width:0;width:100%;display:flex;align-items:center;justify-content:center;gap:10px}.alerts-summary strong{font-size:28px}.alerts-card{padding:18px}.alerts-options .alerts-option{padding:15px 18px}.alerts-save-row{align-items:flex-start;flex-direction:column}.alerts-save-row button{width:100%}}
+
+/* V8.9 — expérience mobile / PWA */
+.app-install-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 120;
+  width: min(720px, calc(100% - 28px));
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: center;
+  padding: 18px 20px;
+  border: 1px solid rgba(255, 215, 0, .42);
+  border-radius: 20px;
+  background: #071a46;
+  color: #fff;
+  box-shadow: 0 18px 60px rgba(3, 15, 40, .28);
+}
+.app-install-copy span { color: #ffd500; font-size: 12px; font-weight: 900; letter-spacing: .08em; }
+.app-install-copy strong { display: block; margin-top: 4px; font-size: 18px; }
+.app-install-copy p { margin: 4px 0 0; color: #dce6fa; font-size: 13px; }
+.app-install-actions { display: flex; gap: 8px; }
+.app-install-actions button { border: 0; border-radius: 11px; padding: 11px 15px; background: #ffd500; color: #071a46; font-weight: 900; cursor: pointer; }
+.app-install-actions .is-ghost { background: rgba(255,255,255,.1); color: #fff; }
+.ios-install-help { grid-column: 1 / -1; margin: 0; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.14); color: #eef3ff; font-size: 13px; }
+
+.mobile-app-nav { display: none; }
+.offline-page { padding-top: 46px; padding-bottom: 70px; }
+.offline-card { max-width: 760px; margin: 0 auto; padding: 38px; border-radius: 26px; background: #071a46; color: #fff; box-shadow: 0 18px 50px rgba(3,15,40,.14); }
+.offline-card > span { color: #ffd500; font-size: 12px; font-weight: 900; letter-spacing: .08em; }
+.offline-card h1 { margin: 10px 0; font-size: clamp(32px, 6vw, 52px); line-height: 1; }
+.offline-card p { color: #d8e2f6; }
+.offline-actions { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+.offline-actions a { padding: 12px 16px; border-radius: 11px; background: #ffd500; color: #071a46; font-weight: 900; }
+.offline-actions a.is-secondary { background: rgba(255,255,255,.1); color: #fff; }
+
+@media (max-width: 760px) {
+  body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .mobile-app-nav {
+    position: fixed;
+    z-index: 110;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    padding: 7px 8px calc(7px + env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(255,255,255,.12);
+    background: rgba(7, 26, 70, .97);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 -10px 28px rgba(3,15,40,.16);
+  }
+  .mobile-app-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 48px; color: #fff; text-decoration: none; }
+  .mobile-app-nav a span { color: #ffd500; font-size: 18px; line-height: 1; }
+  .mobile-app-nav a strong { font-size: 10px; line-height: 1.15; }
+  .app-install-banner { bottom: calc(82px + env(safe-area-inset-bottom)); grid-template-columns: 1fr; padding: 16px; }
+  .app-install-actions { width: 100%; }
+  .app-install-actions button { flex: 1; }
+  .offline-card { padding: 26px 22px; }
+}
+
+@media (display-mode: standalone) {
+  .site-header { padding-top: env(safe-area-inset-top); }
+  .app-install-banner { display: none; }
+}
