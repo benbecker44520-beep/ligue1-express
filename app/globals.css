@@ -1025,3 +1025,79 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 
 /* V8.9.3 — accueil épuré */
 .home-focus-banner{margin:16px 0 18px;padding:18px 22px}.home-focus-banner .v8-focus-teams{max-width:720px;margin:0 auto}.home-focus-banner .v8-focus-button{max-width:420px;margin:15px auto 0}.club-space-grid:has(> .club-space-panel:only-child){grid-template-columns:1fr}
+
+/* V8.9.5 — Actualités mobiles compactes */
+@media(max-width:760px){
+  .listing-page .cards-grid{
+    display:flex;
+    grid-template-columns:none;
+    gap:14px;
+    margin-left:-14px;
+    margin-right:-14px;
+    padding:2px 14px 16px;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    scroll-padding-left:14px;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .listing-page .cards-grid::-webkit-scrollbar{display:none}
+  .listing-page .cards-grid .article-card{
+    flex:0 0 min(82vw,330px);
+    scroll-snap-align:start;
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    border-radius:16px;
+  }
+  .listing-page .cards-grid .card-visual{
+    height:170px;
+    flex:none;
+    background-size:cover;
+    background-position:center;
+  }
+  .listing-page .cards-grid .card-body{
+    display:flex;
+    flex:1;
+    flex-direction:column;
+    padding:14px 15px 15px;
+  }
+  .listing-page .cards-grid .card-body h3{
+    margin:9px 0 13px;
+    font-size:18px;
+    line-height:1.22;
+  }
+  .listing-page .cards-grid .card-body h3 a{
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:3;
+    overflow:hidden;
+  }
+  .listing-page .cards-grid .card-body p{display:none}
+  .listing-page .cards-grid .text-link{
+    align-self:flex-start;
+    margin-top:auto;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:86px;
+    min-height:38px;
+    padding:0 14px;
+    border-radius:9px;
+    background:var(--navy);
+    color:white;
+    font-size:0;
+    text-decoration:none;
+  }
+  .listing-page .cards-grid .text-link::after{
+    content:"Lire →";
+    font-size:12px;
+    font-weight:900;
+  }
+}
+
+@media(max-width:430px){
+  .listing-page .cards-grid .article-card{flex-basis:84vw}
+  .listing-page .cards-grid .card-visual{height:155px}
+  .listing-page .cards-grid .card-body h3{font-size:17px}
+}
