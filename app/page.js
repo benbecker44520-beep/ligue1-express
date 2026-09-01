@@ -86,8 +86,6 @@ export default async function HomePage() {
   const fixtures = fixturesResult.ok ? fixturesResult.data : [];
   const formTeams = formTable(fixtures, standings);
   const snapshot = snapshotResult.ok ? snapshotResult.data : {};
-  const focusMatch = snapshot.live || snapshot.next || snapshot.latest || null;
-  const focusLabel = snapshot.live ? "🔴 EN DIRECT" : snapshot.next ? "MATCH À SUIVRE" : "DERNIER MATCH";
   const featuredPrediction = [...predictions]
     .filter((prediction) => prediction.verdict === "pending")
     .sort((a, b) => new Date(a.match_date || 0) - new Date(b.match_date || 0))[0] || predictions[0] || null;
@@ -119,21 +117,20 @@ export default async function HomePage() {
         <Link href="/resultats" className="v8-live-more">Tout suivre →</Link>
       </section>
 
-      {focusMatch ? (
-        <section className="v8-focus-match home-focus-banner">
-          <div className="v8-focus-head"><span>{focusLabel}</span><Link href="/resultats">Calendrier →</Link></div>
-          <p>{formatMatchTime(focusMatch)}</p>
-          <div className="v8-focus-teams">
-            <MatchTeam team={focusMatch.home} />
-            <div className="v8-focus-score">
-              {focusMatch.score.home !== null && focusMatch.score.away !== null ? <strong>{focusMatch.score.home}<i>–</i>{focusMatch.score.away}</strong> : <strong>VS</strong>}
-            </div>
-            <MatchTeam team={focusMatch.away} align="right" />
+
+
+      {secondary.length > 0 && (
+        <section className="home-headlines" aria-label="À suivre">
+          <div className="home-headlines-label">À SUIVRE</div>
+          <div className="home-headlines-grid">
+            {secondary.map((article) => (
+              <Link href={`/article/${article.slug}`} className="home-headline" key={article.slug}>
+                <div className={`home-headline-image ${article.image_url ? "has-image" : ""}`} style={article.image_url ? { backgroundImage: `url("${article.image_url}")` } : undefined}>{!article.image_url && <span>L1</span>}</div>
+                <div className="home-headline-copy"><span>{article.category || "ACTUALITÉ"}</span><strong>{article.title}</strong></div><b>→</b>
+              </Link>
+            ))}
           </div>
-          <Link href={`/match/${focusMatch.id}`} className="v8-focus-button">Ouvrir le centre match →</Link>
         </section>
-      ) : (
-        <section className="v8-focus-match home-focus-banner"><div className="v8-focus-head"><span>MATCH À SUIVRE</span></div><p>Le prochain match sera affiché automatiquement.</p></section>
       )}
 
       <section className="top-grid v8-top-grid">
@@ -167,19 +164,7 @@ export default async function HomePage() {
         </aside>
       </section>
 
-      {secondary.length > 0 && (
-        <section className="home-headlines" aria-label="À suivre">
-          <div className="home-headlines-label">À SUIVRE</div>
-          <div className="home-headlines-grid">
-            {secondary.map((article) => (
-              <Link href={`/article/${article.slug}`} className="home-headline" key={article.slug}>
-                <div className={`home-headline-image ${article.image_url ? "has-image" : ""}`} style={article.image_url ? { backgroundImage: `url("${article.image_url}")` } : undefined}>{!article.image_url && <span>L1</span>}</div>
-                <div className="home-headline-copy"><span>{article.category || "ACTUALITÉ"}</span><strong>{article.title}</strong></div><b>→</b>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
+
 
       <nav className="media-shortcuts" aria-label="Accès rapides Ligue 1">
         <Link href="/actualites" className="media-shortcut"><div><span>À LA UNE</span><strong>Dernières actualités</strong></div><b>→</b></Link>
