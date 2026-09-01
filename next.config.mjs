@@ -17,6 +17,7 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "crests.football-data.org" },
+      { protocol: "https", hostname: "apiv3.apifootball.com" },
       { protocol: "https", hostname: "r2.thesportsdb.com" },
       { protocol: "https", hostname: "www.thesportsdb.com" },
       { protocol: "https", hostname: "img.sofascore.com" },

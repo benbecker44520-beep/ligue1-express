@@ -1,26 +1,26 @@
 import Image from "next/image";
 import Link from "next/link";
 import LiveAutoRefresh from "@/components/LiveAutoRefresh";
+import { getFrenchLiveMatches } from "@/lib/apifootball";
 import { getFixtures } from "@/lib/football";
-import { getChampionshipSnapshot } from "@/lib/championships";
-import { secondaryMatchHref } from "@/lib/futpythontrader";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "LIVE — Scores en direct" };
 
 const LIVE_STATUSES = new Set(["IN_PLAY", "PAUSED", "LIVE"]);
 
-function statusLabel(status) {
+function fallbackStatusLabel(status) {
   if (status === "PAUSED") return "MI-TEMPS";
   if (LIVE_STATUSES.has(status)) return "EN DIRECT";
   return status || "LIVE";
 }
 
 function LiveCard({ match, league, href }) {
+  const label = match.statusText || fallbackStatusLabel(match.status);
   return (
     <Link className="live-v82-match" href={href}>
       <div className="live-v82-match-head">
-        <span className="live-v82-pulse"><i /> {statusLabel(match.status)}</span>
+        <span className="live-v82-pulse"><i /> {label}</span>
         <span>{league}</span>
       </div>
       <div className="live-v82-team">
@@ -38,29 +38,38 @@ function LiveCard({ match, league, href }) {
   );
 }
 
+function LeagueStatus({ number, name, source, active, note }) {
+  return (
+    <div className={`live-v82-league ${active ? "is-active" : ""}`}>
+      <b>{number}</b>
+      <div><strong>{name}</strong><span>{note} · {source}</span></div>
+      <em>{active ? "ACTIF" : "SECOURS"}</em>
+    </div>
+  );
+}
+
 export default async function LivePage() {
-  const [l1Result, l2Result, l3Result] = await Promise.allSettled([
-    getFixtures(),
-    getChampionshipSnapshot("ligue-2"),
-    getChampionshipSnapshot("ligue-3")
-  ]);
+  const apiResult = await getFrenchLiveMatches();
+  let matches = apiResult.ok ? apiResult.data : [];
+  let l1Fallback = false;
 
-  const l1 = l1Result.status === "fulfilled" && l1Result.value?.ok
-    ? (l1Result.value.data || []).filter((m) => LIVE_STATUSES.has(m.status))
-    : [];
+  // Sécurité de continuité : si APIfootball est momentanément indisponible,
+  // la Ligue 1 conserve le flux football-data.org déjà validé en V8.2.
+  if (!apiResult.ok) {
+    const footballData = await getFixtures().catch(() => null);
+    const fallbackMatches = footballData?.ok
+      ? (footballData.data || []).filter((match) => LIVE_STATUSES.has(match.status)).map((match) => ({ ...match, provider: "football-data" }))
+      : [];
+    matches = fallbackMatches;
+    l1Fallback = true;
+  }
 
-  // FutPythonTrader est actuellement notre source L2/L3, mais son CSV n'est pas un flux live.
-  // On n'invente donc jamais un score en direct : ces ligues seront activées automatiquement
-  // ici dès qu'une vraie source live sera branchée et renverra un statut LIVE/IN_PLAY/PAUSED.
-  const secondary = [
-    ["Ligue 2", "ligue-2", l2Result],
-    ["Ligue 3", "ligue-3", l3Result]
-  ].flatMap(([name, slug, result]) => {
-    if (result.status !== "fulfilled" || !result.value?.ok) return [];
-    return (result.value.matches || []).filter((m) => LIVE_STATUSES.has(m.status)).map((m) => ({ match: m, league: name, slug }));
-  });
-
-  const total = l1.length + secondary.length;
+  const groups = [
+    { id: "168", name: "Ligue 1", matches: matches.filter((m) => m.leagueId === "168" || (m.provider === "football-data" && !m.leagueId)) },
+    { id: "164", name: "Ligue 2", matches: matches.filter((m) => m.leagueId === "164") },
+    { id: "167", name: "National", matches: matches.filter((m) => m.leagueId === "167") }
+  ];
+  const total = groups.reduce((sum, group) => sum + group.matches.length, 0);
 
   return (
     <div className="container live-v82-page">
@@ -70,7 +79,7 @@ export default async function LivePage() {
         <div>
           <p className="eyebrow">LIGUE 1 EXPRESS · TEMPS RÉEL</p>
           <h1><span>LIVE</span> Scores en direct</h1>
-          <p>Suivez les matchs du football français. Les scores Ligue 1 sont actualisés automatiquement toutes les 60 secondes.</p>
+          <p>Suivez la Ligue 1, la Ligue 2 et le National. Les scores sont actualisés automatiquement toutes les 60 secondes.</p>
         </div>
         <div className={`live-v82-counter ${total ? "is-live" : ""}`}>
           <i />
@@ -80,23 +89,42 @@ export default async function LivePage() {
       </section>
 
       {total > 0 ? (
-        <section className="live-v82-grid">
-          {l1.map((match) => <LiveCard key={`l1-${match.id}`} match={match} league="Ligue 1" href={`/match/${match.id}`} />)}
-          {secondary.map(({ match, league, slug }) => <LiveCard key={`${slug}-${match.id}`} match={match} league={league} href={secondaryMatchHref(slug, match.id)} />)}
-        </section>
+        <div className="live-v83-sections">
+          {groups.filter((group) => group.matches.length).map((group) => (
+            <section className="live-v83-section" key={group.id}>
+              <div className="live-v83-section-head"><h2>{group.name}</h2><span>{group.matches.length} LIVE</span></div>
+              <div className="live-v82-grid">
+                {group.matches.map((match) => (
+                  <LiveCard
+                    key={`${group.id}-${match.id}`}
+                    match={match}
+                    league={group.name}
+                    href={match.provider === "apifootball" ? `/live/match/${match.id}` : `/match/${match.id}`}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       ) : (
         <section className="live-v82-empty">
           <div className="live-v82-ball">⚽</div>
           <h2>Aucun match en direct actuellement</h2>
-          <p>La page se rafraîchit automatiquement. Dès qu'un match Ligue 1 passe en direct, son score apparaît ici.</p>
+          <p>La page se rafraîchit automatiquement. Dès qu'un match de Ligue 1, Ligue 2 ou National démarre, son score apparaît ici.</p>
           <Link href="/resultats">Voir les résultats et prochains matchs →</Link>
         </section>
       )}
 
+      {!apiResult.ok && (
+        <div className="live-v83-source-note">
+          APIfootball est momentanément indisponible. La Ligue 1 utilise automatiquement le flux de secours football-data.org.
+        </div>
+      )}
+
       <section className="live-v82-leagues">
-        <div className="live-v82-league is-active"><b>01</b><div><strong>Ligue 1</strong><span>Scores live activés · football-data.org</span></div><em>ACTIF</em></div>
-        <div className="live-v82-league"><b>02</b><div><strong>Ligue 2</strong><span>Calendrier disponible · source live à connecter</span></div><em>BIENTÔT</em></div>
-        <div className="live-v82-league"><b>03</b><div><strong>Ligue 3</strong><span>Calendrier disponible · source live à connecter</span></div><em>BIENTÔT</em></div>
+        <LeagueStatus number="01" name="Ligue 1" source={l1Fallback ? "football-data.org" : "APIfootball"} active note={l1Fallback ? "Live activé en secours" : "Scores live activés"} />
+        <LeagueStatus number="02" name="Ligue 2" source="APIfootball" active={apiResult.ok} note={apiResult.ok ? "Scores live activés" : "En attente du flux principal"} />
+        <LeagueStatus number="03" name="National" source="APIfootball" active={apiResult.ok} note={apiResult.ok ? "Scores live activés" : "En attente du flux principal"} />
       </section>
     </div>
   );
