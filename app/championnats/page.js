@@ -3,7 +3,7 @@ import { CHAMPIONSHIPS } from "@/lib/championships";
 
 export const metadata = {
   title: "Championnats",
-  description: "Ligue 1, Ligue 2 et Ligue 3 : classements, matchs et informations essentielles."
+  description: "Ligue 1, Ligue 2, Ligue 3 et Coupe de France : classements, matchs et informations essentielles."
 };
 
 export default function ChampionshipsPage() {
@@ -13,7 +13,7 @@ export default function ChampionshipsPage() {
     <div className="page-shell listing-page championships-index">
       <span className="eyebrow">FOOTBALL FRANÇAIS</span>
       <h1>Championnats</h1>
-      <p className="championships-intro">Choisis une compétition pour retrouver son classement, ses derniers résultats et ses prochains matchs.</p>
+      <p className="championships-intro">Choisis une compétition pour retrouver son classement ou son parcours, ses derniers résultats et ses prochains matchs.</p>
 
       <div className="championship-card-grid">
         {championships.map((champ) => (

@@ -15,7 +15,7 @@ function MatchLine({ match, championshipSlug }) {
   const hasScore = match.score?.home !== null && match.score?.away !== null;
   const isLive = match.status === "IN_PLAY";
   return (
-    <Link href={championshipSlug === "ligue-1" ? `/match/${match.id}` : secondaryMatchHref(championshipSlug, match.id)} className="champ-match-row champ-match-link">
+    <Link href={championshipSlug === "ligue-1" ? `/match/${match.id}` : championshipSlug === "coupe-de-france" ? `/live/match/${match.id}` : secondaryMatchHref(championshipSlug, match.id)} className="champ-match-row champ-match-link">
       <div className="champ-match-team home">{match.home?.logo && <Image src={match.home.logo} alt="" width={25} height={25} unoptimized />}<span>{match.home?.shortName || match.home?.name}</span></div>
       <div className="champ-match-center"><strong>{hasScore ? `${match.score.home} - ${match.score.away}` : "vs"}</strong><small>{isLive ? "● En direct" : formatMatchDate(match)}</small></div>
       <div className="champ-match-team away"><span>{match.away?.shortName || match.away?.name}</span>{match.away?.logo && <Image src={match.away.logo} alt="" width={25} height={25} unoptimized />}</div>
@@ -43,7 +43,27 @@ export default async function ChampionshipPage({ params }) {
       <span className="eyebrow">{config.level.toUpperCase()} · {result.ok ? `SAISON ${result.season}` : "DONNÉES"}</span>
       <div className="championship-title-row"><div><h1>{config.name}</h1>{config.subtitle && <p>{config.subtitle}</p>}</div><div className="championship-brand-mark">{config.shortName}</div></div>
 
-      {!result.ok ? <div className="football-setup-box"><h2>Données temporairement indisponibles</h2><p>{result.error}</p></div> : <>
+      {!result.ok ? <div className="football-setup-box"><h2>Données temporairement indisponibles</h2><p>{result.error}</p></div> : result.isCup ? <>
+        <div className="championship-source-line"><span>Actualisation automatique</span><strong>{result.matches.length} matchs disponibles</strong><b>Source : {result.source}</b></div>
+        <section className="cup-france-hero">
+          <div><span>🇫🇷 COUPE DE FRANCE</span><h2>La route vers la finale</h2><p>Retrouve les affiches, résultats et prochains rendez-vous tour après tour.</p></div>
+          <b>{result.season}</b>
+        </section>
+        <div className="championship-dashboard championship-dashboard-wide">
+          <section className="championship-panel">
+            <div className="panel-heading"><h2>Derniers résultats</h2><span>{result.recent.length} terminés</span></div>
+            {result.recent.length ? result.recent.slice(0, 12).map((m) => <MatchLine key={`cr-${m.id}`} match={m} championshipSlug={normalizedSlug} />) : <div className="champ-empty">Aucun résultat disponible pour le moment.</div>}
+          </section>
+          <section className="championship-panel">
+            <div className="panel-heading"><h2>Prochains matchs</h2><span>{result.upcoming.length} à venir</span></div>
+            {result.upcoming.length ? result.upcoming.slice(0, 12).map((m) => <MatchLine key={`cu-${m.id}`} match={m} championshipSlug={normalizedSlug} />) : <div className="champ-empty">Les prochaines affiches seront ajoutées dès leur publication.</div>}
+          </section>
+        </div>
+        {result.rounds.length > 0 && <section className="championship-panel cup-rounds-panel">
+          <div className="panel-heading"><h2>Parcours de la compétition</h2><span>{result.rounds.length} tours détectés</span></div>
+          <div className="cup-rounds-list">{result.rounds.map((round) => { const count = result.matches.filter((m) => m.round === round).length; return <div key={round}><strong>{round}</strong><span>{count} match{count > 1 ? "s" : ""}</span></div>; })}</div>
+        </section>}
+      </> : <>
         {result.note && <div className={`championship-data-note ${result.limited ? "is-warning" : ""}`}>ℹ️ {result.note}</div>}
         <div className="championship-source-line"><span>Actualisation automatique</span>{result.currentMatchday && <strong>Journée actuelle : {result.currentMatchday}</strong>}<b>Source : {result.source}</b></div>
         {result.currentMatchday && <Link className="matchday-cta" href={`/championnats/${normalizedSlug}/journee/${result.currentMatchday}`}><span>⚡ CENTRE JOURNÉE</span><strong>Voir tous les matchs de la J{result.currentMatchday}</strong><b>Scores · horaires · fiches match →</b></Link>}

@@ -67,7 +67,8 @@ export default async function LivePage() {
   const groups = [
     { id: "168", name: "Ligue 1", matches: matches.filter((m) => m.leagueId === "168" || (m.provider === "football-data" && !m.leagueId)) },
     { id: "164", name: "Ligue 2", matches: matches.filter((m) => m.leagueId === "164") },
-    { id: "167", name: "National", matches: matches.filter((m) => m.leagueId === "167") }
+    { id: "167", name: "National", matches: matches.filter((m) => m.leagueId === "167") },
+    { id: "165", name: "Coupe de France", matches: matches.filter((m) => m.leagueId === "165") }
   ];
   const total = groups.reduce((sum, group) => sum + group.matches.length, 0);
 
@@ -79,7 +80,7 @@ export default async function LivePage() {
         <div>
           <p className="eyebrow">LIGUE 1 EXPRESS · TEMPS RÉEL</p>
           <h1><span>LIVE</span> Scores en direct</h1>
-          <p>Suivez la Ligue 1, la Ligue 2 et le National. Les scores sont actualisés automatiquement toutes les 60 secondes.</p>
+          <p>Suivez la Ligue 1, la Ligue 2, le National et la Coupe de France. Les scores sont actualisés automatiquement toutes les 60 secondes.</p>
         </div>
         <div className={`live-v82-counter ${total ? "is-live" : ""}`}>
           <i />
@@ -110,7 +111,7 @@ export default async function LivePage() {
         <section className="live-v82-empty">
           <div className="live-v82-ball">⚽</div>
           <h2>Aucun match en direct actuellement</h2>
-          <p>La page se rafraîchit automatiquement. Dès qu'un match de Ligue 1, Ligue 2 ou National démarre, son score apparaît ici.</p>
+          <p>La page se rafraîchit automatiquement. Dès qu'un match de Ligue 1, Ligue 2, National ou Coupe de France démarre, son score apparaît ici.</p>
           <Link href="/resultats">Voir les résultats et prochains matchs →</Link>
         </section>
       )}
@@ -125,6 +126,7 @@ export default async function LivePage() {
         <LeagueStatus number="01" name="Ligue 1" source={l1Fallback ? "football-data.org" : "APIfootball"} active note={l1Fallback ? "Live activé en secours" : "Scores live activés"} />
         <LeagueStatus number="02" name="Ligue 2" source="APIfootball" active={apiResult.ok} note={apiResult.ok ? "Scores live activés" : "En attente du flux principal"} />
         <LeagueStatus number="03" name="National" source="APIfootball" active={apiResult.ok} note={apiResult.ok ? "Scores live activés" : "En attente du flux principal"} />
+        <LeagueStatus number="04" name="Coupe de France" source="APIfootball" active={apiResult.ok} note={apiResult.ok ? "Scores live activés" : "En attente du flux principal"} />
       </section>
     </div>
   );
