@@ -6,6 +6,7 @@ import { getFixtures, getHomeSnapshot, getScorers, getStandings } from "@/lib/fo
 import { getPublishedPredictions } from "@/lib/predictions";
 import { getTransfers } from "@/lib/transfers";
 import { sameEntityName } from "@/lib/content-links";
+import MyClubHome from "@/components/MyClubHome";
 
 export const revalidate = 0;
 
@@ -118,6 +119,8 @@ export default async function HomePage() {
         </div>
         <Link href="/resultats" className="v8-live-more">Tout suivre →</Link>
       </section>
+
+      <MyClubHome />
 
       <section className="top-grid v8-top-grid">
         <div
