@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getPersonDetails, getScorers, getTeamById } from "@/lib/football";
+import { getPersonDetails, getScorers, getTeamById, getPlayerSeasonStats } from "@/lib/football";
 import { getPlayerPhoto } from "@/lib/player-media";
+import PlayerPortrait from "@/components/PlayerPortrait";
 import { getPublishedArticles } from "@/lib/articles";
 import { getTransfers } from "@/lib/transfers";
 import { articleMentions, sameEntityName } from "@/lib/content-links";
@@ -32,10 +33,11 @@ export default async function PlayerPage({ params, searchParams }) {
   if (result.notFound) notFound();
   if (!result.ok) return <div className="page-shell listing-page"><span className="eyebrow">LIGUE 1 · JOUEUR</span><h1>Fiche joueur</h1><div className="football-setup-box"><h2>Données indisponibles</h2><p>Les données du joueur sont temporairement indisponibles. Réessaie dans quelques instants.</p></div></div>;
   const p = result.data;
-  const [photoResult, scorersResult, teamResult, articles, transfers] = await Promise.all([
-    getPlayerPhoto(p.name), getScorers(), p.currentTeam?.id ? getTeamById(p.currentTeam.id) : Promise.resolve({ok:false}), getPublishedArticles({limit:50}), getTransfers()
+  const [photoResult, scorersResult, seasonStatsResult, teamResult, articles, transfers] = await Promise.all([
+    getPlayerPhoto(p.name), getScorers(), getPlayerSeasonStats(id), p.currentTeam?.id ? getTeamById(p.currentTeam.id) : Promise.resolve({ok:false}), getPublishedArticles({limit:50}), getTransfers()
   ]);
-  const playerPhoto = photoResult.ok ? photoResult.data?.image : null;
+  const playerImages = photoResult.ok ? [photoResult.data?.cutout, photoResult.data?.render, photoResult.data?.thumb].filter(Boolean) : [];
+  const seasonStats = seasonStatsResult.ok ? seasonStatsResult.data : null;
   const age = ageOf(p.dateOfBirth);
   const scorer = scorersResult.ok ? scorersResult.data.find(s => String(s.playerId) === String(id)) : null;
   const scorerRank = scorer && scorersResult.ok ? scorersResult.data.findIndex(s => String(s.playerId) === String(id)) + 1 : null;
@@ -46,8 +48,8 @@ export default async function PlayerPage({ params, searchParams }) {
 
   return <div className="page-shell listing-page player-detail-page player-detail-v7">
     <div className="club-back">{p.currentTeam?.id ? <Link href={`/club/${p.currentTeam.id}`}>← Retour à {p.currentTeam.shortName || p.currentTeam.name}</Link> : <Link href="/classement">← Retour aux clubs</Link>}</div>
-    <section className={`player-hero-card player-hero-v7 ${playerPhoto ? "has-player-photo" : ""}`}>
-      <div className="player-photo-stage">{playerPhoto ? <img src={playerPhoto} alt={`Portrait de ${p.name}`} className="player-photo" /> : <div className="player-avatar">{p.currentTeam?.crest ? <Image src={p.currentTeam.crest} alt="" width={92} height={92} unoptimized /> : <span>{p.name?.slice(0,1)}</span>}</div>}</div>
+    <section className={`player-hero-card player-hero-v7 ${playerImages.length ? "has-player-photo" : ""}`}>
+      <div className="player-photo-stage"><PlayerPortrait name={p.name} images={playerImages} crest={p.currentTeam?.crest || null} /></div>
       <div className="player-hero-copy"><span className="eyebrow">LIGUE 1 · CENTRE JOUEUR</span><h1>{p.name}</h1><p>{positionFr(p.position)}{p.currentTeam?.name ? <> · <Link href={`/club/${p.currentTeam.id}`}>{p.currentTeam.name}</Link></> : null}</p>{scorer && <div className="player-v7-highlight"><strong>{scorer.goals}</strong><span>but{scorer.goals>1?"s":""} en Ligue 1</span>{scorer.assists != null && <><strong>{scorer.assists}</strong><span>passe{scorer.assists>1?"s":""} décisive{scorer.assists>1?"s":""}</span></>}</div>}</div>
       {p.currentTeam?.crest && <div className="player-hero-crest"><Image src={p.currentTeam.crest} alt={`Logo ${p.currentTeam.name}`} width={76} height={76} unoptimized /></div>}
     </section>
@@ -55,7 +57,7 @@ export default async function PlayerPage({ params, searchParams }) {
 
     <section id="profil" className="player-info-card"><div><span>POSTE</span><strong>{positionFr(p.position)}</strong></div><div><span>NATIONALITÉ</span><strong>{nationalityFr(p.nationality)}</strong></div><div><span>ÂGE</span><strong>{age != null ? `${age} ans` : "—"}</strong></div><div><span>DATE DE NAISSANCE</span><strong>{birthFr(p.dateOfBirth)}</strong></div>{p.shirtNumber != null && <div><span>NUMÉRO</span><strong>#{p.shirtNumber}</strong></div>}</section>
 
-    <section id="stats" className="player-v897-stats"><div className="club-section-title"><span>⚡ STATS SAISON</span><strong>Ligue 1</strong></div>{scorer ? <div className="player-v897-stat-grid"><div><span>BUTS</span><strong>{scorer.goals}</strong></div><div><span>PASSES D.</span><strong>{scorer.assists ?? "—"}</strong></div><div><span>PENALTYS</span><strong>{scorer.penalties ?? "—"}</strong></div><div><span>CLASSEMENT BUTEURS</span><strong>{scorerRank ? `#${scorerRank}` : "—"}</strong></div></div> : <p className="club-empty">Ce joueur n’apparaît pas actuellement dans le Top 20 des buteurs de Ligue 1.</p>}</section>
+    <section id="stats" className="player-v897-stats"><div className="club-section-title"><span>⚡ STATS SAISON</span><strong>Ligue 1</strong></div>{seasonStats ? <><div className="player-v897-stat-grid player-v897-stat-grid-six"><div><span>MATCHS JOUÉS</span><strong>{seasonStats.matchesOnPitch ?? "—"}</strong></div><div><span>TITULARISATIONS</span><strong>{seasonStats.startingXI ?? "—"}</strong></div><div><span>MINUTES</span><strong>{seasonStats.minutesPlayed ?? "—"}</strong></div><div><span>BUTS</span><strong>{seasonStats.goals ?? scorer?.goals ?? "—"}</strong></div><div><span>PASSES D.</span><strong>{seasonStats.assists ?? scorer?.assists ?? "—"}</strong></div><div><span>PENALTYS</span><strong>{seasonStats.penalties ?? scorer?.penalties ?? "—"}</strong></div></div>{scorerRank ? <p className="player-v897-ranking">Classement des buteurs : <strong>#{scorerRank}</strong></p> : null}</> : scorer ? <div className="player-v897-stat-grid"><div><span>BUTS</span><strong>{scorer.goals}</strong></div><div><span>PASSES D.</span><strong>{scorer.assists ?? "—"}</strong></div><div><span>PENALTYS</span><strong>{scorer.penalties ?? "—"}</strong></div><div><span>CLASSEMENT BUTEURS</span><strong>{scorerRank ? `#${scorerRank}` : "—"}</strong></div></div> : <div className="player-v897-stat-unavailable"><strong>Statistiques détaillées temporairement indisponibles</strong><span>Le profil, le club, les matchs et les actualités du joueur restent accessibles.</span></div>}</section>
 
     {p.currentTeam && <section className="player-club-card"><div className="club-section-title"><span>CLUB ACTUEL</span><strong>Ligue 1</strong></div><Link href={`/club/${p.currentTeam.id}`} className="player-club-link">{p.currentTeam.crest && <Image src={p.currentTeam.crest} alt="" width={54} height={54} unoptimized />}<div><strong>{p.currentTeam.name}</strong><span>Voir le centre du club →</span></div></Link></section>}
 
