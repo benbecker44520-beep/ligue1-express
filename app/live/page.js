@@ -3,6 +3,7 @@ import Link from "next/link";
 import LiveAutoRefresh from "@/components/LiveAutoRefresh";
 import { getFrenchLiveMatches } from "@/lib/apifootball";
 import { getFixtures } from "@/lib/football";
+import { getEspnCupLiveMatches } from "@/lib/espn";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "LIVE — Scores en direct" };
@@ -49,8 +50,13 @@ function LeagueStatus({ number, name, source, active, note }) {
 }
 
 export default async function LivePage() {
-  const apiResult = await getFrenchLiveMatches();
+  const [apiResult, espnCupLive] = await Promise.all([
+    getFrenchLiveMatches(),
+    getEspnCupLiveMatches().catch(() => [])
+  ]);
   let matches = apiResult.ok ? apiResult.data : [];
+  const hasApiCup = matches.some((m) => m.leagueId === "165");
+  if (!hasApiCup && espnCupLive.length) matches = [...matches, ...espnCupLive];
   let l1Fallback = false;
 
   // Sécurité de continuité : si APIfootball est momentanément indisponible,
@@ -100,7 +106,7 @@ export default async function LivePage() {
                     key={`${group.id}-${match.id}`}
                     match={match}
                     league={group.name}
-                    href={match.provider === "apifootball" ? `/live/match/${match.id}` : `/match/${match.id}`}
+                    href={match.provider === "apifootball" ? `/live/match/${match.id}` : match.provider === "espn" ? "/championnats/coupe-de-france" : `/match/${match.id}`}
                   />
                 ))}
               </div>
@@ -126,7 +132,7 @@ export default async function LivePage() {
         <LeagueStatus number="01" name="Ligue 1" source={l1Fallback ? "football-data.org" : "APIfootball"} active note={l1Fallback ? "Live activé en secours" : "Scores live activés"} />
         <LeagueStatus number="02" name="Ligue 2" source="APIfootball" active={apiResult.ok} note={apiResult.ok ? "Scores live activés" : "En attente du flux principal"} />
         <LeagueStatus number="03" name="National" source="APIfootball" active={apiResult.ok} note={apiResult.ok ? "Scores live activés" : "En attente du flux principal"} />
-        <LeagueStatus number="04" name="Coupe de France" source="APIfootball" active={apiResult.ok} note={apiResult.ok ? "Scores live activés" : "En attente du flux principal"} />
+        <LeagueStatus number="04" name="Coupe de France" source={hasApiCup ? "APIfootball" : "ESPN"} active note="Scores live activés" />
       </section>
     </div>
   );
