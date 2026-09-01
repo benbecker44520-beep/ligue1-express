@@ -1,6 +1,7 @@
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import AnalyticsTracker from "@/components/AnalyticsTracker";
 import { getSiteUrl } from "@/lib/site";
 
 const siteUrl = getSiteUrl();
@@ -46,6 +47,7 @@ export default function RootLayout({ children }) {
       <body>
         <a className="skip-link" href="#contenu">Aller au contenu</a>
         <Header />
+        <AnalyticsTracker />
         <main id="contenu">{children}</main>
         <Footer />
       </body>

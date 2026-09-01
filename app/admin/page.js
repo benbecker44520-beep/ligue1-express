@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createSupabaseClient, hasSupabaseConfig } from "@/lib/supabase";
 import ShareButtons from "@/components/ShareButtons";
 import NewsletterAdmin from "@/components/NewsletterAdmin";
+import AnalyticsAdmin from "@/components/AnalyticsAdmin";
 
 function slugify(value) {
   return value
@@ -606,6 +607,7 @@ export default function AdminPage() {
         <button className={adminSection === "scorers" ? "active" : ""} onClick={() => setAdminSection("scorers")}><span>⚽</span><strong>Buteurs</strong><small>Buteurs des matchs terminés</small></button>
         <button className={adminSection === "events" ? "active" : ""} onClick={() => setAdminSection("events")}><span>🟨</span><strong>Faits marquants</strong><small>Cartons, VAR et remplacements</small></button>
         <button className={adminSection === "newsletter" ? "active" : ""} onClick={() => setAdminSection("newsletter")}><span>📩</span><strong>Newsletter</strong><small>Voir et gérer les abonnés</small></button>
+        <button className={adminSection === "analytics" ? "active" : ""} onClick={() => setAdminSection("analytics")}><span>📊</span><strong>Statistiques</strong><small>Visiteurs, pages vues et audience</small></button>
       </nav>
 
       {adminSection === "articles" && <>
@@ -982,6 +984,8 @@ export default function AdminPage() {
           </div>
         </div>
       </section>}
+
+      {adminSection === "analytics" && <AnalyticsAdmin />}
 
       {adminSection === "newsletter" && <section className="predictions-admin-panel admin-panel-standalone">
         <div className="panel-heading scorers-admin-heading">
