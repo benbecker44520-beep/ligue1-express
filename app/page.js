@@ -97,7 +97,7 @@ export default async function HomePage() {
     excerpt: "L'actualité de la Ligue 1, en un clin d'œil."
   };
 
-  const heroImages = [hero.image_url, ...allArticles.filter((article) => article.slug !== hero.slug).map((article) => article.image_url)].filter(Boolean);
+  const heroImages = [hero.image_url].filter(Boolean);
   const heroImage = heroImages[0] || null;
   const secondary = allArticles.filter((a) => a.slug !== hero.slug).slice(0, 3);
   const latest = allArticles.filter((a) => a.slug !== hero.slug).slice(3, 9);

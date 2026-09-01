@@ -7,7 +7,7 @@ export default function HomeHeroMedia({ images = [], title = "Ligue 1 Express" }
   const [index, setIndex] = useState(0);
   const current = candidates[index] || null;
 
-  if (!current) return <div className="v8973-hero-fallback" aria-hidden="true">⚽</div>;
+  if (!current) return <div className="v8973-hero-fallback" aria-hidden="true">L1</div>;
 
   return (
     <img
