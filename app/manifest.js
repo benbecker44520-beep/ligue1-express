@@ -15,7 +15,6 @@ export default function manifest() {
     categories: ["sports", "news"],
     shortcuts: [
       { name: "LIVE", short_name: "LIVE", url: "/live" },
-      { name: "Fil Express", short_name: "Fil", url: "/fil-express" },
       { name: "Mes alertes", short_name: "Alertes", url: "/mes-alertes" }
     ],
     icons: [

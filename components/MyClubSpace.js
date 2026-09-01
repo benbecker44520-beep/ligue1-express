@@ -48,7 +48,7 @@ export default function MyClubSpace() {
   const filtered = useMemo(() => { const n = search.trim().toLowerCase(); if (!n) return leagues; return leagues.map(l => ({...l, clubs:l.clubs.filter(c => `${c.team} ${c.shortName}`.toLowerCase().includes(n))})).filter(l => l.clubs.length); }, [leagues, search]);
 
   if (!favorite) return <section className="club-space-onboarding">
-    <span>★ MON CLUB</span><h1>Ton football, rien qu'à toi.</h1><p>Choisis ton club préféré pour créer un espace personnalisé avec matchs, classement, Fil Express, actualités, mercato et alertes.</p><button onClick={openPicker}>Choisir mon club →</button>{picker && <Picker leagues={filtered} loading={loading} search={search} setSearch={setSearch} selectClub={selectClub} close={() => setPicker(false)} />}
+    <span>★ MON CLUB</span><h1>Ton football, rien qu'à toi.</h1><p>Choisis ton club préféré pour créer un espace personnalisé avec matchs, classement, actualités, mercato et alertes.</p><button onClick={openPicker}>Choisir mon club →</button>{picker && <Picker leagues={filtered} loading={loading} search={search} setSearch={setSearch} selectClub={selectClub} close={() => setPicker(false)} />}
   </section>;
 
   const club = details?.club;
@@ -63,7 +63,7 @@ export default function MyClubSpace() {
       <section className="club-space-matches"><MatchCard match={details.latest} label="DERNIER RÉSULTAT"/><MatchCard match={details.next} label="PROCHAIN MATCH"/></section>
 
       <section className="club-space-grid">
-        <div className="club-space-panel club-space-feed"><div className="club-space-panel-head"><div><span>⚡ À LA MINUTE</span><h2>Fil de ton club</h2></div><Link href="/fil-express">Tout le fil →</Link></div>{details.express?.length ? details.express.map(item => <Link href={item.link_url || "/fil-express"} key={item.id} className="club-space-feed-item"><time>{new Intl.DateTimeFormat("fr-FR",{hour:"2-digit",minute:"2-digit",timeZone:"Europe/Paris"}).format(new Date(item.published_at))}</time><div><small>{String(item.category).toUpperCase()}</small><strong>{item.title}</strong></div><b>→</b></Link>) : <p className="club-space-empty">Aucune info dédiée pour le moment.</p>}</div>
+        
         <div className="club-space-panel"><div className="club-space-panel-head"><div><span>🔁 TRANSFERTS</span><h2>Mercato</h2></div><Link href="/mercato">Centre Mercato →</Link></div>{details.transfers?.length ? details.transfers.map(t => <Link href="/mercato" className="club-space-transfer" key={t.id}><small>{t.transfer_status === "official" ? "✅ OFFICIEL" : t.transfer_status === "advanced" ? "🔥 AVANCÉ" : "👀 RUMEUR"}</small><strong>{t.player_name}</strong><p>{t.from_club || "Libre"} → {t.to_club || "À définir"}</p></Link>) : <p className="club-space-empty">Aucun mouvement mercato associé actuellement.</p>}</div>
       </section>
 

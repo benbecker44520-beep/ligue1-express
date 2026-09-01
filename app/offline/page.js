@@ -11,7 +11,7 @@ export default function OfflinePage() {
         <p>Impossible de charger de nouvelles données pour le moment. Les pages déjà mises en cache peuvent rester accessibles.</p>
         <div className="offline-actions">
           <Link href="/">Retour à l’accueil</Link>
-          <Link href="/fil-express" className="is-secondary">Fil Express</Link>
+          <Link href="/live" className="is-secondary">Centre LIVE</Link>
         </div>
       </section>
     </div>

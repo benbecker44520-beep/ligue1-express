@@ -3,7 +3,6 @@ import { getChampionshipSnapshot, CHAMPIONSHIPS } from "@/lib/championships";
 import { getPublishedArticles } from "@/lib/articles";
 import { getTransfers } from "@/lib/transfers";
 import { articleMentions, sameEntityName } from "@/lib/content-links";
-import { getExpressFeed } from "@/lib/express-feed";
 
 export const dynamic = "force-dynamic";
 
@@ -83,19 +82,12 @@ async function detailResponse(request) {
   const upcoming = clubMatches.filter((match) => match.status !== "FINISHED").sort((a, b) => a.timestamp - b.timestamp);
   const form = recent.map((match) => matchResult(match, club)).filter(Boolean);
 
-  const [articles, transfers, expressFeed] = await Promise.all([
+  const [articles, transfers] = await Promise.all([
     getPublishedArticles({ limit: 40 }),
-    getTransfers(),
-    getExpressFeed({ limit: 40 })
+    getTransfers()
   ]);
   const relatedArticles = articles.filter((article) => articleMentions(article, club.team) || articleMentions(article, club.shortName)).slice(0, 6);
   const relatedTransfers = transfers.filter((transfer) => sameEntityName(transfer.from_club, club.team) || sameEntityName(transfer.to_club, club.team)).slice(0, 5);
-  const relatedExpress = expressFeed.filter((item) =>
-    sameEntityName(item.club_name, club.team) ||
-    sameEntityName(item.club_name, club.shortName) ||
-    articleMentions({ title: item.title, excerpt: item.body }, club.team) ||
-    articleMentions({ title: item.title, excerpt: item.body }, club.shortName)
-  ).slice(0, 8);
   const clubHref = league === "ligue-1" ? `/club/${club.teamId}` : `/championnats/${league}/club/${encodeURIComponent(club.team)}`;
 
   return NextResponse.json({
@@ -128,14 +120,6 @@ async function detailResponse(request) {
       to_club: transfer.to_club,
       transfer_status: transfer.transfer_status,
       fee: transfer.fee || null
-    })),
-    express: relatedExpress.map((item) => ({
-      id: item.id,
-      title: item.title,
-      body: item.body || null,
-      category: item.category || "info",
-      link_url: item.link_url || "/fil-express",
-      published_at: item.published_at
     }))
   }, { headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" } });
 }

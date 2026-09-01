@@ -7,7 +7,6 @@ const PREFS_KEY = "ligue1-express-alert-preferences-v1";
 const CLUB_KEY = "ligue1-express-my-club-v1";
 
 const DEFAULT_PREFS = {
-  express: true,
   mercato: true,
   match: true,
   result: true,
@@ -18,7 +17,6 @@ const DEFAULT_PREFS = {
 };
 
 const OPTIONS = [
-  ["express", "⚡ Fil Express", "Les brèves publiées à la minute."],
   ["mercato", "🔁 Mercato", "Arrivées, départs, officialisations et rumeurs avancées."],
   ["match", "⚽ Match", "Avant-match, coup d’envoi et informations importantes."],
   ["result", "🏁 Résultats", "Score final et principaux faits du match."],

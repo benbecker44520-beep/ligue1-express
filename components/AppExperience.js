@@ -80,7 +80,7 @@ export default function AppExperience() {
       <nav className="mobile-app-nav" aria-label="Navigation application mobile">
         <Link href="/"><span>⌂</span><strong>Accueil</strong></Link>
         <Link href="/live"><span>●</span><strong>Live</strong></Link>
-        <Link href="/fil-express"><span>⚡</span><strong>Fil</strong></Link>
+        <Link href="/stats"><span>▥</span><strong>Stats</strong></Link>
         <Link href="/actualites"><span>▤</span><strong>Actus</strong></Link>
         <Link href="/mon-club"><span>★</span><strong>Mon Club</strong></Link>
       </nav>

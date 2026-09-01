@@ -6,8 +6,6 @@ import { getFixtures, getHomeSnapshot, getScorers, getStandings } from "@/lib/fo
 import { getPublishedPredictions } from "@/lib/predictions";
 import { getTransfers } from "@/lib/transfers";
 import { sameEntityName } from "@/lib/content-links";
-import MyClubCompact from "@/components/MyClubCompact";
-import { expressMeta, getExpressFeed } from "@/lib/express-feed";
 
 export const revalidate = 0;
 
@@ -70,7 +68,7 @@ function formTable(fixtures = [], standings = []) {
 }
 
 export default async function HomePage() {
-  const [allArticles, featuredArticle, mercatoArticles, analyses, predictions, transfers, scorersResult, standingsResult, fixturesResult, snapshotResult, expressFeed] = await Promise.all([
+  const [allArticles, featuredArticle, mercatoArticles, analyses, predictions, transfers, scorersResult, standingsResult, fixturesResult, snapshotResult] = await Promise.all([
     getPublishedArticles({ limit: 14 }),
     getFeaturedArticle(),
     getPublishedArticles({ category: "MERCATO", limit: 3 }),
@@ -80,8 +78,7 @@ export default async function HomePage() {
     getScorers(),
     getStandings(),
     getFixtures(),
-    getHomeSnapshot(),
-    getExpressFeed({ limit: 5 })
+    getHomeSnapshot()
   ]);
 
   const standings = standingsResult.ok ? standingsResult.data : [];
@@ -122,12 +119,22 @@ export default async function HomePage() {
         <Link href="/resultats" className="v8-live-more">Tout suivre →</Link>
       </section>
 
-      {expressFeed.length > 0 && <section className="home-express-feed">
-        <div className="home-express-head"><div><span>⚡ À LA MINUTE</span><strong>Fil Express</strong></div><Link href="/fil-express">Voir tout le fil →</Link></div>
-        <div className="home-express-list">{expressFeed.map(item => { const meta = expressMeta(item.category); return <Link href={item.link_url || "/fil-express"} key={item.id} className="home-express-item"><time>{new Intl.DateTimeFormat("fr-FR", {hour:"2-digit",minute:"2-digit",timeZone:"Europe/Paris"}).format(new Date(item.published_at))}</time><span>{meta.icon} {meta.label}</span><strong>{item.title}</strong><b>→</b></Link>; })}</div>
-      </section>}
-
-      <MyClubCompact />
+      {focusMatch ? (
+        <section className="v8-focus-match home-focus-banner">
+          <div className="v8-focus-head"><span>{focusLabel}</span><Link href="/resultats">Calendrier →</Link></div>
+          <p>{formatMatchTime(focusMatch)}</p>
+          <div className="v8-focus-teams">
+            <MatchTeam team={focusMatch.home} />
+            <div className="v8-focus-score">
+              {focusMatch.score.home !== null && focusMatch.score.away !== null ? <strong>{focusMatch.score.home}<i>–</i>{focusMatch.score.away}</strong> : <strong>VS</strong>}
+            </div>
+            <MatchTeam team={focusMatch.away} align="right" />
+          </div>
+          <Link href={`/match/${focusMatch.id}`} className="v8-focus-button">Ouvrir le centre match →</Link>
+        </section>
+      ) : (
+        <section className="v8-focus-match home-focus-banner"><div className="v8-focus-head"><span>MATCH À SUIVRE</span></div><p>Le prochain match sera affiché automatiquement.</p></section>
+      )}
 
       <section className="top-grid v8-top-grid">
         <div
@@ -146,23 +153,6 @@ export default async function HomePage() {
         </div>
 
         <aside className="v8-right-rail">
-          {focusMatch ? (
-            <section className="v8-focus-match">
-              <div className="v8-focus-head"><span>{focusLabel}</span><Link href="/resultats">Calendrier →</Link></div>
-              <p>{formatMatchTime(focusMatch)}</p>
-              <div className="v8-focus-teams">
-                <MatchTeam team={focusMatch.home} />
-                <div className="v8-focus-score">
-                  {focusMatch.score.home !== null && focusMatch.score.away !== null ? <strong>{focusMatch.score.home}<i>–</i>{focusMatch.score.away}</strong> : <strong>VS</strong>}
-                </div>
-                <MatchTeam team={focusMatch.away} align="right" />
-              </div>
-              <Link href={`/match/${focusMatch.id}`} className="v8-focus-button">Ouvrir le centre match →</Link>
-            </section>
-          ) : (
-            <section className="v8-focus-match"><div className="v8-focus-head"><span>MATCH À SUIVRE</span></div><p>Le prochain match sera affiché automatiquement.</p></section>
-          )}
-
           <section className="v8-standings-mini">
             <div className="v8-card-head"><div><span>CLASSEMENT</span><strong>Top 5 Ligue 1</strong></div><Link href="/classement">Voir tout →</Link></div>
             {standings.slice(0, 5).map((row) => (
