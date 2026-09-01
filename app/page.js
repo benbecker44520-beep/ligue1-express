@@ -6,6 +6,7 @@ import { getFixtures, getHomeSnapshot, getScorers, getStandings } from "@/lib/fo
 import { getPublishedPredictions } from "@/lib/predictions";
 import { getTransfers } from "@/lib/transfers";
 import { sameEntityName } from "@/lib/content-links";
+import HomeHeroMedia from "@/components/HomeHeroMedia";
 
 export const revalidate = 0;
 
@@ -96,7 +97,8 @@ export default async function HomePage() {
     excerpt: "L'actualité de la Ligue 1, en un clin d'œil."
   };
 
-  const heroImage = hero.image_url || allArticles.find((article) => article.image_url)?.image_url || null;
+  const heroImages = [hero.image_url, ...allArticles.filter((article) => article.slug !== hero.slug).map((article) => article.image_url)].filter(Boolean);
+  const heroImage = heroImages[0] || null;
   const secondary = allArticles.filter((a) => a.slug !== hero.slug).slice(0, 3);
   const latest = allArticles.filter((a) => a.slug !== hero.slug).slice(3, 9);
   const latestTransfers = transfers.slice(0, 4);
@@ -135,12 +137,9 @@ export default async function HomePage() {
       )}
 
       <section className="top-grid v8-top-grid">
-        <div
-          className={`hero v8-hero ${heroImage ? "has-hero-image" : ""}`}
-          style={heroImage ? { backgroundImage: `url("${heroImage}")` } : undefined}
-        >
+        <div className={`hero v8-hero ${heroImage ? "has-hero-image" : ""}`}>
+          <HomeHeroMedia images={heroImages} title={hero.title} />
           <div className="hero-overlay"></div>
-          {!heroImage && <div className="hero-ball">⚽</div>}
           <div className="hero-content">
             <span className="tag tag-yellow">À LA UNE</span>
             <span className="eyebrow">LIGUE 1 · EXPRESS</span>
