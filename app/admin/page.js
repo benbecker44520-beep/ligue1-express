@@ -20,6 +20,22 @@ const emptyPredictionForm = {
   id: null, match_id: "", selection: "1", comment: "", secondary_bet: "", confidence: 7, status: "published"
 };
 
+const predictionChoices = ["1", "N", "2"];
+
+function selectedPredictionChoices(selection = "") {
+  return predictionChoices.filter((choice) => String(selection).includes(choice));
+}
+
+function togglePredictionChoice(selection, choice) {
+  const selected = selectedPredictionChoices(selection);
+  if (selected.includes(choice)) {
+    if (selected.length === 1) return selection;
+    return predictionChoices.filter((item) => item !== choice && selected.includes(item)).join("");
+  }
+  if (selected.length >= 2) return selection;
+  return predictionChoices.filter((item) => item === choice || selected.includes(item)).join("");
+}
+
 const emptyTransferForm = {
   id: null, player_name: "", from_club: "", to_club: "", position: "", transfer_type: "transfer", transfer_status: "rumour", fee: "", note: "", occurred_at: ""
 };
@@ -777,11 +793,11 @@ export default function AdminPage() {
             <div>
               <span className="admin-field-label">Pronostic</span>
               <div className="prediction-choice-buttons">
-                {["1","N","2"].map(choice => (
-                  <button type="button" key={choice} className={predictionForm.selection === choice ? "active" : ""} onClick={() => setPredictionForm({...predictionForm, selection:choice})}>{choice}</button>
+                {predictionChoices.map(choice => (
+                  <button type="button" key={choice} className={selectedPredictionChoices(predictionForm.selection).includes(choice) ? "active" : ""} onClick={() => setPredictionForm({...predictionForm, selection:togglePredictionChoice(predictionForm.selection, choice)})}>{choice}</button>
                 ))}
               </div>
-              <small className="prediction-help">1 = domicile · N = nul · 2 = extérieur</small>
+              <small className="prediction-help">1 = domicile · N = nul · 2 = extérieur · 2 choix maximum</small>
             </div>
 
             <label>

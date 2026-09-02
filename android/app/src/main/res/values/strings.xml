@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Ligue 1 Express</string>
+    <string name="title_activity_main">Ligue 1 Express</string>
+    <string name="package_name">fr.ligue1express.app</string>
+    <string name="custom_url_scheme">fr.ligue1express.app</string>
+</resources>

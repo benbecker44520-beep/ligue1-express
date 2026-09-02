@@ -1,0 +1,9 @@
+{
+  "appId": "fr.ligue1express.app",
+  "appName": "Ligue 1 Express",
+  "webDir": "public",
+  "server": {
+    "url": "https://ligue1-express.vercel.app",
+    "cleartext": false
+  }
+}

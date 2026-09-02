@@ -6,7 +6,22 @@ export const metadata = { title: "Pronostics", description: "Les pronostics foot
 
 function formatDate(value) { if (!value) return "Date à confirmer"; return new Intl.DateTimeFormat("fr-FR", { weekday:"short", day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit", timeZone:"Europe/Paris" }).format(new Date(value)); }
 function verdictLabel(v) { return v === "won" ? "✅ GAGNÉ" : v === "lost" ? "❌ PERDU" : "⏳ EN ATTENTE"; }
-function pickLabel(p) { return p.selection === "1" ? `Victoire de ${p.home_team}` : p.selection === "2" ? `Victoire de ${p.away_team}` : "Match nul"; }
+function pickLabel(p) {
+  if (p.selection === "1") return `Victoire de ${p.home_team}`;
+  if (p.selection === "N") return "Match nul";
+  if (p.selection === "2") return `Victoire de ${p.away_team}`;
+  if (p.selection === "1N") return `${p.home_team} ou match nul`;
+  if (p.selection === "N2") return `Match nul ou ${p.away_team}`;
+  if (p.selection === "12") return `${p.home_team} ou ${p.away_team}`;
+  return `Choix ${p.selection}`;
+}
+
+function pickDescription(selection) {
+  if (selection === "1") return "Victoire de l’équipe à domicile";
+  if (selection === "N") return "Aucun vainqueur";
+  if (selection === "2") return "Victoire de l’équipe à l’extérieur";
+  return "Double chance";
+}
 function legacySecondaryBet(p) {
   if (p.secondary_bet) return p.secondary_bet;
   const text = String(p.comment || "").trim();
@@ -43,7 +58,7 @@ export default async function PronoPage() {
         return <article className={`prono-card prono-card-v6 prono-${p.verdict}`} key={p.id}>
           <div className="prono-card-top"><span>{p.competition||"Ligue 1"}</span><strong className={`prono-verdict ${p.verdict}`}>{verdictLabel(p.verdict)}</strong></div>
           <div className="prono-match prono-match-v601"><div className="prono-team">{m?.home?.logo && <Image src={m.home.logo} alt="" width={42} height={42} unoptimized />}<strong>{p.home_team}</strong></div><div className="prono-score"><b>{has?`${hs} - ${as}`:"VS"}</b><small>{formatDate(p.match_date)}</small></div><div className="prono-team">{m?.away?.logo && <Image src={m.away.logo} alt="" width={42} height={42} unoptimized />}<strong>{p.away_team}</strong></div></div>
-          <div className="prono-main-pick"><span>🎯 NOTRE PRONOSTIC</span><h3>{pickLabel(p)}</h3><small>Choix {p.selection} · {p.selection==="1"?"Victoire de l’équipe à domicile":p.selection==="2"?"Victoire de l’équipe à l’extérieur":"Aucun vainqueur"}</small></div>
+          <div className="prono-main-pick"><span>🎯 NOTRE PRONOSTIC</span><h3>{pickLabel(p)}</h3><small>Choix {p.selection} · {pickDescription(p.selection)}</small></div>
           <div className="prono-details prono-details-v601"><div className={!p.confidence ? "prono-detail-muted" : ""}><span>🔥 Indice de confiance</span>{p.confidence ? <><strong>{p.confidence}/10</strong><div className="confidence-track"><i style={{width:`${p.confidence*10}%`}} /></div></> : <small>À renseigner par la rédaction</small>}</div>{legacySecondaryBet(p) && <div><span>⚽ Pari complémentaire</span><strong>{legacySecondaryBet(p)}</strong></div>}</div>
           {analysisText(p) ? <div className="prono-analysis"><span>📝 L'ANALYSE EXPRESS</span><p>{analysisText(p)}</p></div> : <div className="prono-analysis prono-analysis-empty"><span>📝 L'ANALYSE EXPRESS</span><p>Analyse à venir.</p></div>}
         </article>})}</div>}
