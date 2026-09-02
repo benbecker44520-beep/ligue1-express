@@ -142,6 +142,7 @@ export default async function HomePage() {
         <Link href="/resultats" className="v8-live-more">Tout suivre →</Link>
       </section>
 
+      {weekPrediction && <MatchOfTheWeek prediction={weekPrediction} match={weekMatch} stats={weekStats} homeForm={weekHomeForm} awayForm={weekAwayForm} meetings={weekMeetings} />}
 
 
       {secondary.length > 0 && (
@@ -240,8 +241,6 @@ export default async function HomePage() {
           </div>
         </section>
       )}
-
-      {weekPrediction && <MatchOfTheWeek prediction={weekPrediction} match={weekMatch} stats={weekStats} homeForm={weekHomeForm} awayForm={weekAwayForm} meetings={weekMeetings} />}
 
       <section className="content-section v8-news-section">
         <div className="section-title"><div><span className="eyebrow section-eyebrow">FIL INFO</span><h2>Dernières actualités</h2></div><Link href="/actualites">Voir toutes les actus →</Link></div>

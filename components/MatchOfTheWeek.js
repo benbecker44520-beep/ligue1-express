@@ -44,11 +44,14 @@ export default function MatchOfTheWeek({ prediction, match, stats, homeForm, awa
       </div>
       <div className="week-team away">{match?.away?.logo && <Image src={match.away.logo} width={72} height={72} alt="" unoptimized />}<strong>{prediction.away_team}</strong></div>
     </div>
-    <div className="week-insights">
-      <div className="week-forms"><span>📈 FORME RÉCENTE</span><TeamForm name={prediction.home_team} logo={match?.home?.logo} form={homeForm} /><TeamForm name={prediction.away_team} logo={match?.away?.logo} form={awayForm} /></div>
-      <div className="week-editorial"><span>✍️ PRONO DE LA RÉDACTION</span><strong>{prediction.selection}</strong><p>{prediction.comment || "L’analyse de la rédaction accompagne ce grand rendez-vous."}</p>{prediction.confidence && <small>Confiance {prediction.confidence}/10</small>}</div>
-      <div className="week-info"><span>🔎 À SURVEILLER</span><p><b>Joueurs :</b> {prediction.players_to_watch || "À confirmer"}</p><p><b>Absents :</b> {prediction.absentees || "Aucun absent renseigné"}</p>{meetings.length > 0 && <div><b>Derniers face-à-face</b>{meetings.map((item) => <small key={item.id}>{item.home.shortName || item.home.name} {item.score.home}–{item.score.away} {item.away.shortName || item.away.name}</small>)}</div>}</div>
-    </div>
+    <details className="week-details">
+      <summary>Voir l’analyse, la forme et les absents <span>＋</span></summary>
+      <div className="week-insights">
+        <div className="week-forms"><span>📈 FORME RÉCENTE</span><TeamForm name={prediction.home_team} logo={match?.home?.logo} form={homeForm} /><TeamForm name={prediction.away_team} logo={match?.away?.logo} form={awayForm} /></div>
+        <div className="week-editorial"><span>✍️ PRONO DE LA RÉDACTION</span><strong>{prediction.selection}</strong><p>{prediction.comment || "L’analyse de la rédaction accompagne ce grand rendez-vous."}</p>{prediction.confidence && <small>Confiance {prediction.confidence}/10</small>}</div>
+        <div className="week-info"><span>🔎 À SURVEILLER</span><p><b>Joueurs :</b> {prediction.players_to_watch || "À confirmer"}</p><p><b>Absents :</b> {prediction.absentees || "Aucun absent renseigné"}</p>{meetings.length > 0 && <div><b>Derniers face-à-face</b>{meetings.map((item) => <small key={item.id}>{item.home.shortName || item.home.name} {item.score.home}–{item.score.away} {item.away.shortName || item.away.name}</small>)}</div>}</div>
+      </div>
+    </details>
     <SupporterPrediction matchId={prediction.match_id} matchDate={prediction.match_date} homeTeam={prediction.home_team} awayTeam={prediction.away_team} editorialSelection={prediction.selection} outcome={prediction.outcome} initialStats={stats} />
     <Link className="week-match-link" href={`/match/${prediction.match_id}`}>Ouvrir le Centre Match →</Link>
   </section>;
