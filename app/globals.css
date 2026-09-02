@@ -1134,3 +1134,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 
 /* V8.9.9.1 - Images Studio Social */
 .social-image-card{display:grid;gap:11px;padding:14px;border:1px solid #e2e8f0;border-radius:14px;background:#f8fafc}.social-image-card>div:first-child{display:grid;gap:3px}.social-image-card strong{color:#0b2d6b;font-size:13px}.social-image-card span{font-size:11px;color:#64748b}.social-image-input{display:none}.social-image-actions{display:flex;flex-wrap:wrap;gap:8px}.social-image-actions button{border:1px solid #d7dfeb;background:#fff;color:#0b2d6b;border-radius:10px;padding:9px 11px;font-weight:900;cursor:pointer}.social-image-actions button.active{background:#0b2d6b;color:#fff;border-color:#0b2d6b}.social-image-thumb{position:relative;overflow:hidden;border-radius:12px;background:#071f4f;aspect-ratio:16/9;max-width:360px}.social-image-thumb img{width:100%;height:100%;object-fit:cover;display:block}.social-image-thumb button{position:absolute;right:8px;top:8px;border:0;border-radius:8px;padding:7px 9px;background:rgba(7,31,79,.9);color:#fff;font-weight:800;cursor:pointer}
+
+
+/* V8.9.9.2 - Templates média & logos clubs */
+.social-club-auto{display:flex;flex-wrap:wrap;gap:8px}.social-club-auto span{display:inline-flex;align-items:center;gap:5px;border:1px solid #dce3eb;background:#fff;border-radius:999px;padding:6px 9px;font-size:10px!important;font-weight:850;color:#50627a!important}
