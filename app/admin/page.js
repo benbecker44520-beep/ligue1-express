@@ -995,7 +995,7 @@ export default function AdminPage() {
         </div>
       </section>}
 
-      {adminSection === "social" && <SocialStudio articles={articles} />}
+      {adminSection === "social" && <SocialStudio articles={articles} predictions={predictions} upcomingMatches={upcomingMatches} finishedMatches={finishedMatches} transfers={transfers} />}
 
       {adminSection === "analytics" && <AnalyticsAdmin />}
 
