@@ -194,7 +194,8 @@ export default function AdminPage() {
   }
 
   async function savePrediction(e) {
-    e.preventDefault();
+    e?.preventDefault?.();
+    setPredictionMessage("Enregistrement en cours...");
     const match = upcomingMatches.find((m) => String(m.id) === String(predictionForm.match_id));
     const existing = predictions.find((p) => String(p.id) === String(predictionForm.id));
     if (!match && !existing) {
@@ -216,21 +217,25 @@ export default function AdminPage() {
       updated_at: new Date().toISOString()
     };
 
-    let error;
-    if (predictionForm.id) {
-      ({ error } = await supabase.from("predictions").update(payload).eq("id", predictionForm.id));
-    } else {
-      ({ error } = await supabase.from("predictions").insert(payload));
-    }
+    try {
+      let error;
+      if (predictionForm.id) {
+        ({ error } = await supabase.from("predictions").update(payload).eq("id", predictionForm.id));
+      } else {
+        ({ error } = await supabase.from("predictions").insert(payload));
+      }
 
-    if (error) {
-      setPredictionMessage(error.code === "23505" ? "Un prono existe déjà pour ce match." : error.message);
-      return;
-    }
+      if (error) {
+        setPredictionMessage(error.code === "23505" ? "Un prono existe déjà pour ce match." : error.message);
+        return;
+      }
 
-    setPredictionMessage(predictionForm.id ? "Prono modifié ✅" : "Prono enregistré ✅");
-    resetPredictionForm();
-    await loadPredictions();
+      setPredictionMessage(predictionForm.id ? "Prono modifié ✅" : "Prono enregistré ✅");
+      resetPredictionForm();
+      await loadPredictions();
+    } catch (error) {
+      setPredictionMessage(error?.message || "Erreur pendant l’enregistrement du prono.");
+    }
   }
 
   async function removePrediction(id) {
@@ -252,7 +257,8 @@ export default function AdminPage() {
   function editTransfer(t) { setTransferForm({ ...emptyTransferForm, ...t, occurred_at: t.occurred_at || "" }); setTransferMessage("Mode modification activé."); }
   function resetTransferForm() { setTransferForm(emptyTransferForm); }
   async function saveTransfer(e) {
-    e.preventDefault();
+    e?.preventDefault?.();
+    setTransferMessage("Enregistrement en cours...");
     const payload = { player_name:transferForm.player_name.trim(), from_club:transferForm.from_club.trim()||null, to_club:transferForm.to_club.trim()||null, position:transferForm.position.trim()||null, transfer_type:transferForm.transfer_type, transfer_status:transferForm.transfer_status, fee:transferForm.fee.trim()||null, note:transferForm.note.trim()||null, occurred_at:transferForm.occurred_at||null, updated_at:new Date().toISOString() };
     let error; if (transferForm.id) ({error}=await supabase.from("transfers").update(payload).eq("id",transferForm.id)); else ({error}=await supabase.from("transfers").insert(payload));
     if(error){setTransferMessage(error.message);return;} setTransferMessage(transferForm.id?"Mouvement modifié ✅":"Mouvement ajouté ✅"); resetTransferForm(); await loadTransfers();
@@ -284,7 +290,8 @@ export default function AdminPage() {
   }
 
   async function addScorer(e) {
-    e.preventDefault();
+    e?.preventDefault?.();
+    setScorerMessage("Enregistrement en cours...");
     if (!selectedMatchId || !scorerForm.player_name.trim() || scorerForm.minute === "") return;
     const minute = Number(scorerForm.minute);
     if (!Number.isInteger(minute) || minute < 0 || minute > 130) {
@@ -329,7 +336,8 @@ export default function AdminPage() {
   }
 
   async function addMatchEvent(e) {
-    e.preventDefault();
+    e?.preventDefault?.();
+    setEventMessage("Enregistrement en cours...");
     if (!selectedMatchId || eventForm.minute === "") return;
     const minute = Number(eventForm.minute);
     if (!Number.isInteger(minute) || minute < 0 || minute > 130) {
@@ -454,7 +462,7 @@ export default function AdminPage() {
   }
 
   async function saveArticle(e) {
-    e.preventDefault();
+    e?.preventDefault?.();
     if (!form.title.trim()) return;
 
     setSaving(true);
@@ -583,7 +591,7 @@ export default function AdminPage() {
         <form className="admin-form login-form" onSubmit={login}>
           <label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
           <label>Mot de passe<input type="password" value={password} onChange={e => setPassword(e.target.value)} required /></label>
-          <button className="primary-button">Se connecter</button>
+          <button type="submit" className="primary-button">Se connecter</button>
           {message && <p className="admin-message">{message}</p>}
         </form>
       </div>
@@ -598,18 +606,18 @@ export default function AdminPage() {
           <h1>Administration</h1>
           <p className="admin-dashboard-subtitle">Choisis ce que tu veux gérer.</p>
         </div>
-        <button className="secondary-button" onClick={logout}>Déconnexion</button>
+        <button type="button" className="secondary-button" onClick={logout}>Déconnexion</button>
       </div>
 
       <nav className="admin-dashboard-menu" aria-label="Menu administration">
-        <button className={adminSection === "articles" ? "active" : ""} onClick={() => setAdminSection("articles")}><span>📰</span><strong>Articles</strong><small>Publier, modifier et mettre à la Une</small></button>
-        <button className={adminSection === "predictions" ? "active" : ""} onClick={() => setAdminSection("predictions")}><span>🎯</span><strong>Pronostics</strong><small>Pronostics de la rédaction</small></button>
-        <button className={adminSection === "transfers" ? "active" : ""} onClick={() => setAdminSection("transfers")}><span>🔁</span><strong>Mercato</strong><small>Arrivées, départs et rumeurs</small></button>
-        <button className={adminSection === "scorers" ? "active" : ""} onClick={() => setAdminSection("scorers")}><span>⚽</span><strong>Buteurs</strong><small>Buteurs des matchs terminés</small></button>
-        <button className={adminSection === "events" ? "active" : ""} onClick={() => setAdminSection("events")}><span>🟨</span><strong>Faits marquants</strong><small>Cartons, VAR et remplacements</small></button>
-        <button className={adminSection === "newsletter" ? "active" : ""} onClick={() => setAdminSection("newsletter")}><span>📩</span><strong>Newsletter</strong><small>Voir et gérer les abonnés</small></button>
-        <button className={adminSection === "social" ? "active" : ""} onClick={() => setAdminSection("social")}><span>🎨</span><strong>Studio Social</strong><small>Visuels et textes Facebook / X</small></button>
-        <button className={adminSection === "analytics" ? "active" : ""} onClick={() => setAdminSection("analytics")}><span>📊</span><strong>Statistiques</strong><small>Visiteurs, pages vues et audience</small></button>
+        <button type="button" className={adminSection === "articles" ? "active" : ""} onClick={() => setAdminSection("articles")}><span>📰</span><strong>Articles</strong><small>Publier, modifier et mettre à la Une</small></button>
+        <button type="button" className={adminSection === "predictions" ? "active" : ""} onClick={() => setAdminSection("predictions")}><span>🎯</span><strong>Pronostics</strong><small>Pronostics de la rédaction</small></button>
+        <button type="button" className={adminSection === "transfers" ? "active" : ""} onClick={() => setAdminSection("transfers")}><span>🔁</span><strong>Mercato</strong><small>Arrivées, départs et rumeurs</small></button>
+        <button type="button" className={adminSection === "scorers" ? "active" : ""} onClick={() => setAdminSection("scorers")}><span>⚽</span><strong>Buteurs</strong><small>Buteurs des matchs terminés</small></button>
+        <button type="button" className={adminSection === "events" ? "active" : ""} onClick={() => setAdminSection("events")}><span>🟨</span><strong>Faits marquants</strong><small>Cartons, VAR et remplacements</small></button>
+        <button type="button" className={adminSection === "newsletter" ? "active" : ""} onClick={() => setAdminSection("newsletter")}><span>📩</span><strong>Newsletter</strong><small>Voir et gérer les abonnés</small></button>
+        <button type="button" className={adminSection === "social" ? "active" : ""} onClick={() => setAdminSection("social")}><span>🎨</span><strong>Studio Social</strong><small>Visuels et textes Facebook / X</small></button>
+        <button type="button" className={adminSection === "analytics" ? "active" : ""} onClick={() => setAdminSection("analytics")}><span>📊</span><strong>Statistiques</strong><small>Visiteurs, pages vues et audience</small></button>
       </nav>
 
       {adminSection === "articles" && <>
@@ -683,7 +691,7 @@ export default function AdminPage() {
             </select>
           </label>
 
-          <button className="primary-button" disabled={saving}>
+          <button type="button" className="primary-button" disabled={saving} onClick={saveArticle}>
             {saving ? "Enregistrement..." : form.id ? "Enregistrer les modifications" : "Enregistrer l'article"}
           </button>
         </form>
@@ -798,7 +806,7 @@ export default function AdminPage() {
               </select>
             </label>
 
-            <button className="primary-button">{predictionForm.id ? "Enregistrer le prono" : "Publier le prono"}</button>
+            <button type="button" className="primary-button" onClick={savePrediction}>{predictionForm.id ? "Enregistrer le prono" : "Publier le prono"}</button>
           </form>
 
           <div className="predictions-admin-list">
@@ -829,7 +837,7 @@ export default function AdminPage() {
           <div className="admin-two-cols"><label>Statut<select value={transferForm.transfer_status} onChange={e=>setTransferForm({...transferForm,transfer_status:e.target.value})}><option value="official">✅ Officiel</option><option value="advanced">🔥 Dossier avancé</option><option value="rumour">👀 Rumeur</option></select></label><label>Type<select value={transferForm.transfer_type} onChange={e=>setTransferForm({...transferForm,transfer_type:e.target.value})}><option value="transfer">Transfert</option><option value="loan">Prêt</option><option value="free">Libre</option><option value="return">Retour de prêt</option></select></label></div>
           <div className="admin-two-cols"><label>Poste<input value={transferForm.position} onChange={e=>setTransferForm({...transferForm,position:e.target.value})} placeholder="Milieu" /></label><label>Montant<input value={transferForm.fee} onChange={e=>setTransferForm({...transferForm,fee:e.target.value})} placeholder="25 M€ / Libre" /></label></div>
           <label>Date<input type="date" value={transferForm.occurred_at} onChange={e=>setTransferForm({...transferForm,occurred_at:e.target.value})} /></label><label>Note<textarea value={transferForm.note} onChange={e=>setTransferForm({...transferForm,note:e.target.value})} placeholder="Contexte du dossier..." /></label>
-          <button className="primary-button">{transferForm.id?"Enregistrer":"Ajouter au Centre Mercato"}</button>
+          <button type="button" className="primary-button" onClick={saveTransfer}>{transferForm.id?"Enregistrer":"Ajouter au Centre Mercato"}</button>
         </form><div className="predictions-admin-list"><h3>Mouvements suivis</h3>{transfers.length===0?<p>Aucun mouvement.</p>:transfers.map(t=><div className="prediction-admin-card" key={t.id}><div className="prediction-admin-main"><div><span className="tag">{t.transfer_status}</span><strong>{t.player_name}</strong></div><small>{t.from_club||"Libre"} → {t.to_club||"?"}</small>{t.note&&<p>{t.note}</p>}</div><div className="admin-actions"><button className="mini-button" onClick={()=>editTransfer(t)}>Modifier</button><button className="mini-button danger" onClick={()=>removeTransfer(t.id)}>Supprimer</button></div></div>)}</div></div>
       </section>}
 
@@ -885,7 +893,7 @@ export default function AdminPage() {
               </select>
             </label>
 
-            <button className="primary-button">Ajouter le buteur</button>
+            <button type="button" className="primary-button" onClick={addScorer}>Ajouter le buteur</button>
           </form>
 
           <div className="scorers-admin-list">
@@ -967,7 +975,7 @@ export default function AdminPage() {
               <input value={eventForm.reason} onChange={e => setEventForm({...eventForm, reason:e.target.value})} placeholder="Ex. faute, contestation, VAR hors-jeu..." />
             </label>
 
-            <button className="primary-button">Ajouter l'action</button>
+            <button type="button" className="primary-button" onClick={addMatchEvent}>Ajouter l'action</button>
           </form>
 
           <div className="scorers-admin-list">
