@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createSupabaseClient } from "@/lib/supabase";
+import ShareButtons from "@/components/ShareButtons";
 
 const VOTER_KEY = "ligue1-express-supporter-voter-v1";
 const PICKS_KEY = "ligue1-express-supporter-picks-v1";
@@ -133,5 +134,6 @@ export default function SupporterPrediction({ matchId, matchDate, homeTeam, away
       <small>{closed ? "🔒 Votes clôturés au coup d’envoi" : choice ? "Tu peux modifier ton choix jusqu’au coup d’envoi." : "Un seul vote par personne et par match."}</small>
       {message && <span>{message}</span>}
     </div>
+    {choice && <div className="supporter-share"><span>Partager mon pronostic {choice}</span><ShareButtons compact title={`Mon pronostic pour ${homeTeam} - ${awayTeam} : ${choice}`} path="/prono" /></div>}
   </section>;
 }

@@ -8,6 +8,7 @@ import { getTransfers } from "@/lib/transfers";
 import { sameEntityName } from "@/lib/content-links";
 import HomeHeroMedia from "@/components/HomeHeroMedia";
 import { getAllSupporterPredictionStats } from "@/lib/supporter-predictions";
+import MatchOfTheWeek from "@/components/MatchOfTheWeek";
 
 export const revalidate = 0;
 
@@ -69,6 +70,19 @@ function formTable(fixtures = [], standings = []) {
     .slice(0, 5);
 }
 
+function recentForm(fixtures, teamId, excludedMatchId) {
+  return fixtures.filter((match) => match.status === "FINISHED" && String(match.id) !== String(excludedMatchId) && (String(match.home.id) === String(teamId) || String(match.away.id) === String(teamId))).sort((a, b) => b.timestamp - a.timestamp).slice(0, 5).reverse().map((match) => {
+    const home = String(match.home.id) === String(teamId);
+    const scored = home ? match.score.home : match.score.away;
+    const conceded = home ? match.score.away : match.score.home;
+    return scored > conceded ? "V" : scored < conceded ? "D" : "N";
+  });
+}
+
+function headToHead(fixtures, homeId, awayId, excludedMatchId) {
+  return fixtures.filter((match) => match.status === "FINISHED" && String(match.id) !== String(excludedMatchId) && [String(match.home.id), String(match.away.id)].includes(String(homeId)) && [String(match.home.id), String(match.away.id)].includes(String(awayId))).sort((a, b) => b.timestamp - a.timestamp).slice(0, 3);
+}
+
 export default async function HomePage() {
   const [allArticles, featuredArticle, mercatoArticles, analyses, predictions, transfers, scorersResult, standingsResult, fixturesResult, snapshotResult, supporterStats] = await Promise.all([
     getPublishedArticles({ limit: 14 }),
@@ -92,7 +106,12 @@ export default async function HomePage() {
   const featuredPrediction = [...predictions]
     .filter((prediction) => prediction.verdict === "pending")
     .sort((a, b) => new Date(a.match_date || 0) - new Date(b.match_date || 0))[0] || predictions[0] || null;
-  const featuredSupport = featuredPrediction ? supporterStats[String(featuredPrediction.match_id)] : null;
+  const weekPrediction = predictions.find((prediction) => prediction.is_week_match) || featuredPrediction;
+  const weekMatch = weekPrediction?.match || fixtures.find((match) => String(match.id) === String(weekPrediction?.match_id)) || null;
+  const weekStats = weekPrediction ? supporterStats[String(weekPrediction.match_id)] : null;
+  const weekHomeForm = weekMatch ? recentForm(fixtures, weekMatch.home.id, weekMatch.id) : [];
+  const weekAwayForm = weekMatch ? recentForm(fixtures, weekMatch.away.id, weekMatch.id) : [];
+  const weekMeetings = weekMatch ? headToHead(fixtures, weekMatch.home.id, weekMatch.away.id, weekMatch.id) : [];
 
   const hero = featuredArticle || allArticles[0] || {
     slug: "debrief-express-journee",
@@ -222,12 +241,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      {featuredPrediction && (
-        <section className="home-prono-card v8-prono">
-          <div><span className="eyebrow">LE PRONO LIGUE 1 EXPRESS</span><h2>{featuredPrediction.home_team} - {featuredPrediction.away_team}</h2><p>{featuredPrediction.secondary_bet || featuredPrediction.comment || "Le choix de la rédaction pour ce match."}</p></div>
-          <div className="home-prono-duel"><div><span>Rédaction</span><strong>{featuredPrediction.selection}</strong></div><i>VS</i><div><span>Supporters{featuredSupport?.majority ? ` · ${featuredSupport.majorityPercentage}%` : ""}</span><strong>{featuredSupport?.majority || "—"}</strong></div><Link href="/prono">Voir le duel →</Link></div>
-        </section>
-      )}
+      {weekPrediction && <MatchOfTheWeek prediction={weekPrediction} match={weekMatch} stats={weekStats} homeForm={weekHomeForm} awayForm={weekAwayForm} meetings={weekMeetings} />}
 
       <section className="content-section v8-news-section">
         <div className="section-title"><div><span className="eyebrow section-eyebrow">FIL INFO</span><h2>Dernières actualités</h2></div><Link href="/actualites">Voir toutes les actus →</Link></div>

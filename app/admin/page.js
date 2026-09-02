@@ -17,7 +17,7 @@ function slugify(value) {
 }
 
 const emptyPredictionForm = {
-  id: null, match_id: "", selection: "1", comment: "", secondary_bet: "", confidence: 7, status: "published"
+  id: null, match_id: "", selection: "1", comment: "", secondary_bet: "", confidence: 7, status: "published", is_week_match: false, players_to_watch: "", absentees: ""
 };
 
 const predictionChoices = ["1", "N", "2"];
@@ -200,7 +200,10 @@ export default function AdminPage() {
       comment: prediction.comment || "",
       secondary_bet: prediction.secondary_bet || "",
       confidence: prediction.confidence || 7,
-      status: prediction.status || "draft"
+      status: prediction.status || "draft",
+      is_week_match: Boolean(prediction.is_week_match),
+      players_to_watch: prediction.players_to_watch || "",
+      absentees: prediction.absentees || ""
     });
     setPredictionMessage("Mode modification du prono activé.");
   }
@@ -230,11 +233,21 @@ export default function AdminPage() {
       secondary_bet: predictionForm.secondary_bet.trim() || null,
       confidence: Number(predictionForm.confidence) || null,
       status: predictionForm.status,
+      is_week_match: Boolean(predictionForm.is_week_match),
+      players_to_watch: predictionForm.players_to_watch.trim() || null,
+      absentees: predictionForm.absentees.trim() || null,
       updated_at: new Date().toISOString()
     };
 
     try {
       let error;
+      if (predictionForm.is_week_match) {
+        const { error: unfeatureError } = await supabase.from("predictions").update({ is_week_match: false }).eq("is_week_match", true);
+        if (unfeatureError) {
+          setPredictionMessage(unfeatureError.message);
+          return;
+        }
+      }
       if (predictionForm.id) {
         ({ error } = await supabase.from("predictions").update(payload).eq("id", predictionForm.id));
       } else {
@@ -815,6 +828,21 @@ export default function AdminPage() {
             </label>
 
             <label>
+              Joueurs à surveiller
+              <input value={predictionForm.players_to_watch} onChange={e => setPredictionForm({...predictionForm, players_to_watch:e.target.value})} placeholder="Ex. Joueur A, Joueur B" />
+            </label>
+
+            <label>
+              Absents importants
+              <input value={predictionForm.absentees} onChange={e => setPredictionForm({...predictionForm, absentees:e.target.value})} placeholder="Ex. Joueur C (blessé), Joueur D (suspendu)" />
+            </label>
+
+            <label className="prediction-week-toggle">
+              <input type="checkbox" checked={predictionForm.is_week_match} onChange={e => setPredictionForm({...predictionForm, is_week_match:e.target.checked})} />
+              <span><strong>⭐ Match de la semaine</strong><small>Mettre ce match en grand sur l’accueil</small></span>
+            </label>
+
+            <label>
               Publication
               <select value={predictionForm.status} onChange={e => setPredictionForm({...predictionForm, status:e.target.value})}>
                 <option value="draft">Brouillon</option>
@@ -831,7 +859,7 @@ export default function AdminPage() {
               <div className="prediction-admin-card" key={prediction.id}>
                 <div className="prediction-admin-main">
                   <div><span className="tag">{prediction.selection}</span><strong>{prediction.home_team} - {prediction.away_team}</strong></div>
-                  <small>{prediction.status === "published" ? "Publié" : "Brouillon"}</small>
+                  <small>{prediction.status === "published" ? "Publié" : "Brouillon"}{prediction.is_week_match ? " · ⭐ Match de la semaine" : ""}</small>
                   {prediction.comment && <p>{prediction.comment}</p>}
                 </div>
                 <div className="admin-actions">
