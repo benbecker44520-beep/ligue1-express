@@ -44,14 +44,33 @@ function percentages(rows = []) {
   return { ...Object.fromEntries(parts.map((part) => [part.selection, part.value])), total };
 }
 
-export default function SupporterPrediction({ matchId, matchDate, homeTeam, awayTeam }) {
+function majorityChoice(stats) {
+  if (!stats.total) return null;
+  const highest = Math.max(...CHOICES.map((item) => stats[item]));
+  const leaders = CHOICES.filter((item) => stats[item] === highest);
+  return leaders.length === 1 ? leaders[0] : null;
+}
+
+function duelResult(editorialSelection, supporterChoice, outcome) {
+  if (!outcome || !supporterChoice) return "";
+  const editorialWon = String(editorialSelection || "").includes(outcome);
+  const supportersWon = supporterChoice === outcome;
+  if (editorialWon && supportersWon) return "🤝 Les deux avaient raison";
+  if (editorialWon) return "✍️ Point pour la rédaction";
+  if (supportersWon) return "👥 Point pour les supporters";
+  return "❌ Personne n’avait vu juste";
+}
+
+export default function SupporterPrediction({ matchId, matchDate, homeTeam, awayTeam, editorialSelection, outcome, initialStats }) {
   const supabase = useMemo(() => createSupabaseClient(), []);
-  const [stats, setStats] = useState({ "1": 0, "N": 0, "2": 0, total: 0 });
+  const [stats, setStats] = useState(initialStats ? { ...initialStats.percentages, total: initialStats.total } : { "1": 0, "N": 0, "2": 0, total: 0 });
   const [choice, setChoice] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const closed = !matchDate || new Date(matchDate).getTime() <= Date.now();
   const choiceLabels = labels(homeTeam, awayTeam);
+  const supporterChoice = majorityChoice(stats);
+  const resultLabel = duelResult(editorialSelection, supporterChoice, outcome);
 
   async function loadStats() {
     if (!supabase) return setLoading(false);
@@ -103,6 +122,12 @@ export default function SupporterPrediction({ matchId, matchDate, homeTeam, away
         <i><b style={{ width: `${stats[item]}%` }} /></i>
       </div>)}
     </div>
+
+    {stats.total > 0 && <div className="prediction-duel-inline">
+      <div><span>Rédaction</span><strong>{editorialSelection}</strong></div><i>VS</i>
+      <div><span>Supporters{supporterChoice ? ` · ${stats[supporterChoice]}%` : ""}</span><strong>{supporterChoice || "="}</strong></div>
+      <b>{resultLabel || (supporterChoice ? "Duel en attente du résultat" : "Tendance partagée")}</b>
+    </div>}
 
     <div className="supporter-vote-foot">
       <small>{closed ? "🔒 Votes clôturés au coup d’envoi" : choice ? "Tu peux modifier ton choix jusqu’au coup d’envoi." : "Un seul vote par personne et par match."}</small>

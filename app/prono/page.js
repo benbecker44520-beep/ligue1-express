@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { getPublishedPredictions } from "@/lib/predictions";
 import SupporterPrediction from "@/components/SupporterPrediction";
+import { getAllSupporterPredictionStats } from "@/lib/supporter-predictions";
 
 export const revalidate = 0;
 export const metadata = { title: "Pronostics", description: "Les pronostics football de la rédaction Ligue 1 Express, expliqués clairement et suivis après chaque match." };
@@ -35,13 +36,22 @@ function analysisText(p) {
 }
 
 export default async function PronoPage() {
-  const predictions = await getPublishedPredictions();
+  const [predictions, supporterStats] = await Promise.all([getPublishedPredictions(), getAllSupporterPredictionStats()]);
   const settled = predictions.filter(p => p.verdict !== "pending");
   const won = settled.filter(p => p.verdict === "won").length;
   const lost = settled.length - won;
   const pending = predictions.length - settled.length;
   const successRate = settled.length ? Math.round(won / settled.length * 100) : 0;
   const lastFive = settled.slice(0,5);
+  const evaluatedDuels = settled.filter((p) => supporterStats[String(p.match_id)]?.majority);
+  const editorialDuelWins = evaluatedDuels.filter((p) => p.verdict === "won").length;
+  const supporterDuelWins = evaluatedDuels.filter((p) => supporterStats[String(p.match_id)].majority === p.outcome).length;
+  const agreements = predictions.filter((p) => {
+    const majority = supporterStats[String(p.match_id)]?.majority;
+    return majority && String(p.selection).includes(majority);
+  }).length;
+  const editorialDuelRate = evaluatedDuels.length ? Math.round(editorialDuelWins * 100 / evaluatedDuels.length) : 0;
+  const supporterDuelRate = evaluatedDuels.length ? Math.round(supporterDuelWins * 100 / evaluatedDuels.length) : 0;
   return <div className="page-shell listing-page prono-page">
     <span className="eyebrow">LES CHOIX DE LA RÉDACTION</span><h1>Pronostics</h1>
     <p className="prono-intro">Un choix clair, notre lecture du match et un indice de confiance. Après le coup de sifflet final, le bilan se met à jour automatiquement.</p>
@@ -51,6 +61,11 @@ export default async function PronoPage() {
         <div className="prono-kpis"><div><strong>{won}</strong><span>Gagnés</span></div><div><strong>{lost}</strong><span>Perdus</span></div><div><strong>{pending}</strong><span>En attente</span></div></div>
         {lastFive.length > 0 && <div className="prono-form"><span>5 derniers</span>{lastFive.map(p=><i key={p.id} className={p.verdict}>{p.verdict === "won" ? "G" : "P"}</i>)}</div>}
       </div>
+    </section>
+    <section className="editorial-supporters-summary">
+      <div className="duel-summary-title"><span>⚔️ V8.11 · LE DUEL</span><h2>Rédaction contre Supporters</h2><p>Qui lit le mieux les matchs de Ligue 1 Express ?</p></div>
+      <div className="duel-summary-score"><div><span>✍️ Rédaction</span><strong>{editorialDuelRate}%</strong><small>{editorialDuelWins} bon{editorialDuelWins > 1 ? "s" : ""} pronostic{editorialDuelWins > 1 ? "s" : ""}</small></div><i>VS</i><div><span>👥 Supporters</span><strong>{supporterDuelRate}%</strong><small>{supporterDuelWins} bon{supporterDuelWins > 1 ? "s" : ""} pronostic{supporterDuelWins > 1 ? "s" : ""}</small></div></div>
+      <div className="duel-summary-meta"><b>{evaluatedDuels.length}</b><span>duel{evaluatedDuels.length > 1 ? "s" : ""} terminé{evaluatedDuels.length > 1 ? "s" : ""}</span><b>{agreements}</b><span>avis identique{agreements > 1 ? "s" : ""}</span></div>
     </section>
     <div className="prono-legend"><strong>Comprendre le 1 / N / 2</strong><span><b>1</b> Domicile</span><span><b>N</b> Match nul</span><span><b>2</b> Extérieur</span></div>
     <section className="prono-list-section"><div className="section-title"><div><span className="eyebrow section-eyebrow">NOS CHOIX</span><h2>Pronostics publiés</h2></div></div>
@@ -62,7 +77,7 @@ export default async function PronoPage() {
           <div className="prono-main-pick"><span>🎯 NOTRE PRONOSTIC</span><h3>{pickLabel(p)}</h3><small>Choix {p.selection} · {pickDescription(p.selection)}</small></div>
           <div className="prono-details prono-details-v601"><div className={!p.confidence ? "prono-detail-muted" : ""}><span>🔥 Indice de confiance</span>{p.confidence ? <><strong>{p.confidence}/10</strong><div className="confidence-track"><i style={{width:`${p.confidence*10}%`}} /></div></> : <small>À renseigner par la rédaction</small>}</div>{legacySecondaryBet(p) && <div><span>⚽ Pari complémentaire</span><strong>{legacySecondaryBet(p)}</strong></div>}</div>
           {analysisText(p) ? <div className="prono-analysis"><span>📝 L'ANALYSE EXPRESS</span><p>{analysisText(p)}</p></div> : <div className="prono-analysis prono-analysis-empty"><span>📝 L'ANALYSE EXPRESS</span><p>Analyse à venir.</p></div>}
-          <SupporterPrediction matchId={p.match_id} matchDate={p.match_date} homeTeam={p.home_team} awayTeam={p.away_team} />
+          <SupporterPrediction matchId={p.match_id} matchDate={p.match_date} homeTeam={p.home_team} awayTeam={p.away_team} editorialSelection={p.selection} outcome={p.outcome} initialStats={supporterStats[String(p.match_id)]} />
         </article>})}</div>}
     </section>
   </div>;

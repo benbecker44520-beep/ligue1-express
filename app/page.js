@@ -7,6 +7,7 @@ import { getPublishedPredictions } from "@/lib/predictions";
 import { getTransfers } from "@/lib/transfers";
 import { sameEntityName } from "@/lib/content-links";
 import HomeHeroMedia from "@/components/HomeHeroMedia";
+import { getAllSupporterPredictionStats } from "@/lib/supporter-predictions";
 
 export const revalidate = 0;
 
@@ -69,7 +70,7 @@ function formTable(fixtures = [], standings = []) {
 }
 
 export default async function HomePage() {
-  const [allArticles, featuredArticle, mercatoArticles, analyses, predictions, transfers, scorersResult, standingsResult, fixturesResult, snapshotResult] = await Promise.all([
+  const [allArticles, featuredArticle, mercatoArticles, analyses, predictions, transfers, scorersResult, standingsResult, fixturesResult, snapshotResult, supporterStats] = await Promise.all([
     getPublishedArticles({ limit: 14 }),
     getFeaturedArticle(),
     getPublishedArticles({ category: "MERCATO", limit: 3 }),
@@ -79,7 +80,8 @@ export default async function HomePage() {
     getScorers(),
     getStandings(),
     getFixtures(),
-    getHomeSnapshot()
+    getHomeSnapshot(),
+    getAllSupporterPredictionStats()
   ]);
 
   const standings = standingsResult.ok ? standingsResult.data : [];
@@ -90,6 +92,7 @@ export default async function HomePage() {
   const featuredPrediction = [...predictions]
     .filter((prediction) => prediction.verdict === "pending")
     .sort((a, b) => new Date(a.match_date || 0) - new Date(b.match_date || 0))[0] || predictions[0] || null;
+  const featuredSupport = featuredPrediction ? supporterStats[String(featuredPrediction.match_id)] : null;
 
   const hero = featuredArticle || allArticles[0] || {
     slug: "debrief-express-journee",
@@ -222,7 +225,7 @@ export default async function HomePage() {
       {featuredPrediction && (
         <section className="home-prono-card v8-prono">
           <div><span className="eyebrow">LE PRONO LIGUE 1 EXPRESS</span><h2>{featuredPrediction.home_team} - {featuredPrediction.away_team}</h2><p>{featuredPrediction.secondary_bet || featuredPrediction.comment || "Le choix de la rédaction pour ce match."}</p></div>
-          <div className="home-prono-choice"><span>Notre choix</span><strong>{featuredPrediction.selection}</strong><Link href="/prono">Voir les pronos →</Link></div>
+          <div className="home-prono-duel"><div><span>Rédaction</span><strong>{featuredPrediction.selection}</strong></div><i>VS</i><div><span>Supporters{featuredSupport?.majority ? ` · ${featuredSupport.majorityPercentage}%` : ""}</span><strong>{featuredSupport?.majority || "—"}</strong></div><Link href="/prono">Voir le duel →</Link></div>
         </section>
       )}
 
