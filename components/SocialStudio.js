@@ -40,12 +40,15 @@ export default function SocialStudio({ articles = [], predictions = [], upcoming
   const [headline, setHeadline] = useState("");
   const [note, setNote] = useState("");
   const [status, setStatus] = useState("");
+  const [manualImage, setManualImage] = useState("");
+  const [imageMode, setImageMode] = useState("auto");
   const canvasRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const items = type === "article" ? published : type === "mercato" ? transfers : type === "prono" ? predictions : type === "match" ? upcomingMatches : finishedMatches;
   const item = items.find(x => String(x.id) === String(itemId)) || items[0] || null;
 
-  useEffect(() => { setItemId(items[0] ? String(items[0].id) : ""); }, [type]);
+  useEffect(() => { setItemId(items[0] ? String(items[0].id) : ""); setManualImage(""); setImageMode("auto"); }, [type]);
 
   useEffect(() => {
     if (!item) { setHeadline(""); setNote(""); return; }
@@ -61,11 +64,25 @@ export default function SocialStudio({ articles = [], predictions = [], upcoming
   const facebookText = `${kicker} ⚽\n\n${headline}${note ? `\n\n${note}` : ""}\n\n👉 ${articleUrl}\n\n#Ligue1 #Ligue1Express`;
   const xText = `${kicker} ⚽\n\n${headline}${note ? `\n${note}` : ""}\n\n${articleUrl}\n\n#Ligue1`;
 
+  const automaticImage = type === "article" ? (item?.image_url || "") : type === "mercato" ? (item?.image_url || item?.player_image || item?.photo_url || "") : "";
+  const selectedImage = imageMode === "manual" ? manualImage : imageMode === "none" ? "" : automaticImage;
+
+  function chooseImage(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { setStatus("Choisis un fichier image (JPG, PNG, WEBP…)."); return; }
+    if (file.size > 12 * 1024 * 1024) { setStatus("Image trop lourde : 12 Mo maximum."); return; }
+    const reader = new FileReader();
+    reader.onload = () => { setManualImage(String(reader.result || "")); setImageMode("manual"); setStatus("Image ajoutée au visuel ✅"); };
+    reader.onerror = () => setStatus("Impossible de lire cette image.");
+    reader.readAsDataURL(file);
+  }
+
   async function renderCanvas() {
     const canvas = canvasRef.current; if (!canvas) return;
     const ctx = canvas.getContext("2d"), W = 1200, H = 1200; canvas.width = W; canvas.height = H;
     ctx.fillStyle = "#071f4f"; ctx.fillRect(0,0,W,H);
-    const imageUrl = type === "article" ? item?.image_url : null;
+    const imageUrl = selectedImage;
     if (imageUrl) { try { const img=await loadImage(imageUrl); const scale=Math.max(W/img.width,H/img.height); const iw=img.width*scale, ih=img.height*scale; ctx.drawImage(img,(W-iw)/2,(H-ih)/2,iw,ih); } catch {} }
     const grad=ctx.createLinearGradient(0,0,W,H); grad.addColorStop(0,"rgba(4,25,66,.98)"); grad.addColorStop(.65,"rgba(4,25,66,.78)"); grad.addColorStop(1,"rgba(4,25,66,.42)"); ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
     ctx.fillStyle="#ffd51f"; ctx.fillRect(0,0,W,22); ctx.font="900 34px Arial"; ctx.fillText(kicker,78,110);
@@ -76,7 +93,7 @@ export default function SocialStudio({ articles = [], predictions = [], upcoming
     }
     ctx.fillStyle="#ffd51f"; ctx.fillRect(78,1040,360,92); ctx.fillStyle="#071f4f"; ctx.font="900 31px Arial"; ctx.fillText("LIGUE 1 EXPRESS",106,1098); ctx.fillStyle="white"; ctx.font="700 23px Arial"; ctx.fillText("ligue1-express.vercel.app",470,1095);
   }
-  useEffect(()=>{ renderCanvas(); },[type,item?.id,headline,note]);
+  useEffect(()=>{ renderCanvas(); },[type,item?.id,headline,note,selectedImage]);
 
   function downloadPng(){ try { const a=document.createElement("a"); a.download=`ligue1-express-${type}-${item?.id || "social"}.png`; a.href=canvasRef.current.toDataURL("image/png"); a.click(); setStatus("Visuel PNG téléchargé ✅"); } catch { setStatus("Export bloqué par une image distante. Essaie un autre visuel."); } }
   async function copy(text,label){ await navigator.clipboard.writeText(text); setStatus(`${label} copié ✅`); }
@@ -90,6 +107,16 @@ export default function SocialStudio({ articles = [], predictions = [], upcoming
         {!items.length && <div className="admin-message-box">Aucun contenu disponible pour ce format.</div>}
         <label>Titre du visuel<textarea value={headline} onChange={e=>setHeadline(e.target.value)} rows="3" /></label>
         <label>Accroche<textarea value={note} onChange={e=>setNote(e.target.value)} rows="3" /></label>
+        <div className="social-image-card">
+          <div><strong>Image du visuel</strong><span>Ajoute une photo : elle sera recadrée automatiquement et intégrée au PNG.</span></div>
+          <input ref={fileInputRef} className="social-image-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={chooseImage} />
+          <div className="social-image-actions">
+            <button type="button" className={imageMode==="manual"?"active":""} onClick={()=>fileInputRef.current?.click()}>📷 Choisir une image</button>
+            {automaticImage && <button type="button" className={imageMode==="auto"?"active":""} onClick={()=>setImageMode("auto")}>✨ Image automatique</button>}
+            <button type="button" className={imageMode==="none"?"active":""} onClick={()=>setImageMode("none")}>Sans image</button>
+          </div>
+          {selectedImage && <div className="social-image-thumb"><img src={selectedImage} alt="Aperçu de l’image choisie"/><button type="button" onClick={()=>{setManualImage("");setImageMode(automaticImage?"auto":"none");if(fileInputRef.current)fileInputRef.current.value="";}}>Retirer</button></div>}
+        </div>
         <div className="social-copy-card"><strong>Facebook</strong><textarea value={facebookText} readOnly rows="7"/><button type="button" className="primary-button" onClick={()=>copy(facebookText,"Texte Facebook")}>Copier Facebook</button></div>
         <div className="social-copy-card"><strong>X / Twitter</strong><textarea value={xText} readOnly rows="7"/><button type="button" className="primary-button" onClick={()=>copy(xText,"Texte X")}>Copier X</button></div>
         <div className="social-studio-actions"><button type="button" className="secondary-button" onClick={downloadPng}>Télécharger le PNG</button><a className="mini-button" target="_blank" rel="noreferrer" href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(xText)}`}>Ouvrir sur X ↗</a><a className="mini-button" target="_blank" rel="noreferrer" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`}>Ouvrir sur Facebook ↗</a></div>
