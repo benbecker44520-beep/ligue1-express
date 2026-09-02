@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { getPublishedPredictions } from "@/lib/predictions";
+import SupporterPrediction from "@/components/SupporterPrediction";
 
 export const revalidate = 0;
 export const metadata = { title: "Pronostics", description: "Les pronostics football de la rédaction Ligue 1 Express, expliqués clairement et suivis après chaque match." };
@@ -61,6 +62,7 @@ export default async function PronoPage() {
           <div className="prono-main-pick"><span>🎯 NOTRE PRONOSTIC</span><h3>{pickLabel(p)}</h3><small>Choix {p.selection} · {pickDescription(p.selection)}</small></div>
           <div className="prono-details prono-details-v601"><div className={!p.confidence ? "prono-detail-muted" : ""}><span>🔥 Indice de confiance</span>{p.confidence ? <><strong>{p.confidence}/10</strong><div className="confidence-track"><i style={{width:`${p.confidence*10}%`}} /></div></> : <small>À renseigner par la rédaction</small>}</div>{legacySecondaryBet(p) && <div><span>⚽ Pari complémentaire</span><strong>{legacySecondaryBet(p)}</strong></div>}</div>
           {analysisText(p) ? <div className="prono-analysis"><span>📝 L'ANALYSE EXPRESS</span><p>{analysisText(p)}</p></div> : <div className="prono-analysis prono-analysis-empty"><span>📝 L'ANALYSE EXPRESS</span><p>Analyse à venir.</p></div>}
+          <SupporterPrediction matchId={p.match_id} matchDate={p.match_date} homeTeam={p.home_team} awayTeam={p.away_team} />
         </article>})}</div>}
     </section>
   </div>;
