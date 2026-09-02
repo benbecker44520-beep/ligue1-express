@@ -25,9 +25,23 @@ function wrapText(ctx, text, maxWidth, maxLines = 5) {
 function loadImage(src) {
   return new Promise((resolve, reject) => {
     if (!src) return reject(new Error("no image"));
-    const img = new Image(); img.crossOrigin = "anonymous";
+    const img = new Image();
+    if (!String(src).startsWith("data:") && !String(src).startsWith("blob:")) img.crossOrigin = "anonymous";
     img.onload = () => resolve(img); img.onerror = reject; img.src = src;
   });
+}
+
+function canvasImageSource(src) {
+  if (!src) return "";
+  const value = String(src);
+  if (value.startsWith("data:") || value.startsWith("blob:") || value.startsWith("/")) return value;
+  try {
+    const url = new URL(value);
+    if (typeof window !== "undefined" && url.origin === window.location.origin) return value;
+    return `/api/social-image?url=${encodeURIComponent(value)}`;
+  } catch {
+    return value;
+  }
 }
 
 function clubName(team, fallback = "?") { return team?.shortName || team?.name || team || fallback; }
@@ -46,6 +60,7 @@ export default function SocialStudio({ articles = [], predictions = [], upcoming
   const [manualImage, setManualImage] = useState("");
   const [imageMode, setImageMode] = useState("auto");
   const canvasRef = useRef(null);
+  const renderTokenRef = useRef(0);
   const fileInputRef = useRef(null);
 
   const items = type === "article" ? published : type === "mercato" ? transfers : type === "prono" ? predictions : type === "match" ? upcomingMatches : finishedMatches;
@@ -94,13 +109,17 @@ export default function SocialStudio({ articles = [], predictions = [], upcoming
   }
 
   async function renderCanvas() {
-    const canvas = canvasRef.current; if (!canvas) return;
-    const ctx = canvas.getContext("2d"), W = 1200, H = 1200; canvas.width = W; canvas.height = H;
+    const visibleCanvas = canvasRef.current; if (!visibleCanvas) return;
+    const renderToken = ++renderTokenRef.current;
+    const offscreen = document.createElement("canvas");
+    const ctx = offscreen.getContext("2d"), W = 1200, H = 1200;
+    offscreen.width = W; offscreen.height = H;
     ctx.fillStyle = "#071f4f"; ctx.fillRect(0,0,W,H);
 
     if (selectedImage) {
       try {
-        const img = await loadImage(selectedImage);
+        const img = await loadImage(canvasImageSource(selectedImage));
+        if (renderToken !== renderTokenRef.current) return;
         const scale = Math.max(W / img.width, H / img.height);
         const iw = img.width * scale, ih = img.height * scale;
         ctx.drawImage(img, (W-iw)/2, (H-ih)/2, iw, ih);
@@ -121,16 +140,17 @@ export default function SocialStudio({ articles = [], predictions = [], upcoming
     if (isFixture && item) {
       const scoreHome = type === "resultat" ? (item.score?.fullTime?.home ?? "-") : null;
       const scoreAway = type === "resultat" ? (item.score?.fullTime?.away ?? "-") : null;
-      const logoY = hasPhoto ? 255 : 235;
+      const logoY = hasPhoto ? 245 : 225;
       const logoSize = 170;
       const homeX = 130, awayX = W - 130 - logoSize;
       for (const [src,x] of [[homeLogo,homeX],[awayLogo,awayX]]) {
         if (!src) continue;
         try {
-          const logo=await loadImage(src);
-          const ratio=Math.min(logoSize/logo.width,logoSize/logo.height);
+          const logo = await loadImage(canvasImageSource(src));
+          if (renderToken !== renderTokenRef.current) return;
+          const ratio = Math.min(logoSize/logo.width,logoSize/logo.height);
           const lw=logo.width*ratio, lh=logo.height*ratio;
-          ctx.fillStyle="rgba(255,255,255,.94)"; ctx.beginPath(); ctx.roundRect(x-18,logoY-18,logoSize+36,logoSize+36,30); ctx.fill();
+          ctx.fillStyle="rgba(255,255,255,.96)"; ctx.beginPath(); ctx.roundRect(x-18,logoY-18,logoSize+36,logoSize+36,30); ctx.fill();
           ctx.drawImage(logo,x+(logoSize-lw)/2,logoY+(logoSize-lh)/2,lw,lh);
         } catch {}
       }
@@ -146,11 +166,11 @@ export default function SocialStudio({ articles = [], predictions = [], upcoming
       }
       ctx.textAlign="left";
 
-      const mainY = hasPhoto ? 660 : 640;
+      const mainY = 690;
       ctx.fillStyle="white"; ctx.font="900 58px Arial";
       wrapText(ctx,headline,1040,3).forEach((line,i)=>ctx.fillText(line,78,mainY+i*68));
       ctx.fillStyle="rgba(255,255,255,.9)"; ctx.font="700 27px Arial";
-      wrapText(ctx,note,1000,2).forEach((line,i)=>ctx.fillText(line,78,870+i*38));
+      wrapText(ctx,note,1000,2).forEach((line,i)=>ctx.fillText(line,78,900+i*38));
     } else {
       ctx.fillStyle="white"; ctx.font="900 72px Arial";
       wrapText(ctx,headline,1035,5).forEach((line,i)=>ctx.fillText(line,78,255+i*84));
@@ -162,6 +182,12 @@ export default function SocialStudio({ articles = [], predictions = [], upcoming
     ctx.fillStyle="#ffd51f"; ctx.fillRect(78,1040,360,92);
     ctx.fillStyle="#071f4f"; ctx.font="900 31px Arial"; ctx.fillText("LIGUE 1 EXPRESS",106,1098);
     ctx.fillStyle="white"; ctx.font="700 23px Arial"; ctx.fillText("ligue1-express.vercel.app",470,1095);
+
+    if (renderToken !== renderTokenRef.current) return;
+    visibleCanvas.width = W; visibleCanvas.height = H;
+    const visibleCtx = visibleCanvas.getContext("2d");
+    visibleCtx.clearRect(0,0,W,H);
+    visibleCtx.drawImage(offscreen,0,0);
   }
   useEffect(()=>{ renderCanvas(); },[type,item?.id,headline,note,selectedImage,homeLogo,awayLogo,homeLabel,awayLabel]);
 
