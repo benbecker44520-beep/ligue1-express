@@ -4,6 +4,7 @@ import LiveAutoRefresh from "@/components/LiveAutoRefresh";
 import { getFrenchLiveMatches } from "@/lib/apifootball";
 import { getFixtures } from "@/lib/football";
 import { getEspnCupLiveMatches } from "@/lib/espn";
+import FollowMatchButton from "@/components/FollowMatchButton";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "LIVE — Scores en direct" };
@@ -19,23 +20,26 @@ function fallbackStatusLabel(status) {
 function LiveCard({ match, league, href }) {
   const label = match.statusText || fallbackStatusLabel(match.status);
   return (
-    <Link className="live-v82-match" href={href}>
-      <div className="live-v82-match-head">
-        <span className="live-v82-pulse"><i /> {label}</span>
-        <span>{league}</span>
-      </div>
-      <div className="live-v82-team">
-        {match.home.logo ? <Image src={match.home.logo} width={34} height={34} alt="" /> : <span className="live-v82-logo-fallback">⚽</span>}
-        <strong>{match.home.shortName || match.home.name}</strong>
-        <b>{match.score?.home ?? "-"}</b>
-      </div>
-      <div className="live-v82-team">
-        {match.away.logo ? <Image src={match.away.logo} width={34} height={34} alt="" /> : <span className="live-v82-logo-fallback">⚽</span>}
-        <strong>{match.away.shortName || match.away.name}</strong>
-        <b>{match.score?.away ?? "-"}</b>
-      </div>
-      <div className="live-v82-open">Ouvrir le Centre Match →</div>
-    </Link>
+    <article className="live-v82-match">
+      <Link className="live-v82-match-link" href={href}>
+        <div className="live-v82-match-head">
+          <span className="live-v82-pulse"><i /> {label}</span>
+          <span>{league}</span>
+        </div>
+        <div className="live-v82-team">
+          {match.home.logo ? <Image src={match.home.logo} width={34} height={34} alt="" /> : <span className="live-v82-logo-fallback">⚽</span>}
+          <strong>{match.home.shortName || match.home.name}</strong>
+          <b>{match.score?.home ?? "-"}</b>
+        </div>
+        <div className="live-v82-team">
+          {match.away.logo ? <Image src={match.away.logo} width={34} height={34} alt="" /> : <span className="live-v82-logo-fallback">⚽</span>}
+          <strong>{match.away.shortName || match.away.name}</strong>
+          <b>{match.score?.away ?? "-"}</b>
+        </div>
+        <div className="live-v82-open">Ouvrir le Centre Match →</div>
+      </Link>
+      {match.provider === "apifootball" && <FollowMatchButton compact match={{ ...match, href, leagueName:league }} />}
+    </article>
   );
 }
 

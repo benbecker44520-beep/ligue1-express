@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import LiveAutoRefresh from "@/components/LiveAutoRefresh";
 import { getApiFootballMatch } from "@/lib/apifootball";
+import FollowMatchButton from "@/components/FollowMatchButton";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,7 @@ export default async function ApiFootballLiveMatchPage({ params }) {
           </div>
         </div>
         {(match.stadium || match.referee) && <div className="live-v83-details">{match.stadium ? <span>🏟️ {match.stadium}</span> : null}{match.referee ? <span>👤 Arbitre : {match.referee}</span> : null}</div>}
+        <div className="live-v83-follow"><FollowMatchButton match={{ ...match, href:`/live/match/${match.id}` }} /></div>
       </section>
 
       <section className="live-v83-timeline">

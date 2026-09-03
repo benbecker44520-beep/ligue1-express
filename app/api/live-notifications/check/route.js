@@ -65,13 +65,16 @@ async function runCheck(request) {
       ? await supabase.from("supporter_profiles").select("user_id,favorite_club,alert_preferences").in("user_id", userIds)
       : { data: [] };
     const profilesByUser = new Map((profiles || []).map((profile) => [profile.user_id, profile]));
+    const { data: followedRows } = await supabase.from("followed_matches").select("user_id").eq("provider", candidate.match.provider || "apifootball").eq("match_id", String(candidate.match.id));
+    const followedUsers = new Set((followedRows || []).map((row) => row.user_id));
     const copy = notificationFor(candidate.match, candidate.event);
 
     for (const subscription of subscriptions || []) {
       const profile = profilesByUser.get(subscription.user_id);
       const prefs = profile?.alert_preferences || {};
       if (prefs[PREF_FOR_EVENT[candidate.event.type]] === false) continue;
-      if (prefs.favoriteOnly !== false && !sameClub(candidate.match, profile?.favorite_club)) continue;
+      const followsMatch = followedUsers.has(subscription.user_id);
+      if (!followsMatch && prefs.favoriteOnly !== false && !sameClub(candidate.match, profile?.favorite_club)) continue;
       try {
         await sendPush(subscription, {
           ...copy,
@@ -95,4 +98,3 @@ async function runCheck(request) {
 
 export async function GET(request) { return runCheck(request); }
 export async function POST(request) { return runCheck(request); }
-

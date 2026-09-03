@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createSupabaseClient } from "@/lib/supabase";
 import { loadMemberProfile } from "@/lib/member-client";
+import FollowedMatchesList from "@/components/FollowedMatchesList";
 
 const PREFS_KEY = "ligue1-express-alert-preferences-v1";
 const CLUB_KEY = "ligue1-express-my-club-v1";
@@ -165,6 +166,8 @@ export default function NotificationCenter() {
           {pushMessage && <p className="alerts-push-message">{pushMessage}</p>}
         </div>
       </section>
+
+      <FollowedMatchesList />
 
       <section className="alerts-card alerts-types">
         <div className="alerts-card-head"><span>⚡ CENTRE D’ALERTES</span><strong>Ce que je veux suivre</strong></div>
