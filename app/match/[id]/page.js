@@ -7,6 +7,7 @@ import { scoreWithScorerFallback } from "@/lib/match-score";
 import { getEspnMatchIncidents } from "@/lib/espn";
 import { getMatchIncidents as getSofaMatchIncidents } from "@/lib/sofascore";
 import { getApiFootballMatchIncidents } from "@/lib/apifootball";
+import MatchTimelineFilter from "@/components/MatchTimelineFilter";
 
 export const revalidate = 0;
 
@@ -256,33 +257,9 @@ export default async function MatchPage({ params }) {
       <section className="match-timeline-card">
         <div className="match-timeline-heading">
           <div><span className="eyebrow">RÉSULTAT · FIL DU MATCH</span><h2>Les faits marquants</h2></div>
-          <div className="match-event-legend"><span>⚽ But</span><span>🚫 But refusé</span><span>🟨 Jaune</span><span>🟥 Rouge</span><span>🔄 Remplacement</span></div>
         </div>
         {incidents.length ? (
-          <div className="match-timeline-list result-v8212-events">
-            <div className="result-v8212-teams" aria-hidden="true">
-              <strong>{match.home.shortName || match.home.name}</strong>
-              <span>MIN.</span>
-              <strong>{match.away.shortName || match.away.name}</strong>
-            </div>
-            {incidents.map((incident) => (
-              <div className={`match-timeline-row ${incident.isHome ? "home" : "away"} ${incident.type}`} key={incident.id}>
-                <div className="match-event-copy">
-                  <strong>{incident.label}{incident.manual && <small className="match-event-manual-badge">Ajout rédaction</small>}</strong>
-                  {incident.type === "substitution" ? (
-                    <span>{incident.playerOut ? `${incident.playerOut} sort` : "Sortie"} · {incident.playerIn ? `${incident.playerIn} entre` : "Entrée"}</span>
-                  ) : (
-                    <span>{incident.player || incident.reason || (incident.isHome ? match.home.shortName || match.home.name : match.away.shortName || match.away.name)}</span>
-                  )}
-                  {incident.reason && incident.player && <small>{incident.reason}</small>}
-                </div>
-                <div className="result-v8212-marker">
-                  <time>{incident.minute || "—"}</time>
-                  <i>{incident.icon}</i>
-                </div>
-              </div>
-            ))}
-          </div>
+          <MatchTimelineFilter incidents={incidents} homeName={match.home.shortName || match.home.name} awayName={match.away.shortName || match.away.name} />
         ) : (
           <div className="match-timeline-empty">Les cartons, remplacements et décisions VAR ne sont pas encore disponibles pour ce match.</div>
         )}
