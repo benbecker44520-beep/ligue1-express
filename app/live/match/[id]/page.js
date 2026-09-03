@@ -62,11 +62,11 @@ export default async function ApiFootballLiveMatchPage({ params }) {
         <div className="live-v83-section-head"><h2>Fil du match</h2><span>AUTO · 60 S</span></div>
         {match.events.length ? (
           <div className="live-v83-events">
+            <div className="live-v83-events-teams" aria-hidden="true"><strong>{match.home.shortName || match.home.name}</strong><span>MIN.</span><strong>{match.away.shortName || match.away.name}</strong></div>
             {match.events.map((event) => (
               <div className={`live-v83-event side-${event.side}`} key={event.id}>
-                <time>{event.minuteLabel || `${event.minute}'`}</time>
-                <i><EventIcon type={event.type} /></i>
-                <div><EventText event={event} /></div>
+                <div className="live-v83-event-action"><EventText event={event} /></div>
+                <div className="live-v83-event-marker"><time>{event.minuteLabel || `${event.minute}'`}</time><i><EventIcon type={event.type} /></i></div>
               </div>
             ))}
           </div>
