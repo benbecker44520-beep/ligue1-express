@@ -23,10 +23,17 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [connected, setConnected] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   useEffect(() => {
     if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => setConnected(Boolean(data.session)));
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => setConnected(Boolean(session)));
+    async function updateAccess(session) {
+      setConnected(Boolean(session));
+      if (!session) return setIsAdmin(false);
+      const { data: allowed } = await supabase.rpc("is_current_user_admin");
+      setIsAdmin(Boolean(allowed));
+    }
+    supabase.auth.getSession().then(({ data }) => updateAccess(data.session));
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => window.setTimeout(() => updateAccess(session), 0));
     return () => data.subscription.unsubscribe();
   }, [supabase]);
 
@@ -57,7 +64,7 @@ export default function Header() {
             {accountOpen && <div className="header-account-dropdown">
               <Link href={connected ? "/mon-profil-supporter" : "/connexion"} onClick={() => setAccountOpen(false)}><b>👤 {connected ? "Mon espace membre" : "Connexion / Inscription"}</b><small>{connected ? "Profil, pronostics et badges" : "Retrouver mes préférences"}</small></Link>
               {connected && <Link href="/mon-club" onClick={() => setAccountOpen(false)}><b>★ Mon club</b><small>Mon actualité personnalisée</small></Link>}
-              <Link href="/admin" className="editorial-access" onClick={() => setAccountOpen(false)}><b>🔐 Accès rédaction</b><small>Administration du site</small></Link>
+              {isAdmin && <Link href="/admin" className="editorial-access" onClick={() => setAccountOpen(false)}><b>🔐 Accès rédaction</b><small>Administration du site</small></Link>}
             </div>}
           </div>
           <button
@@ -90,7 +97,7 @@ export default function Header() {
           <Link href="/mes-alertes" onClick={() => setOpen(false)}>🔔 Mes alertes</Link>
           <Link href={connected ? "/mon-profil-supporter" : "/connexion"} onClick={() => setOpen(false)}>{connected ? "👤 Mon espace" : "👤 Connexion / Inscription"}</Link>
           {connected && <Link href="/mon-club" onClick={() => setOpen(false)}>★ Mon club</Link>}
-          <Link href="/admin" className="mobile-editorial-access" onClick={() => setOpen(false)}>🔐 Accès rédaction</Link>
+          {isAdmin && <Link href="/admin" className="mobile-editorial-access" onClick={() => setOpen(false)}>🔐 Accès rédaction</Link>}
         </nav>
       )}
     </header>

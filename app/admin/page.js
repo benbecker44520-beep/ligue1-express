@@ -68,6 +68,7 @@ export default function AdminPage() {
   const configured = hasSupabaseConfig();
   const supabase = useMemo(() => createSupabaseClient(), []);
   const [session, setSession] = useState(null);
+  const [adminAccess, setAdminAccess] = useState(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -109,12 +110,18 @@ export default function AdminPage() {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
+      setAdminAccess(null);
     });
     return () => listener.subscription.unsubscribe();
   }, [supabase]);
 
   useEffect(() => {
-    if (session) {
+    if (!session || !supabase) { setAdminAccess(null); return; }
+    supabase.rpc("is_current_user_admin").then(({ data, error }) => setAdminAccess(!error && Boolean(data)));
+  }, [session, supabase]);
+
+  useEffect(() => {
+    if (session && adminAccess) {
       loadArticles();
       loadFinishedMatches();
       loadUpcomingMatches();
@@ -123,7 +130,7 @@ export default function AdminPage() {
       loadNewsletterSubscribers();
       loadTransfers();
     }
-  }, [session]);
+  }, [session, adminAccess]);
 
   useEffect(() => {
     if (!imageFile) return;
@@ -134,14 +141,14 @@ export default function AdminPage() {
 
 
   useEffect(() => {
-    if (session && selectedMatchId) {
+    if (session && adminAccess && selectedMatchId) {
       loadScorers(selectedMatchId);
       loadMatchEvents(selectedMatchId);
     } else {
       setScorers([]);
       setMatchEvents([]);
     }
-  }, [session, selectedMatchId]);
+  }, [session, adminAccess, selectedMatchId]);
 
 
   async function loadNewsletterSubscribers() {
@@ -636,6 +643,14 @@ export default function AdminPage() {
         </form>
       </div>
     );
+  }
+
+  if (adminAccess === null) {
+    return <div className="page-shell admin-page"><div className="member-account-loading">Vérification des droits de rédaction…</div></div>;
+  }
+
+  if (!adminAccess) {
+    return <div className="page-shell admin-page"><section className="admin-access-denied"><span>🔒 ACCÈS PROTÉGÉ</span><h1>Accès réservé à la rédaction</h1><p>Ce compte ne possède pas le rôle administrateur.</p><div><a href="/">Retourner au site</a><button type="button" onClick={logout}>Se déconnecter</button></div></section></div>;
   }
 
   return (
