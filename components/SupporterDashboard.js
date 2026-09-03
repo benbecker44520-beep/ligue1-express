@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import SupporterRecovery from "@/components/SupporterRecovery";
 
 const PROFILE_KEY = "ligue1-express-supporter-profile-v1";
 
@@ -59,12 +60,12 @@ export default function SupporterDashboard({ entries, predictions, general, week
     return { history, stats, badges: badges(stats), generalRank: position(general, String(profile.id)), weeklyRank: position(weekly, String(profile.id)) };
   }, [profile, entries, predictions, general, weekly]);
 
-  if (!profile?.id) return <main className="page-shell supporter-dashboard-page"><section className="supporter-login-card"><span>🏆 ESPACE SUPPORTER</span><h1>Crée d’abord ton pseudo</h1><p>Ton espace personnel utilise le profil créé depuis la page Pronostics. Aucun compte ni e-mail n’est nécessaire.</p><Link href="/prono">Créer mon profil →</Link></section></main>;
+  if (!profile?.id) return <main className="page-shell supporter-dashboard-page"><section className="supporter-login-card"><span>🏆 ESPACE SUPPORTER</span><h1>Retrouve ton espace</h1><p>Crée un nouveau pseudo ou récupère un profil existant avec ton code personnel.</p><Link href="/prono">Créer un nouveau profil →</Link></section><SupporterRecovery onRecovered={(restored) => setProfile(restored)} /></main>;
   if (!dashboard) return null;
 
   const nextBadge = dashboard.badges.find((badge) => !badge.unlocked);
   return <main className="page-shell supporter-dashboard-page">
-    <section className="supporter-dashboard-hero"><div><span>🏆 V8.14 · MON ESPACE</span><h1>Salut {profile.nickname} !</h1><p>Retrouve ici toute ta saison de pronostiqueur.</p></div><div><Link href="/prono">Faire mes pronostics</Link><Link href="/classement-pronos">Voir le classement</Link></div></section>
+    <section className="supporter-dashboard-hero"><div><span>🏆 V8.15 · MON ESPACE</span><h1>Salut {profile.nickname} !</h1><p>Retrouve ici toute ta saison de pronostiqueur.</p></div><div><Link href="/prono">Faire mes pronostics</Link><Link href="/classement-pronos">Voir le classement</Link></div></section>
 
     <section className="supporter-dashboard-kpis">
       <div><span>Points</span><strong>{dashboard.stats.points}</strong><small>3 par bon résultat</small></div>
@@ -80,5 +81,6 @@ export default function SupporterDashboard({ entries, predictions, general, week
       <div className="supporter-history"><div className="supporter-block-title"><span>MES PRONOSTICS</span><h2>Historique</h2></div>{dashboard.history.length === 0 ? <div className="supporter-history-empty"><p>Tu n’as pas encore enregistré de pronostic.</p><Link href="/prono">Faire mon premier choix →</Link></div> : <div>{dashboard.history.map((item) => <article key={`${item.match_id}-${item.voted_at}`} className={`supporter-history-row is-${item.status}`}><div><span>{new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short", timeZone: "Europe/Paris" }).format(new Date(item.match.matchDate))}</span><strong>{item.match.homeTeam} <i>–</i> {item.match.awayTeam}</strong><small>Ton choix : {choiceLabel(item.selection, item.match)}</small></div><div>{item.match.outcome && <b>{item.match.homeScore} - {item.match.awayScore}</b>}<strong>{item.status === "won" ? "+3 POINTS" : item.status === "lost" ? "PERDU" : "EN ATTENTE"}</strong></div></article>)}</div>}</div>
       <aside className="supporter-badge-case"><div className="supporter-block-title"><span>MA COLLECTION</span><h2>Badges</h2></div><div>{dashboard.badges.map((badge) => <article className={badge.unlocked ? "is-unlocked" : ""} key={badge.name}><b>{badge.icon}</b><div><strong>{badge.name}</strong><small>{badge.unlocked ? "Débloqué ✓" : `${badge.current}/${badge.target}`}</small></div></article>)}</div></aside>
     </section>
+    <SupporterRecovery profile={profile} />
   </main>;
 }
