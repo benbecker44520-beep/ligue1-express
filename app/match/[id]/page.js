@@ -6,6 +6,7 @@ import { createSupabaseClient } from "@/lib/supabase";
 import { scoreWithScorerFallback } from "@/lib/match-score";
 import { getEspnMatchIncidents } from "@/lib/espn";
 import { getMatchIncidents as getSofaMatchIncidents } from "@/lib/sofascore";
+import { getApiFootballMatchIncidents } from "@/lib/apifootball";
 
 export const revalidate = 0;
 
@@ -66,7 +67,13 @@ export default async function MatchPage({ params }) {
   const awayScorers = scorers.filter((s) => s.team_side === "away");
   const displayScore = scoreWithScorerFallback(match, scorers);
   const hasScore = displayScore.home !== null && displayScore.away !== null;
-  let incidentsResult = await getEspnMatchIncidents(match, "fra.1");
+  // Le LIVE est alimenté par APIfootball. On le consulte en premier afin que
+  // les actions du direct restent visibles dans la fiche Résultats, même si
+  // les identifiants football-data.org / ESPN / SofaScore sont différents.
+  let incidentsResult = await getApiFootballMatchIncidents(match);
+  if (!incidentsResult.ok || !incidentsResult.data?.length) {
+    incidentsResult = await getEspnMatchIncidents(match, "fra.1");
+  }
   if (!incidentsResult.ok || !incidentsResult.data?.length) {
     const sofaFallback = await getSofaMatchIncidents(match, 34);
     if (sofaFallback.ok && sofaFallback.data?.length) incidentsResult = sofaFallback;
