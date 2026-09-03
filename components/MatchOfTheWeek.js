@@ -35,7 +35,7 @@ export default function MatchOfTheWeek({ prediction, match, stats, homeForm, awa
   const hasScore = Number.isFinite(match?.score?.home) && Number.isFinite(match?.score?.away);
 
   return <section className="match-of-week">
-    <div className="week-kicker"><span>⭐ MATCH DE LA SEMAINE</span><ShareButtons compact title={`${prediction.home_team} - ${prediction.away_team} : fais ton pronostic`} path="/prono" /></div>
+    <div className="week-kicker"><span>⭐ MATCH DE LA SEMAINE</span><ShareButtons compact title={`${prediction.home_team} - ${prediction.away_team} : fais ton pronostic`} path={`/match/${prediction.match_id}`} /></div>
     <div className="week-scoreboard">
       <div className="week-team">{match?.home?.logo && <Image src={match.home.logo} width={72} height={72} alt="" unoptimized />}<strong>{prediction.home_team}</strong></div>
       <div className="week-center">

@@ -16,6 +16,17 @@ function slugify(value) {
     .replace(/(^-|-$)/g, "");
 }
 
+function adminError(error, fallback = "Une erreur est survenue.") {
+  const message = String(error?.message || "").trim();
+  if (/networkerror|failed to fetch|network request failed|load failed/i.test(message)) {
+    return "Connexion temporairement indisponible. Clique sur Actualiser dans quelques secondes.";
+  }
+  if (/jwt|token.*expired|session.*expired/i.test(message)) {
+    return "Ta session a expiré. Déconnecte-toi puis reconnecte-toi.";
+  }
+  return message || fallback;
+}
+
 const emptyPredictionForm = {
   id: null, match_id: "", selection: "1", comment: "", secondary_bet: "", confidence: 7, status: "published", is_week_match: false, players_to_watch: "", absentees: ""
 };
@@ -138,14 +149,14 @@ export default function AdminPage() {
       .from("newsletter_subscribers")
       .select("id,email,subscribed_at,active,unsubscribe_token")
       .order("subscribed_at", { ascending: false });
-    if (error) setNewsletterMessage(error.message);
+    if (error) setNewsletterMessage(adminError(error, "Impossible de charger les abonnés."));
     else setNewsletterSubscribers(data || []);
   }
 
   async function removeNewsletterSubscriber(id) {
     if (!window.confirm("Supprimer cet abonné de la newsletter ?")) return;
     const { error } = await supabase.from("newsletter_subscribers").delete().eq("id", id);
-    if (error) setNewsletterMessage(error.message);
+    if (error) setNewsletterMessage(adminError(error, "Impossible de supprimer cet abonné."));
     else {
       setNewsletterMessage("Abonné supprimé.");
       loadNewsletterSubscribers();
@@ -188,7 +199,7 @@ export default function AdminPage() {
       .from("predictions")
       .select("*")
       .order("match_date", { ascending: false });
-    if (error) setPredictionMessage(error.message);
+    if (error) setPredictionMessage(adminError(error, "Impossible de charger les pronostics."));
     else setPredictions(data || []);
   }
 
@@ -244,7 +255,7 @@ export default function AdminPage() {
       if (predictionForm.is_week_match) {
         const { error: unfeatureError } = await supabase.from("predictions").update({ is_week_match: false }).eq("is_week_match", true);
         if (unfeatureError) {
-          setPredictionMessage(unfeatureError.message);
+          setPredictionMessage(adminError(unfeatureError, "Impossible de modifier le Match de la semaine."));
           return;
         }
       }
@@ -255,7 +266,7 @@ export default function AdminPage() {
       }
 
       if (error) {
-        setPredictionMessage(error.code === "23505" ? "Un prono existe déjà pour ce match." : error.message);
+        setPredictionMessage(error.code === "23505" ? "Un prono existe déjà pour ce match." : adminError(error, "Impossible d’enregistrer le pronostic."));
         return;
       }
 
@@ -263,14 +274,14 @@ export default function AdminPage() {
       resetPredictionForm();
       await loadPredictions();
     } catch (error) {
-      setPredictionMessage(error?.message || "Erreur pendant l’enregistrement du prono.");
+      setPredictionMessage(adminError(error, "Erreur pendant l’enregistrement du prono."));
     }
   }
 
   async function removePrediction(id) {
     if (!window.confirm("Supprimer ce prono ?")) return;
     const { error } = await supabase.from("predictions").delete().eq("id", id);
-    if (error) setPredictionMessage(error.message);
+    if (error) setPredictionMessage(adminError(error, "Impossible de supprimer le pronostic."));
     else {
       if (predictionForm.id === id) resetPredictionForm();
       setPredictionMessage("Prono supprimé.");
@@ -280,7 +291,7 @@ export default function AdminPage() {
 
   async function loadTransfers() {
     const { data, error } = await supabase.from("transfers").select("*").order("created_at", { ascending: false });
-    if (error) setTransferMessage(error.message); else setTransfers(data || []);
+    if (error) setTransferMessage(adminError(error, "Impossible de charger le mercato.")); else setTransfers(data || []);
   }
 
   function editTransfer(t) { setTransferForm({ ...emptyTransferForm, ...t, occurred_at: t.occurred_at || "" }); setTransferMessage("Mode modification activé."); }
@@ -290,9 +301,9 @@ export default function AdminPage() {
     setTransferMessage("Enregistrement en cours...");
     const payload = { player_name:transferForm.player_name.trim(), from_club:transferForm.from_club.trim()||null, to_club:transferForm.to_club.trim()||null, position:transferForm.position.trim()||null, transfer_type:transferForm.transfer_type, transfer_status:transferForm.transfer_status, fee:transferForm.fee.trim()||null, note:transferForm.note.trim()||null, occurred_at:transferForm.occurred_at||null, updated_at:new Date().toISOString() };
     let error; if (transferForm.id) ({error}=await supabase.from("transfers").update(payload).eq("id",transferForm.id)); else ({error}=await supabase.from("transfers").insert(payload));
-    if(error){setTransferMessage(error.message);return;} setTransferMessage(transferForm.id?"Mouvement modifié ✅":"Mouvement ajouté ✅"); resetTransferForm(); await loadTransfers();
+    if(error){setTransferMessage(adminError(error, "Impossible d’enregistrer le mouvement."));return;} setTransferMessage(transferForm.id?"Mouvement modifié ✅":"Mouvement ajouté ✅"); resetTransferForm(); await loadTransfers();
   }
-  async function removeTransfer(id){ if(!window.confirm("Supprimer ce mouvement mercato ?")) return; const {error}=await supabase.from("transfers").delete().eq("id",id); if(error)setTransferMessage(error.message); else {setTransferMessage("Mouvement supprimé."); await loadTransfers();} }
+  async function removeTransfer(id){ if(!window.confirm("Supprimer ce mouvement mercato ?")) return; const {error}=await supabase.from("transfers").delete().eq("id",id); if(error)setTransferMessage(adminError(error, "Impossible de supprimer le mouvement.")); else {setTransferMessage("Mouvement supprimé."); await loadTransfers();} }
 
   async function loadFinishedMatches() {
     try {
@@ -314,7 +325,7 @@ export default function AdminPage() {
       .order("minute", { ascending: true })
       .order("created_at", { ascending: true });
 
-    if (error) setScorerMessage(error.message);
+    if (error) setScorerMessage(adminError(error, "Impossible de charger les buteurs."));
     else setScorers(data || []);
   }
 
@@ -336,7 +347,7 @@ export default function AdminPage() {
       goal_type: scorerForm.goal_type
     });
 
-    if (error) setScorerMessage(error.message);
+    if (error) setScorerMessage(adminError(error, "Impossible d’ajouter le buteur."));
     else {
       setScorerMessage("Buteur ajouté ✅");
       setScorerForm({ ...scorerForm, player_name: "", minute: "", goal_type: "normal" });
@@ -346,7 +357,7 @@ export default function AdminPage() {
 
   async function removeScorer(id) {
     const { error } = await supabase.from("match_scorers").delete().eq("id", id);
-    if (error) setScorerMessage(error.message);
+    if (error) setScorerMessage(adminError(error, "Impossible de supprimer le buteur."));
     else {
       setScorerMessage("Buteur supprimé.");
       await loadScorers(selectedMatchId);
@@ -360,7 +371,7 @@ export default function AdminPage() {
       .eq("match_id", String(matchId))
       .order("minute", { ascending: true })
       .order("created_at", { ascending: true });
-    if (error) setEventMessage(error.message);
+    if (error) setEventMessage(adminError(error, "Impossible de charger les faits marquants."));
     else setMatchEvents(data || []);
   }
 
@@ -393,7 +404,7 @@ export default function AdminPage() {
       reason: eventForm.reason.trim() || null
     });
 
-    if (error) setEventMessage(error.message);
+    if (error) setEventMessage(adminError(error, "Impossible d’ajouter cette action."));
     else {
       setEventMessage("Action ajoutée ✅");
       setEventForm((current) => ({ ...current, minute: "", player_name: "", player_in: "", player_out: "", reason: "" }));
@@ -404,7 +415,7 @@ export default function AdminPage() {
   async function removeMatchEvent(id) {
     if (!window.confirm("Supprimer cette action ?")) return;
     const { error } = await supabase.from("match_events").delete().eq("id", id);
-    if (error) setEventMessage(error.message);
+    if (error) setEventMessage(adminError(error, "Impossible de supprimer cette action."));
     else {
       setEventMessage("Action supprimée.");
       await loadMatchEvents(selectedMatchId);
@@ -427,7 +438,7 @@ export default function AdminPage() {
     e.preventDefault();
     setMessage("Connexion...");
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setMessage(error ? error.message : "");
+    setMessage(error ? adminError(error, "Connexion impossible.") : "");
   }
 
   async function logout() {
@@ -441,7 +452,7 @@ export default function AdminPage() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (error) setMessage(error.message);
+    if (error) setMessage(adminError(error, "Impossible de charger les articles."));
     else setArticles(data || []);
   }
 
@@ -553,7 +564,7 @@ export default function AdminPage() {
       })
       .eq("id", article.id);
 
-    if (error) setMessage(error.message);
+    if (error) setMessage(adminError(error, "Impossible d’enregistrer l’article."));
     else {
       setMessage(next === "published" ? "Article publié ✅" : "Article repassé en brouillon.");
       loadArticles();
@@ -582,7 +593,7 @@ export default function AdminPage() {
       .update({ is_featured: true, updated_at: new Date().toISOString() })
       .eq("id", article.id);
 
-    if (error) setMessage(error.message);
+    if (error) setMessage(adminError(error, "Impossible de modifier l’article."));
     else {
       setMessage(`"${article.title}" est maintenant À LA UNE ⭐`);
       loadArticles();
@@ -592,7 +603,7 @@ export default function AdminPage() {
   async function removeArticle(article) {
     if (!window.confirm(`Supprimer "${article.title}" ?`)) return;
     const { error } = await supabase.from("articles").delete().eq("id", article.id);
-    if (error) setMessage(error.message);
+    if (error) setMessage(adminError(error, "Impossible de supprimer l’article."));
     else {
       if (form.id === article.id) resetForm();
       loadArticles();
