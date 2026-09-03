@@ -2,6 +2,7 @@ import Image from "next/image";
 import { getPublishedPredictions } from "@/lib/predictions";
 import SupporterPrediction from "@/components/SupporterPrediction";
 import { getAllSupporterPredictionStats } from "@/lib/supporter-predictions";
+import SupporterProfile from "@/components/SupporterProfile";
 
 export const revalidate = 0;
 export const metadata = { title: "Pronostics", description: "Les pronostics football de la rédaction Ligue 1 Express, expliqués clairement et suivis après chaque match." };
@@ -55,6 +56,7 @@ export default async function PronoPage() {
   return <div className="page-shell listing-page prono-page">
     <span className="eyebrow">LES CHOIX DE LA RÉDACTION</span><h1>Pronostics</h1>
     <p className="prono-intro">Un choix clair, notre lecture du match et un indice de confiance. Après le coup de sifflet final, le bilan se met à jour automatiquement.</p>
+    <SupporterProfile />
     <section className="prono-summary prono-summary-v6">
       <div className="prono-pie" style={{"--success":`${successRate}%`}}><div><strong>{successRate}%</strong><span>réussite</span></div></div>
       <div className="prono-summary-copy"><span className="eyebrow">BILAN DE LA RÉDACTION</span><h2>{settled.length ? `${won} gagnant${won>1?"s":""} sur ${settled.length} évalué${settled.length>1?"s":""}` : "Le bilan démarre avec les prochains résultats"}</h2>
