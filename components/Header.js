@@ -21,6 +21,7 @@ export default function Header() {
   const supabase = useMemo(() => createSupabaseClient(), []);
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [connected, setConnected] = useState(false);
   useEffect(() => {
     if (!supabase) return;
@@ -51,8 +52,14 @@ export default function Header() {
         <div className="header-actions">
           <button className="search-header-button" aria-label="Rechercher" onClick={() => setSearchOpen(!searchOpen)}>⌕</button>
           <Link href="/mes-alertes" className="alerts-header-link" aria-label="Mes alertes">🔔</Link>
-          <Link href={connected ? "/mon-profil-supporter" : "/connexion"} className="member-header-link">{connected ? "Mon espace" : "Connexion"}</Link>
-          <Link href="/admin" className="admin-link">Admin</Link>
+          <div className="header-account-menu">
+            <button className="member-header-link" onClick={() => setAccountOpen(!accountOpen)} aria-expanded={accountOpen}>{connected ? "Mon espace" : "Connexion"}<span>⌄</span></button>
+            {accountOpen && <div className="header-account-dropdown">
+              <Link href={connected ? "/mon-profil-supporter" : "/connexion"} onClick={() => setAccountOpen(false)}><b>👤 {connected ? "Mon espace membre" : "Connexion / Inscription"}</b><small>{connected ? "Profil, pronostics et badges" : "Retrouver mes préférences"}</small></Link>
+              {connected && <Link href="/mon-club" onClick={() => setAccountOpen(false)}><b>★ Mon club</b><small>Mon actualité personnalisée</small></Link>}
+              <Link href="/admin" className="editorial-access" onClick={() => setAccountOpen(false)}><b>🔐 Accès rédaction</b><small>Administration du site</small></Link>
+            </div>}
+          </div>
           <button
             className="mobile-menu-button"
             aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
@@ -81,8 +88,9 @@ export default function Header() {
             <Link key={href} href={href} onClick={() => setOpen(false)}>{label}</Link>
           ))}
           <Link href="/mes-alertes" onClick={() => setOpen(false)}>🔔 Mes alertes</Link>
-          <Link href={connected ? "/mon-profil-supporter" : "/connexion"} onClick={() => setOpen(false)}>{connected ? "👤 Mon espace" : "👤 Connexion"}</Link>
-          <Link href="/admin" onClick={() => setOpen(false)}>Administration</Link>
+          <Link href={connected ? "/mon-profil-supporter" : "/connexion"} onClick={() => setOpen(false)}>{connected ? "👤 Mon espace" : "👤 Connexion / Inscription"}</Link>
+          {connected && <Link href="/mon-club" onClick={() => setOpen(false)}>★ Mon club</Link>}
+          <Link href="/admin" className="mobile-editorial-access" onClick={() => setOpen(false)}>🔐 Accès rédaction</Link>
         </nav>
       )}
     </header>
