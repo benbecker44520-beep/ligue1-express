@@ -259,11 +259,14 @@ export default async function MatchPage({ params }) {
           <div className="match-event-legend"><span>⚽ But</span><span>🚫 But refusé</span><span>🟨 Jaune</span><span>🟥 Rouge</span><span>🔄 Remplacement</span></div>
         </div>
         {incidents.length ? (
-          <div className="match-timeline-list">
+          <div className="match-timeline-list result-v8212-events">
+            <div className="result-v8212-teams" aria-hidden="true">
+              <strong>{match.home.shortName || match.home.name}</strong>
+              <span>MIN.</span>
+              <strong>{match.away.shortName || match.away.name}</strong>
+            </div>
             {incidents.map((incident) => (
               <div className={`match-timeline-row ${incident.isHome ? "home" : "away"} ${incident.type}`} key={incident.id}>
-                <div className="match-event-minute">{incident.minute || "—"}</div>
-                <div className="match-event-icon">{incident.icon}</div>
                 <div className="match-event-copy">
                   <strong>{incident.label}{incident.manual && <small className="match-event-manual-badge">Ajout rédaction</small>}</strong>
                   {incident.type === "substitution" ? (
@@ -273,7 +276,10 @@ export default async function MatchPage({ params }) {
                   )}
                   {incident.reason && incident.player && <small>{incident.reason}</small>}
                 </div>
-                <div className="match-event-team">{incident.isHome ? match.home.shortName || match.home.name : match.away.shortName || match.away.name}</div>
+                <div className="result-v8212-marker">
+                  <time>{incident.minute || "—"}</time>
+                  <i>{incident.icon}</i>
+                </div>
               </div>
             ))}
           </div>
