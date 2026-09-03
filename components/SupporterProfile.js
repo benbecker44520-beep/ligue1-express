@@ -52,7 +52,7 @@ export default function SupporterProfile() {
 
   if (profile && !editing) return <section className="supporter-profile is-ready">
     <div><span>🏆 MON PROFIL SUPPORTER</span><strong>{profile.nickname}</strong><small>Tes pronostics participent au classement.</small></div>
-    <div><Link href="/classement-pronos">Voir mon classement →</Link><button type="button" onClick={() => setEditing(true)}>Modifier le pseudo</button></div>
+    <div><Link href="/mon-profil-supporter">Mon espace →</Link><Link href="/classement-pronos" className="profile-ranking-link">Classement</Link><button type="button" onClick={() => setEditing(true)}>Modifier le pseudo</button></div>
     {message && <p>{message}</p>}
   </section>;
 

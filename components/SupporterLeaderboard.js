@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 const PROFILE_KEY = "ligue1-express-supporter-profile-v1";
 
@@ -19,7 +20,7 @@ export default function SupporterLeaderboard({ general, weekly }) {
 
   return <>
     <div className="ranking-switch"><button className={mode === "weekly" ? "active" : ""} onClick={() => setMode("weekly")}>Cette semaine</button><button className={mode === "general" ? "active" : ""} onClick={() => setMode("general")}>Classement général</button></div>
-    {myRank > 0 && <div className="my-ranking-position"><span>Ta position</span><strong>#{myRank}</strong><small>{ranking[myRank - 1].points} points · {ranking[myRank - 1].successRate}% de réussite</small></div>}
+    {myRank > 0 && <div className="my-ranking-position"><span>Ta position</span><strong>#{myRank}</strong><small>{ranking[myRank - 1].points} points · {ranking[myRank - 1].successRate}% de réussite</small><Link href="/mon-profil-supporter">Voir mon espace →</Link></div>}
     {ranking.length === 0 ? <div className="ranking-empty"><span>🏟️</span><h2>Le classement va bientôt démarrer</h2><p>Les premiers points apparaîtront après les prochains résultats.</p></div> : <div className="supporter-ranking-table">
       <div className="ranking-row ranking-head"><span>Rang</span><span>Pronostiqueur</span><span>Pronos</span><span>Réussite</span><span>Série</span><span>Points</span></div>
       {ranking.map((player, index) => <div className={`ranking-row ${player.id === profileId ? "is-me" : ""} ${index < 3 ? "is-podium" : ""}`} key={player.id}>

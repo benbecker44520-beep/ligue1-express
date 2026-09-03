@@ -7,7 +7,7 @@ export const revalidate = 3600;
 export default async function sitemap() {
   const base = getSiteUrl();
   const now = new Date();
-  const staticPaths = ["", "/actualites", "/fil-express", "/live", "/championnats", "/championnats/ligue-1", "/championnats/ligue-2", "/championnats/ligue-3", "/resultats", "/classement", "/stats", "/prono", "/classement-pronos", "/mercato", "/analyses", "/mon-club", "/mes-alertes"];
+  const staticPaths = ["", "/actualites", "/fil-express", "/live", "/championnats", "/championnats/ligue-1", "/championnats/ligue-2", "/championnats/ligue-3", "/resultats", "/classement", "/stats", "/prono", "/classement-pronos", "/mon-profil-supporter", "/mercato", "/analyses", "/mon-club", "/mes-alertes"];
   const entries = staticPaths.map((path) => ({
     url: `${base}${path || "/"}`,
     lastModified: now,
