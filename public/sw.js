@@ -1,4 +1,4 @@
-const CACHE_NAME = "ligue1-express-v8-9";
+const CACHE_NAME = "ligue1-express-v8-19";
 const OFFLINE_URL = "/offline";
 const PRECACHE = [
   "/offline",
@@ -47,4 +47,27 @@ self.addEventListener("fetch", (event) => {
       }))
     );
   }
+});
+
+self.addEventListener("push", (event) => {
+  let payload = {};
+  try { payload = event.data?.json() || {}; } catch { payload = { body: event.data?.text() || "Nouvel événement LIVE" }; }
+  event.waitUntil(self.registration.showNotification(payload.title || "Ligue 1 Express", {
+    body: payload.body || "Nouvel événement LIVE",
+    icon: payload.icon || "/icon-192.png",
+    badge: payload.badge || "/icon-192.png",
+    tag: payload.tag || "ligue1-express-live",
+    renotify: true,
+    data: { url: payload.url || "/live" }
+  }));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = new URL(event.notification.data?.url || "/live", self.location.origin).href;
+  event.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+    const existing = windows.find((client) => client.url === target);
+    if (existing) return existing.focus();
+    return clients.openWindow(target);
+  }));
 });

@@ -1197,3 +1197,6 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 
 /* V8.9.9.2 - Templates média & logos clubs */
 .social-club-auto{display:flex;flex-wrap:wrap;gap:8px}.social-club-auto span{display:inline-flex;align-items:center;gap:5px;border:1px solid #dce3eb;background:#fff;border-radius:999px;padding:6px 9px;font-size:10px!important;font-weight:850;color:#50627a!important}
+
+/* V8.19 - Notifications LIVE */
+.alerts-push-message{margin:12px 0 0;color:#147245;font-size:12px;font-weight:900;line-height:1.45}
