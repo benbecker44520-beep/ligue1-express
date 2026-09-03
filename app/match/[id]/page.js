@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getMatchById, getStandings, getTeamById } from "@/lib/football";
+import { getLeaguePlayers, getMatchById, getStandings, getTeamById } from "@/lib/football";
 import { createSupabaseClient } from "@/lib/supabase";
 import { scoreWithScorerFallback } from "@/lib/match-score";
 import { getEspnMatchIncidents } from "@/lib/espn";
@@ -115,7 +115,33 @@ export default async function MatchPage({ params }) {
     });
   }
 
-  const incidents = [...automaticIncidents, ...manualEvents].sort((a, b) => {
+  const leaguePlayersResult = await getLeaguePlayers();
+  const playerNameMatches = (left, right) => {
+    const clean = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const a = clean(left).split(" ").filter(Boolean);
+    const b = clean(right).split(" ").filter(Boolean);
+    if (!a.length || !b.length || a.at(-1) !== b.at(-1)) return false;
+    return clean(left) === clean(right) || a[0]?.[0] === b[0]?.[0];
+  };
+  const resolvePlayer = (name, isHome) => {
+    if (!name || !leaguePlayersResult.ok) return null;
+    const teamId = isHome ? match.home.id : match.away.id;
+    return leaguePlayersResult.data.find((player) => String(player.teamId) === String(teamId) && playerNameMatches(player.name, name))
+      || leaguePlayersResult.data.find((player) => playerNameMatches(player.name, name))
+      || null;
+  };
+  const incidents = [...automaticIncidents, ...manualEvents].map((incident) => {
+    const player = resolvePlayer(incident.player, incident.isHome);
+    const playerIn = resolvePlayer(incident.playerIn, incident.isHome);
+    const playerOut = resolvePlayer(incident.playerOut, incident.isHome);
+    return {
+      ...incident,
+      playerId: player?.playerId || null,
+      playerInId: playerIn?.playerId || null,
+      playerOutId: playerOut?.playerId || null,
+      clubId: incident.isHome ? match.home.id : match.away.id
+    };
+  }).sort((a, b) => {
     const minuteA = a.minuteValue ?? (parseInt(String(a.minute || "0"), 10) || 0);
     const minuteB = b.minuteValue ?? (parseInt(String(b.minute || "0"), 10) || 0);
     return minuteA - minuteB;

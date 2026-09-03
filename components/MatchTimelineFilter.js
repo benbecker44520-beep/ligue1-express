@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 
 const FILTERS = [
   { value: "all", icon: "✨", label: "Tous" },
@@ -39,11 +40,11 @@ export default function MatchTimelineFilter({ incidents, homeName, awayName }) {
         <div className={`match-timeline-row ${incident.isHome ? "home" : "away"} ${incident.type}`} key={incident.id}>
           <div className="match-event-copy">
             <strong>{incident.label}{incident.manual && <small className="match-event-manual-badge">Ajout rédaction</small>}</strong>
-            {incident.type === "substitution" ? (
-              <span>{incident.playerOut ? `${incident.playerOut} sort` : "Sortie"} · {incident.playerIn ? `${incident.playerIn} entre` : "Entrée"}</span>
-            ) : (
-              <span>{incident.player || incident.reason || (incident.isHome ? homeName : awayName)}</span>
-            )}
+            {incident.type === "substitution" ? <span>
+              {incident.playerOutId ? <Link href={`/joueur/${incident.playerOutId}?club=${incident.clubId}`}>{incident.playerOut}</Link> : (incident.playerOut || "Sortie")} sort · {incident.playerInId ? <Link href={`/joueur/${incident.playerInId}?club=${incident.clubId}`}>{incident.playerIn}</Link> : (incident.playerIn || "Entrée")} entre
+            </span> : <span>
+              {incident.playerId ? <Link href={`/joueur/${incident.playerId}?club=${incident.clubId}`}>{incident.player}</Link> : (incident.player || incident.reason || (incident.isHome ? homeName : awayName))}
+            </span>}
             {incident.reason && incident.player && <small>{incident.reason}</small>}
           </div>
           <div className="result-v8212-marker"><time>{incident.minute || "—"}</time><i>{incident.icon}</i></div>

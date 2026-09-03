@@ -7,6 +7,7 @@ import PlayerPortrait from "@/components/PlayerPortrait";
 import { getPublishedArticles } from "@/lib/articles";
 import { getTransfers } from "@/lib/transfers";
 import { articleMentions, sameEntityName } from "@/lib/content-links";
+import { getApiFootballPlayerProfile } from "@/lib/apifootball";
 
 export const revalidate = 0;
 
@@ -33,11 +34,12 @@ export default async function PlayerPage({ params, searchParams }) {
   if (result.notFound) notFound();
   if (!result.ok) return <div className="page-shell listing-page"><span className="eyebrow">LIGUE 1 · JOUEUR</span><h1>Fiche joueur</h1><div className="football-setup-box"><h2>Données indisponibles</h2><p>Les données du joueur sont temporairement indisponibles. Réessaie dans quelques instants.</p></div></div>;
   const p = result.data;
-  const [photoResult, scorersResult, seasonStatsResult, teamResult, articles, transfers] = await Promise.all([
-    getPlayerPhoto(p.name), getScorers(), getPlayerSeasonStats(id), p.currentTeam?.id ? getTeamById(p.currentTeam.id) : Promise.resolve({ok:false}), getPublishedArticles({limit:50}), getTransfers()
+  const [photoResult, scorersResult, seasonStatsResult, apiProfileResult, teamResult, articles, transfers] = await Promise.all([
+    getPlayerPhoto(p.name), getScorers(), getPlayerSeasonStats(id), getApiFootballPlayerProfile(p.name), p.currentTeam?.id ? getTeamById(p.currentTeam.id) : Promise.resolve({ok:false}), getPublishedArticles({limit:50}), getTransfers()
   ]);
   const playerImages = photoResult.ok ? [photoResult.data?.cutout, photoResult.data?.render, photoResult.data?.thumb].filter(Boolean) : [];
   const seasonStats = seasonStatsResult.ok ? seasonStatsResult.data : null;
+  const apiProfile = apiProfileResult.ok ? apiProfileResult.data : null;
   const age = ageOf(p.dateOfBirth);
   const scorer = scorersResult.ok ? scorersResult.data.find(s => String(s.playerId) === String(id)) : null;
   const scorerRank = scorer && scorersResult.ok ? scorersResult.data.findIndex(s => String(s.playerId) === String(id)) + 1 : null;
@@ -57,7 +59,9 @@ export default async function PlayerPage({ params, searchParams }) {
 
     <section id="profil" className="player-info-card"><div><span>POSTE</span><strong>{positionFr(p.position)}</strong></div><div><span>NATIONALITÉ</span><strong>{nationalityFr(p.nationality)}</strong></div><div><span>ÂGE</span><strong>{age != null ? `${age} ans` : "—"}</strong></div><div><span>DATE DE NAISSANCE</span><strong>{birthFr(p.dateOfBirth)}</strong></div>{p.shirtNumber != null && <div><span>NUMÉRO</span><strong>#{p.shirtNumber}</strong></div>}</section>
 
-    <section id="stats" className="player-v897-stats"><div className="club-section-title"><span>⚡ STATS SAISON</span><strong>Ligue 1</strong></div>{(() => { const detailed = seasonStats ? [["MATCHS JOUÉS", seasonStats.matchesOnPitch],["TITULARISATIONS", seasonStats.startingXI],["MINUTES", seasonStats.minutesPlayed],["BUTS", seasonStats.goals],["PASSES D.", seasonStats.assists],["PENALTYS", seasonStats.penalties]].filter(([,value]) => value != null) : []; const scorerStats = scorer ? [["BUTS", scorer.goals],["PASSES D.", scorer.assists],["PENALTYS", scorer.penalties]].filter(([,value]) => value != null) : []; const stats = detailed.length ? detailed : scorerStats; return stats.length ? <><div className="player-v897-stat-grid">{stats.map(([label,value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>{scorerRank ? <p className="player-v897-ranking">Classement des buteurs : <strong>#{scorerRank}</strong></p> : null}</> : <div className="player-v897-stat-unavailable"><strong>Statistiques de saison en attente</strong><span>Les chiffres sont affichés uniquement lorsqu’ils sont confirmés par la source sportive.</span></div>; })()}</section>
+    <section id="stats" className="player-v897-stats"><div className="club-section-title"><span>⚡ STATS SAISON</span><strong>Ligue 1</strong></div>{(() => { const detailed = seasonStats ? [["MATCHS JOUÉS", seasonStats.matchesOnPitch],["TITULARISATIONS", seasonStats.startingXI],["MINUTES", seasonStats.minutesPlayed],["BUTS", seasonStats.goals ?? apiProfile?.goals],["PASSES D.", seasonStats.assists],["JAUNES", apiProfile?.yellowCards],["ROUGES", apiProfile?.redCards]].filter(([,value]) => value != null) : [["MATCHS JOUÉS", apiProfile?.appearances],["BUTS", apiProfile?.goals ?? scorer?.goals],["PASSES D.", scorer?.assists],["JAUNES", apiProfile?.yellowCards],["ROUGES", apiProfile?.redCards]].filter(([,value]) => value != null); const stats = detailed; return stats.length ? <><div className="player-v897-stat-grid player-v822-stat-grid">{stats.map(([label,value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>{scorerRank ? <p className="player-v897-ranking">Classement des buteurs : <strong>#{scorerRank}</strong></p> : null}</> : <div className="player-v897-stat-unavailable"><strong>Statistiques de saison en attente</strong><span>Les chiffres sont affichés uniquement lorsqu’ils sont confirmés par la source sportive.</span></div>; })()}</section>
+
+    <section className={`player-v822-status ${apiProfile?.injured ? "is-injured" : "is-available"}`}><span>{apiProfile?.injured ? "🚑" : "✅"}</span><div><small>ÉTAT DU JOUEUR</small><strong>{apiProfile?.injured ? "Blessé / indisponible" : apiProfile?.injuryKnown ? "Disponible" : "Aucune blessure signalée"}</strong><p>{apiProfile?.injured ? "Une indisponibilité est actuellement signalée par la source sportive." : "Aucune indisponibilité confirmée n’est actuellement remontée."}</p></div></section>
 
     {p.currentTeam && <section className="player-club-card"><div className="club-section-title"><span>CLUB ACTUEL</span><strong>Ligue 1</strong></div><Link href={`/club/${p.currentTeam.id}`} className="player-club-link">{p.currentTeam.crest && <Image src={p.currentTeam.crest} alt="" width={54} height={54} unoptimized />}<div><strong>{p.currentTeam.name}</strong><span>Voir le centre du club →</span></div></Link></section>}
 
