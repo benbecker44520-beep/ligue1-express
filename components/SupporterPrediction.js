@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createSupabaseClient } from "@/lib/supabase";
 import ShareButtons from "@/components/ShareButtons";
+import Link from "next/link";
 
 const VOTER_KEY = "ligue1-express-supporter-voter-v1";
 const PICKS_KEY = "ligue1-express-supporter-picks-v1";
@@ -68,6 +69,7 @@ export default function SupporterPrediction({ matchId, matchDate, homeTeam, away
   const [choice, setChoice] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [connected, setConnected] = useState(false);
   const closed = !matchDate || new Date(matchDate).getTime() <= Date.now();
   const choiceLabels = labels(homeTeam, awayTeam);
   const supporterChoice = majorityChoice(stats);
@@ -83,6 +85,7 @@ export default function SupporterPrediction({ matchId, matchDate, homeTeam, away
   useEffect(() => {
     setChoice(getSavedPicks()[String(matchId)] || "");
     loadStats();
+    if (supabase) supabase.auth.getSession().then(({ data }) => setConnected(Boolean(data.session)));
   }, [matchId]);
 
   async function vote(nextChoice) {
@@ -111,11 +114,12 @@ export default function SupporterPrediction({ matchId, matchDate, homeTeam, away
       <b>{loading ? "…" : `${stats.total} vote${stats.total > 1 ? "s" : ""}`}</b>
     </div>
 
-    {!closed && <div className="supporter-vote-buttons">
+    {!closed && connected && <div className="supporter-vote-buttons">
       {CHOICES.map(item => <button type="button" key={item} className={choice === item ? "active" : ""} onClick={() => vote(item)} disabled={loading}>
         <b>{item}</b><span>{choiceLabels[item]}</span>
       </button>)}
     </div>}
+    {!closed && !connected && <div className="supporter-vote-login"><span>Connecte-toi pour enregistrer ton pronostic et gagner des points.</span><Link href="/connexion">Se connecter →</Link></div>}
 
     <div className="supporter-gauges">
       {CHOICES.map(item => <div className={`supporter-gauge ${choice === item ? "is-mine" : ""}`} key={item}>

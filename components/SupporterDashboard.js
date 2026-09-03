@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import SupporterRecovery from "@/components/SupporterRecovery";
+import { createSupabaseClient } from "@/lib/supabase";
+import { loadMemberProfile } from "@/lib/member-client";
 
 const PROFILE_KEY = "ligue1-express-supporter-profile-v1";
 
@@ -42,10 +44,16 @@ function badges(stats) {
 }
 
 export default function SupporterDashboard({ entries, predictions, general, weekly }) {
+  const supabase = useMemo(() => createSupabaseClient(), []);
   const [profile, setProfile] = useState(null);
+  const [user, setUser] = useState(undefined);
   useEffect(() => {
-    try { setProfile(JSON.parse(localStorage.getItem(PROFILE_KEY) || "null")); } catch {}
-  }, []);
+    if (!supabase) return setUser(null);
+    loadMemberProfile(supabase).then((result) => {
+      setUser(result.user);
+      if (result.profile) setProfile({ id: result.profile.profile_id, nickname: result.profile.nickname });
+    });
+  }, [supabase]);
 
   const dashboard = useMemo(() => {
     if (!profile?.id) return null;
@@ -60,7 +68,9 @@ export default function SupporterDashboard({ entries, predictions, general, week
     return { history, stats, badges: badges(stats), generalRank: position(general, String(profile.id)), weeklyRank: position(weekly, String(profile.id)) };
   }, [profile, entries, predictions, general, weekly]);
 
-  if (!profile?.id) return <main className="page-shell supporter-dashboard-page"><section className="supporter-login-card"><span>🏆 ESPACE SUPPORTER</span><h1>Retrouve ton espace</h1><p>Crée un nouveau pseudo ou récupère un profil existant avec ton code personnel.</p><Link href="/prono">Créer un nouveau profil →</Link></section><SupporterRecovery onRecovered={(restored) => setProfile(restored)} /></main>;
+  if (user === undefined) return <main className="page-shell supporter-dashboard-page"><div className="member-account-loading">Chargement de ton espace…</div></main>;
+  if (!user) return <main className="page-shell supporter-dashboard-page"><section className="supporter-login-card"><span>🏆 ESPACE MEMBRE</span><h1>Connecte-toi pour retrouver ton profil</h1><p>Tes pronostics, ton club, tes points et tes badges seront synchronisés sur tous tes appareils.</p><Link href="/connexion">Connexion / Inscription →</Link></section></main>;
+  if (!profile?.id) return <main className="page-shell supporter-dashboard-page"><section className="supporter-login-card"><h1>Préparation de ton profil…</h1><p>Actualise la page dans quelques secondes.</p></section></main>;
   if (!dashboard) return null;
 
   const nextBadge = dashboard.badges.find((badge) => !badge.unlocked);

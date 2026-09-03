@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { createSupabaseClient } from "@/lib/supabase";
+import { loadMemberProfile } from "@/lib/member-client";
 
 const STORAGE_KEY = "ligue1-express-my-club-v1";
 
@@ -21,6 +23,8 @@ function MatchCard({ match, label }) {
 }
 
 export default function MyClubSpace() {
+  const supabase = useMemo(() => createSupabaseClient(), []);
+  const [user, setUser] = useState(undefined);
   const [favorite, setFavorite] = useState(null);
   const [details, setDetails] = useState(null);
   const [leagues, setLeagues] = useState([]);
@@ -28,7 +32,13 @@ export default function MyClubSpace() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => { try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) setFavorite(JSON.parse(raw)); } catch {} }, []);
+  useEffect(() => {
+    if (!supabase) return setUser(null);
+    loadMemberProfile(supabase).then((result) => {
+      setUser(result.user);
+      if (result.profile?.favorite_club) setFavorite(result.profile.favorite_club);
+    });
+  }, [supabase]);
   useEffect(() => {
     if (!favorite) { setDetails(null); return; }
     const params = new URLSearchParams({ league: favorite.league, teamId: String(favorite.teamId || ""), team: favorite.team || "" });
@@ -41,12 +51,16 @@ export default function MyClubSpace() {
     setLoading(true);
     try { const json = await fetch("/api/my-club?mode=clubs", { cache: "no-store" }).then(r => r.json()); if (json.ok) setLeagues(json.leagues || []); } finally { setLoading(false); }
   }
-  function selectClub(club) {
+  async function selectClub(club) {
     const value = { teamId: club.teamId, team: club.team, shortName: club.shortName, logo: club.logo, league: club.league, leagueName: club.leagueName };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(value)); setFavorite(value); setPicker(false); setSearch("");
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+    await supabase.rpc("update_my_supporter_profile", { p_favorite_club: value });
+    setFavorite(value); setPicker(false); setSearch("");
   }
   const filtered = useMemo(() => { const n = search.trim().toLowerCase(); if (!n) return leagues; return leagues.map(l => ({...l, clubs:l.clubs.filter(c => `${c.team} ${c.shortName}`.toLowerCase().includes(n))})).filter(l => l.clubs.length); }, [leagues, search]);
 
+  if (user === undefined) return <div className="member-account-loading">Chargement de ton club…</div>;
+  if (!user) return <section className="club-space-onboarding"><span>★ MON CLUB</span><h1>Ton espace personnalisé</h1><p>Connecte-toi pour choisir ton équipe et retrouver ses informations sur tous tes appareils.</p><Link href="/connexion">Connexion / Inscription →</Link></section>;
   if (!favorite) return <section className="club-space-onboarding">
     <span>★ MON CLUB</span><h1>Ton football, rien qu'à toi.</h1><p>Choisis ton club préféré pour créer un espace personnalisé avec matchs, classement, actualités, mercato et alertes.</p><button onClick={openPicker}>Choisir mon club →</button>{picker && <Picker leagues={filtered} loading={loading} search={search} setSearch={setSearch} selectClub={selectClub} close={() => setPicker(false)} />}
   </section>;
@@ -74,5 +88,5 @@ export default function MyClubSpace() {
 }
 
 function Picker({ leagues, loading, search, setSearch, selectClub, close }) {
-  return <div className="my-club-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)close();}}><div className="my-club-modal"><div className="my-club-modal-head"><div><span>★ PERSONNALISE LIGUE 1 EXPRESS</span><h2>Quel club supportes-tu ?</h2><p>Ton choix reste enregistré uniquement dans ton navigateur.</p></div><button onClick={close}>×</button></div><input className="my-club-search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher un club…" autoFocus/><div className="my-club-picker-list">{loading ? <div className="my-club-picker-empty">Chargement des clubs…</div> : leagues.map(l=><section key={l.slug}><h3>{l.name}</h3><div className="my-club-picker-grid">{l.clubs.map(c=><button key={`${l.slug}-${c.teamId||c.team}`} onClick={()=>selectClub(c)}><span>{c.logo?<img src={c.logo} alt=""/>:"⚽"}</span><div><strong>{c.shortName||c.team}</strong><small>{c.rank?`${c.rank}e · ${c.points} pts`:l.name}</small></div><b>→</b></button>)}</div></section>)}</div></div></div>;
+  return <div className="my-club-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)close();}}><div className="my-club-modal"><div className="my-club-modal-head"><div><span>★ PERSONNALISE LIGUE 1 EXPRESS</span><h2>Quel club supportes-tu ?</h2><p>Ton choix sera synchronisé avec ton compte.</p></div><button onClick={close}>×</button></div><input className="my-club-search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher un club…" autoFocus/><div className="my-club-picker-list">{loading ? <div className="my-club-picker-empty">Chargement des clubs…</div> : leagues.map(l=><section key={l.slug}><h3>{l.name}</h3><div className="my-club-picker-grid">{l.clubs.map(c=><button key={`${l.slug}-${c.teamId||c.team}`} onClick={()=>selectClub(c)}><span>{c.logo?<img src={c.logo} alt=""/>:"⚽"}</span><div><strong>{c.shortName||c.team}</strong><small>{c.rank?`${c.rank}e · ${c.points} pts`:l.name}</small></div><b>→</b></button>)}</div></section>)}</div></div></div>;
 }

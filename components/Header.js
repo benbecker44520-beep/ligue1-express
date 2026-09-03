@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createSupabaseClient } from "@/lib/supabase";
 
 const links = [
   ["Accueil", "/"],
@@ -17,8 +18,16 @@ const links = [
 ];
 
 export default function Header() {
+  const supabase = useMemo(() => createSupabaseClient(), []);
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [connected, setConnected] = useState(false);
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.auth.getSession().then(({ data }) => setConnected(Boolean(data.session)));
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => setConnected(Boolean(session)));
+    return () => data.subscription.unsubscribe();
+  }, [supabase]);
 
   return (
     <header className="site-header">
@@ -42,6 +51,7 @@ export default function Header() {
         <div className="header-actions">
           <button className="search-header-button" aria-label="Rechercher" onClick={() => setSearchOpen(!searchOpen)}>⌕</button>
           <Link href="/mes-alertes" className="alerts-header-link" aria-label="Mes alertes">🔔</Link>
+          <Link href={connected ? "/mon-profil-supporter" : "/connexion"} className="member-header-link">{connected ? "Mon espace" : "Connexion"}</Link>
           <Link href="/admin" className="admin-link">Admin</Link>
           <button
             className="mobile-menu-button"
@@ -71,6 +81,7 @@ export default function Header() {
             <Link key={href} href={href} onClick={() => setOpen(false)}>{label}</Link>
           ))}
           <Link href="/mes-alertes" onClick={() => setOpen(false)}>🔔 Mes alertes</Link>
+          <Link href={connected ? "/mon-profil-supporter" : "/connexion"} onClick={() => setOpen(false)}>{connected ? "👤 Mon espace" : "👤 Connexion"}</Link>
           <Link href="/admin" onClick={() => setOpen(false)}>Administration</Link>
         </nav>
       )}

@@ -22,6 +22,7 @@ export default function SupporterProfile() {
   const [nickname, setNickname] = useState("");
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState("");
+  const [user, setUser] = useState(undefined);
 
   useEffect(() => {
     try {
@@ -29,26 +30,46 @@ export default function SupporterProfile() {
       if (saved?.nickname) { setProfile(saved); setNickname(saved.nickname); }
     } catch {}
   }, []);
+  useEffect(() => {
+    if (!supabase) return setUser(null);
+    supabase.auth.getUser().then(async ({ data }) => {
+      setUser(data.user || null);
+      if (data.user) {
+        const { data: rows } = await supabase.rpc("get_my_supporter_profile");
+        if (rows?.[0]) {
+          const saved = { id: rows[0].profile_id, nickname: rows[0].nickname };
+          localStorage.setItem(PROFILE_KEY, JSON.stringify(saved));
+          localStorage.setItem(VOTER_KEY, rows[0].voter_token);
+          setProfile(saved); setNickname(saved.nickname);
+        }
+      }
+    });
+  }, [supabase]);
 
   async function save(event) {
     event.preventDefault();
     const clean = nickname.trim();
     if (clean.length < 3 || clean.length > 20) return setMessage("Choisis un pseudo de 3 à 20 caractères.");
     setMessage("Enregistrement…");
-    const { data, error } = await supabase.rpc("register_supporter_profile", { p_voter_token: voterToken(), p_nickname: clean });
+    const { data, error } = user
+      ? await supabase.rpc("update_my_supporter_profile", {p_nickname: clean })
+      : await supabase.rpc("register_supporter_profile", { p_voter_token: voterToken(), p_nickname: clean });
     if (error) {
       if (error.message.includes("already used")) setMessage("Ce pseudo est déjà utilisé.");
       else if (error.message.includes("characters")) setMessage("Utilise uniquement des lettres, chiffres, tirets ou underscores.");
       else setMessage("Impossible d’enregistrer le pseudo pour le moment.");
       return;
     }
-    const saved = { id: data?.[0]?.profile_id, nickname: data?.[0]?.nickname || clean };
+    const saved = { id: profile?.id || data?.[0]?.profile_id, nickname: data?.[0]?.nickname || clean };
     localStorage.setItem(PROFILE_KEY, JSON.stringify(saved));
     setProfile(saved);
     setNickname(saved.nickname);
     setEditing(false);
     setMessage("Profil enregistré ✓ Tes anciens votes comptent aussi.");
   }
+
+  if (user === undefined) return null;
+  if (!user) return <section className="supporter-profile supporter-member-invite"><div><span>🏆 PRONOSTICS SUPPORTERS</span><strong>Connecte-toi pour participer</strong><small>Le pronostic de la rédaction et les tendances restent accessibles à tous.</small></div><div><Link href="/connexion">Connexion / Inscription →</Link><Link href="/classement-pronos" className="profile-ranking-link">Voir le classement</Link></div></section>;
 
   if (profile && !editing) return <section className="supporter-profile is-ready">
     <div><span>🏆 MON PROFIL SUPPORTER</span><strong>{profile.nickname}</strong><small>Tes pronostics participent au classement.</small></div>

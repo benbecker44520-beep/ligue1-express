@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { createSupabaseClient } from "@/lib/supabase";
+import { loadMemberProfile } from "@/lib/member-client";
 
 const PREFS_KEY = "ligue1-express-alert-preferences-v1";
 const CLUB_KEY = "ligue1-express-my-club-v1";
@@ -26,20 +28,22 @@ const OPTIONS = [
 ];
 
 export default function NotificationCenter() {
+  const supabase = useMemo(() => createSupabaseClient(), []);
+  const [user, setUser] = useState(undefined);
   const [prefs, setPrefs] = useState(DEFAULT_PREFS);
   const [favorite, setFavorite] = useState(null);
   const [permission, setPermission] = useState("unsupported");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    try {
-      const rawPrefs = localStorage.getItem(PREFS_KEY);
-      if (rawPrefs) setPrefs({ ...DEFAULT_PREFS, ...JSON.parse(rawPrefs) });
-      const rawClub = localStorage.getItem(CLUB_KEY);
-      if (rawClub) setFavorite(JSON.parse(rawClub));
-    } catch {}
+    if (!supabase) { setUser(null); return; }
+    loadMemberProfile(supabase).then((result) => {
+      setUser(result.user);
+      if (result.profile?.alert_preferences) setPrefs({ ...DEFAULT_PREFS, ...result.profile.alert_preferences });
+      if (result.profile?.favorite_club) setFavorite(result.profile.favorite_club);
+    });
     if (typeof window !== "undefined" && "Notification" in window) setPermission(Notification.permission);
-  }, []);
+  }, [supabase]);
 
   const activeCount = useMemo(() => OPTIONS.filter(([key]) => prefs[key]).length, [prefs]);
 
@@ -48,8 +52,9 @@ export default function NotificationCenter() {
     setSaved(false);
   }
 
-  function save() {
+  async function save() {
     localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+    await supabase.rpc("update_my_supporter_profile", { p_alert_preferences: prefs });
     setSaved(true);
     window.setTimeout(() => setSaved(false), 2200);
   }
@@ -67,6 +72,9 @@ export default function NotificationCenter() {
       icon: "/icon-192.png"
     });
   }
+
+  if (user === undefined) return <div className="member-account-loading">Chargement de tes alertes…</div>;
+  if (!user) return <section className="club-space-onboarding"><span>🔔 MES ALERTES</span><h1>Des informations rien que pour toi</h1><p>Connecte-toi pour enregistrer tes préférences et les retrouver sur tous tes appareils.</p><Link href="/connexion">Connexion / Inscription →</Link></section>;
 
   return (
     <div className="alerts-center">
