@@ -117,26 +117,56 @@ export default function AdminPage() {
 
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
 
     if (!session || !supabase) {
       setAdminAccess(null);
       setAdminAccessError("");
-      return () => { active = false; };
+      return () => { active = false; controller.abort(); };
     }
 
     setAdminAccess(null);
     setAdminAccessError("");
-    supabase.rpc("is_current_user_admin").then(({ data, error }) => {
-      if (!active) return;
-      if (error) {
-        setAdminAccess(false);
-        setAdminAccessError(adminError(error, "Impossible de vérifier les droits administrateur."));
-        return;
-      }
-      setAdminAccess(Boolean(data));
-    });
+    const timeout = window.setTimeout(() => controller.abort(), 8000);
 
-    return () => { active = false; };
+    async function verifyAdminAccess() {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/is_current_user_admin`,
+          {
+            method: "POST",
+            headers: {
+              apikey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json"
+            },
+            body: "{}",
+            cache: "no-store",
+            signal: controller.signal
+          }
+        );
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.message || `Erreur Supabase ${response.status}`);
+        }
+        const allowed = await response.json();
+        if (active) setAdminAccess(Boolean(allowed));
+      } catch (error) {
+        if (!active) return;
+        setAdminAccess(false);
+        setAdminAccessError(
+          error?.name === "AbortError"
+            ? "La vérification des droits a dépassé 8 secondes. Actualise la page ou reconnecte-toi."
+            : adminError(error, "Impossible de vérifier les droits administrateur.")
+        );
+      } finally {
+        window.clearTimeout(timeout);
+      }
+    }
+
+    verifyAdminAccess();
+
+    return () => { active = false; controller.abort(); window.clearTimeout(timeout); };
   }, [session, supabase]);
 
   useEffect(() => {
