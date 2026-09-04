@@ -6,6 +6,7 @@ import { createSupabaseClient, hasSupabaseConfig } from "@/lib/supabase";
 
 const VISITOR_KEY = "l1e_visitor_id";
 const SESSION_KEY = "l1e_session_id";
+const LAST_VIEW_KEY = "l1e_last_page_view";
 
 function randomId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
@@ -21,7 +22,26 @@ function getStoredId(storage, key) {
     }
     return value;
   } catch {
-    return randomId();
+    // Sans stockage persistant, chaque page deviendrait à tort un nouveau visiteur.
+    return null;
+  }
+}
+
+function isAutomatedBrowser() {
+  if (typeof navigator === "undefined") return true;
+  const ua = navigator.userAgent || "";
+  return Boolean(navigator.webdriver) || /bot|crawler|spider|slurp|headless|lighthouse|pagespeed|vercel|facebookexternalhit|twitterbot|linkedinbot|whatsapp|preview/i.test(ua);
+}
+
+function isRapidDuplicate(pathname) {
+  try {
+    const previous = JSON.parse(window.sessionStorage.getItem(LAST_VIEW_KEY) || "null");
+    const now = Date.now();
+    if (previous?.path === pathname && now - Number(previous?.at || 0) < 60_000) return true;
+    window.sessionStorage.setItem(LAST_VIEW_KEY, JSON.stringify({ path: pathname, at: now }));
+    return false;
+  } catch {
+    return true;
   }
 }
 
@@ -50,23 +70,33 @@ export default function AnalyticsTracker() {
   useEffect(() => {
     if (!pathname || pathname.startsWith("/admin") || !hasSupabaseConfig()) return;
     if (typeof navigator !== "undefined" && navigator.doNotTrack === "1") return;
-
-    const visitorId = getStoredId(window.localStorage, VISITOR_KEY);
-    const sessionId = getStoredId(window.sessionStorage, SESSION_KEY);
+    if (isAutomatedBrowser() || isRapidDuplicate(pathname)) return;
     const supabase = createSupabaseClient();
     if (!supabase) return;
-
-    const timer = window.setTimeout(() => {
-      supabase.from("page_views").insert({
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (sessionData?.session) {
+        const { data: isAdmin } = await supabase.rpc("is_current_user_admin");
+        if (cancelled || isAdmin === true) return;
+      }
+      const visitorId = getStoredId(window.localStorage, VISITOR_KEY);
+      const sessionId = getStoredId(window.sessionStorage, SESSION_KEY);
+      if (!visitorId || !sessionId) return;
+      const safePath = pathname.slice(0, 500);
+      const tenMinuteBucket = Math.floor(Date.now() / 600_000);
+      await supabase.from("page_views").insert({
         visitor_id: visitorId,
         session_id: sessionId,
-        path: pathname.slice(0, 500),
+        path: safePath,
         referrer: getReferrerHost().slice(0, 250),
-        device: getDeviceType()
-      }).then(() => {}).catch(() => {});
-    }, 250);
+        device: getDeviceType(),
+        view_key: `${visitorId}:${tenMinuteBucket}:${safePath}`
+      });
+    }, 800);
 
-    return () => window.clearTimeout(timer);
+    return () => { cancelled = true; window.clearTimeout(timer); };
   }, [pathname]);
 
   return null;

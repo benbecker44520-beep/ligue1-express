@@ -114,7 +114,7 @@ export default function AnalyticsAdmin() {
           </article>
         </div>
 
-        <p className="analytics-privacy-note">🔒 Mesure d'audience interne : aucun nom, e-mail, adresse IP brute ou empreinte numérique n'est enregistré. L'espace Admin n'est pas comptabilisé et le signal “Do Not Track” est respecté.</p>
+        <p className="analytics-privacy-note">🔒 Mesure d'audience interne : robots et doublons rapides filtrés, navigation administrateur exclue et journées calculées à l'heure de Paris. Aucun nom, e-mail ou adresse IP brute n'est enregistré.</p>
       </>}
     </section>
   );
