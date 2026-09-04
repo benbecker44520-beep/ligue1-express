@@ -11,6 +11,18 @@ const PREF_FOR_EVENT = {
   offside: "liveOffside",
   red_card: "liveRedCard"
 };
+const PLAYER_HISTORY_EVENTS = new Set(["goal", "yellow_card", "red_card"]);
+
+function normalizedPlayer(value) {
+  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function samePlayer(left, right) {
+  const a = normalizedPlayer(left).split(" ").filter(Boolean);
+  const b = normalizedPlayer(right).split(" ").filter(Boolean);
+  if (!a.length || !b.length || a.at(-1) !== b.at(-1)) return false;
+  return normalizedPlayer(left) === normalizedPlayer(right) || a[0]?.[0] === b[0]?.[0];
+}
 
 function authorized(request) {
   const expected = String(process.env.CRON_SECRET || "").trim();
@@ -42,7 +54,7 @@ async function runCheck(request) {
   if (!live.ok) return NextResponse.json({ error: live.error || "Flux LIVE indisponible." }, { status: 503 });
   const supabase = serviceSupabase();
   const candidates = live.data.flatMap((match) => (match.events || [])
-    .filter((event) => PREF_FOR_EVENT[event.type])
+    .filter((event) => PREF_FOR_EVENT[event.type] || PLAYER_HISTORY_EVENTS.has(event.type))
     .map((event) => ({ match, event, eventKey: `${match.provider}:${match.id}:${event.type}:${event.id}` })));
   let newEvents = 0;
   let sent = 0;
@@ -58,6 +70,23 @@ async function runCheck(request) {
     if (markerError) throw markerError;
     newEvents += 1;
 
+    if (PLAYER_HISTORY_EVENTS.has(candidate.event.type) && candidate.event.player) {
+      await supabase.from("player_live_events").upsert({
+        event_key: candidate.eventKey,
+        player_name: candidate.event.player,
+        event_type: candidate.event.type,
+        minute_label: candidate.event.minuteLabel || (candidate.event.minute != null ? `${candidate.event.minute}'` : null),
+        match_id: String(candidate.match.id),
+        match_url: `/live/match/${candidate.match.id}`,
+        home_name: candidate.match.home.name,
+        away_name: candidate.match.away.name,
+        event_at: new Date().toISOString()
+      }, { onConflict: "event_key" });
+    }
+
+    const preferenceKey = PREF_FOR_EVENT[candidate.event.type];
+    if (!preferenceKey) continue;
+
     const { data: subscriptions, error: subscriptionsError } = await supabase.from("push_subscriptions").select("id,user_id,endpoint,p256dh,auth");
     if (subscriptionsError) throw subscriptionsError;
     const userIds = [...new Set((subscriptions || []).map((item) => item.user_id))];
@@ -67,14 +96,18 @@ async function runCheck(request) {
     const profilesByUser = new Map((profiles || []).map((profile) => [profile.user_id, profile]));
     const { data: followedRows } = await supabase.from("followed_matches").select("user_id").eq("provider", candidate.match.provider || "apifootball").eq("match_id", String(candidate.match.id));
     const followedUsers = new Set((followedRows || []).map((row) => row.user_id));
+    const { data: followedPlayerRows } = candidate.event.type === "goal" && candidate.event.player
+      ? await supabase.from("followed_players").select("user_id,player_name") : { data: [] };
+    const followedPlayerUsers = new Set((followedPlayerRows || []).filter((row) => samePlayer(row.player_name, candidate.event.player)).map((row) => row.user_id));
     const copy = notificationFor(candidate.match, candidate.event);
 
     for (const subscription of subscriptions || []) {
       const profile = profilesByUser.get(subscription.user_id);
       const prefs = profile?.alert_preferences || {};
-      if (prefs[PREF_FOR_EVENT[candidate.event.type]] === false) continue;
+      if (prefs[preferenceKey] === false) continue;
       const followsMatch = followedUsers.has(subscription.user_id);
-      if (!followsMatch && prefs.favoriteOnly !== false && !sameClub(candidate.match, profile?.favorite_club)) continue;
+      const followsPlayer = followedPlayerUsers.has(subscription.user_id);
+      if (!followsMatch && !followsPlayer && prefs.favoriteOnly !== false && !sameClub(candidate.match, profile?.favorite_club)) continue;
       try {
         await sendPush(subscription, {
           ...copy,

@@ -8,6 +8,8 @@ import { getPublishedArticles } from "@/lib/articles";
 import { getTransfers } from "@/lib/transfers";
 import { articleMentions, sameEntityName } from "@/lib/content-links";
 import { getApiFootballPlayerProfile } from "@/lib/apifootball";
+import FollowPlayerButton from "@/components/FollowPlayerButton";
+import { createSupabaseClient } from "@/lib/supabase";
 
 export const revalidate = 0;
 
@@ -17,6 +19,7 @@ export async function generateMetadata({ params, searchParams }) {
   const result = await getPersonDetails(id, query?.club);
   if (!result.ok) return { title: "Joueur Ligue 1", robots: result.notFound ? { index: false } : undefined };
   const p = result.data;
+  const supabase = createSupabaseClient();
   return { title: `${p.name} — stats, club, matchs et mercato`, description: `${p.name} : fiche joueur, statistiques Ligue 1, club, matchs, mercato et actualités.`, alternates: { canonical: `/joueur/${id}` }, openGraph: { title: p.name, description: `Fiche joueur de ${p.name}${p.currentTeam?.name ? ` — ${p.currentTeam.name}` : ""}.` } };
 }
 function ageOf(date) { if (!date) return null; const birth = new Date(date); const now = new Date(); let age = now.getFullYear() - birth.getFullYear(); const m = now.getMonth() - birth.getMonth(); if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--; return age; }
@@ -47,12 +50,18 @@ export default async function PlayerPage({ params, searchParams }) {
   const playerTransfers = transfers.filter(t => sameEntityName(t.player_name, p.name)).slice(0,5);
   const recent = teamResult.ok ? teamResult.data.recent.slice(0,5) : [];
   const upcoming = teamResult.ok ? teamResult.data.upcoming.slice(0,3) : [];
+  let playerHistory = [];
+  if (supabase) {
+    const surname = p.name.split(/\s+/).filter(Boolean).at(-1) || p.name;
+    const { data } = await supabase.from("player_live_events").select("*").ilike("player_name", `%${surname}%`).order("event_at", { ascending: false }).limit(10);
+    playerHistory = data || [];
+  }
 
   return <div className="page-shell listing-page player-detail-page player-detail-v7">
     <div className="club-back">{p.currentTeam?.id ? <Link href={`/club/${p.currentTeam.id}`}>← Retour à {p.currentTeam.shortName || p.currentTeam.name}</Link> : <Link href="/classement">← Retour aux clubs</Link>}</div>
     <section className={`player-hero-card player-hero-v7 ${playerImages.length ? "has-player-photo" : ""}`}>
       <div className="player-photo-stage"><PlayerPortrait name={p.name} images={playerImages} crest={p.currentTeam?.crest || null} /></div>
-      <div className="player-hero-copy"><span className="eyebrow">LIGUE 1 · CENTRE JOUEUR</span><h1>{p.name}</h1><p>{positionFr(p.position)}{p.currentTeam?.name ? <> · <Link href={`/club/${p.currentTeam.id}`}>{p.currentTeam.name}</Link></> : null}</p>{scorer && <div className="player-v7-highlight"><strong>{scorer.goals}</strong><span>but{scorer.goals>1?"s":""} en Ligue 1</span>{scorer.assists != null && <><strong>{scorer.assists}</strong><span>passe{scorer.assists>1?"s":""} décisive{scorer.assists>1?"s":""}</span></>}</div>}</div>
+      <div className="player-hero-copy"><span className="eyebrow">LIGUE 1 · CENTRE JOUEUR</span><h1>{p.name}</h1><p>{positionFr(p.position)}{p.currentTeam?.name ? <> · <Link href={`/club/${p.currentTeam.id}`}>{p.currentTeam.name}</Link></> : null}</p>{scorer && <div className="player-v7-highlight"><strong>{scorer.goals}</strong><span>but{scorer.goals>1?"s":""} en Ligue 1</span>{scorer.assists != null && <><strong>{scorer.assists}</strong><span>passe{scorer.assists>1?"s":""} décisive{scorer.assists>1?"s":""}</span></>}</div>}<FollowPlayerButton player={{id, name:p.name, teamId:p.currentTeam?.id || null, teamName:p.currentTeam?.name || null}} /></div>
       {p.currentTeam?.crest && <div className="player-hero-crest"><Image src={p.currentTeam.crest} alt={`Logo ${p.currentTeam.name}`} width={76} height={76} unoptimized /></div>}
     </section>
     <nav className="player-v897-nav" aria-label="Navigation fiche joueur"><a href="#profil">Profil</a><a href="#stats">Stats</a><a href="#matchs">Matchs</a><a href="#mercato">Mercato</a><a href="#actus">Actualités</a></nav>
@@ -62,6 +71,8 @@ export default async function PlayerPage({ params, searchParams }) {
     <section id="stats" className="player-v897-stats"><div className="club-section-title"><span>⚡ STATS SAISON</span><strong>Ligue 1</strong></div>{(() => { const detailed = seasonStats ? [["MATCHS JOUÉS", seasonStats.matchesOnPitch],["TITULARISATIONS", seasonStats.startingXI],["MINUTES", seasonStats.minutesPlayed],["BUTS", seasonStats.goals ?? apiProfile?.goals],["PASSES D.", seasonStats.assists],["JAUNES", apiProfile?.yellowCards],["ROUGES", apiProfile?.redCards]].filter(([,value]) => value != null) : [["MATCHS JOUÉS", apiProfile?.appearances],["BUTS", apiProfile?.goals ?? scorer?.goals],["PASSES D.", scorer?.assists],["JAUNES", apiProfile?.yellowCards],["ROUGES", apiProfile?.redCards]].filter(([,value]) => value != null); const stats = detailed; return stats.length ? <><div className="player-v897-stat-grid player-v822-stat-grid">{stats.map(([label,value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>{scorerRank ? <p className="player-v897-ranking">Classement des buteurs : <strong>#{scorerRank}</strong></p> : null}</> : <div className="player-v897-stat-unavailable"><strong>Statistiques de saison en attente</strong><span>Les chiffres sont affichés uniquement lorsqu’ils sont confirmés par la source sportive.</span></div>; })()}</section>
 
     <section className={`player-v822-status ${apiProfile?.injured ? "is-injured" : "is-available"}`}><span>{apiProfile?.injured ? "🚑" : "✅"}</span><div><small>ÉTAT DU JOUEUR</small><strong>{apiProfile?.injured ? "Blessé / indisponible" : apiProfile?.injuryKnown ? "Disponible" : "Aucune blessure signalée"}</strong><p>{apiProfile?.injured ? "Une indisponibilité est actuellement signalée par la source sportive." : "Aucune indisponibilité confirmée n’est actuellement remontée."}</p></div></section>
+
+    <section className="player-v823-history"><div className="club-section-title"><span>⚽ HISTORIQUE LIVE</span><strong>Buts et cartons récents</strong></div>{playerHistory.length ? <div>{playerHistory.map((event) => <Link href={event.match_url || "/resultats"} key={event.id}><time>{new Intl.DateTimeFormat("fr-FR",{day:"2-digit",month:"short",timeZone:"Europe/Paris"}).format(new Date(event.event_at))}</time><span>{event.event_type === "goal" ? "⚽" : event.event_type === "red_card" ? "🟥" : "🟨"}</span><div><strong>{event.event_type === "goal" ? "But" : event.event_type === "red_card" ? "Carton rouge" : "Carton jaune"} · {event.minute_label || "LIVE"}</strong><small>{event.home_name} – {event.away_name}</small></div><b>Voir →</b></Link>)}</div> : <p className="club-empty">L’historique se remplira automatiquement lors des prochains matchs LIVE.</p>}</section>
 
     {p.currentTeam && <section className="player-club-card"><div className="club-section-title"><span>CLUB ACTUEL</span><strong>Ligue 1</strong></div><Link href={`/club/${p.currentTeam.id}`} className="player-club-link">{p.currentTeam.crest && <Image src={p.currentTeam.crest} alt="" width={54} height={54} unoptimized />}<div><strong>{p.currentTeam.name}</strong><span>Voir le centre du club →</span></div></Link></section>}
 

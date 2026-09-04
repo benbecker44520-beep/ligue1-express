@@ -103,10 +103,15 @@ export default async function HomePage() {
   const fixtures = fixturesResult.ok ? fixturesResult.data : [];
   const formTeams = formTable(fixtures, standings);
   const snapshot = snapshotResult.ok ? snapshotResult.data : {};
-  const featuredPrediction = [...predictions]
-    .filter((prediction) => prediction.verdict === "pending")
-    .sort((a, b) => new Date(a.match_date || 0) - new Date(b.match_date || 0))[0] || predictions[0] || null;
-  const weekPrediction = predictions.find((prediction) => prediction.is_week_match) || featuredPrediction;
+  const now = Date.now();
+  const activePredictions = predictions.filter((prediction) => {
+    if (prediction.verdict !== "pending" || prediction.match?.status === "FINISHED") return false;
+    const kickoff = new Date(prediction.match_date || 0).getTime();
+    return ["IN_PLAY", "PAUSED", "LIVE"].includes(prediction.match?.status) || kickoff > now - 4 * 60 * 60 * 1000;
+  });
+  const featuredPrediction = [...activePredictions]
+    .sort((a, b) => new Date(a.match_date || 0) - new Date(b.match_date || 0))[0] || null;
+  const weekPrediction = activePredictions.find((prediction) => prediction.is_week_match) || featuredPrediction;
   const weekMatch = weekPrediction?.match || fixtures.find((match) => String(match.id) === String(weekPrediction?.match_id)) || null;
   const weekStats = weekPrediction ? supporterStats[String(weekPrediction.match_id)] : null;
   const weekHomeForm = weekMatch ? recentForm(fixtures, weekMatch.home.id, weekMatch.id) : [];
