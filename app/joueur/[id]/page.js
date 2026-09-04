@@ -19,7 +19,6 @@ export async function generateMetadata({ params, searchParams }) {
   const result = await getPersonDetails(id, query?.club);
   if (!result.ok) return { title: "Joueur Ligue 1", robots: result.notFound ? { index: false } : undefined };
   const p = result.data;
-  const supabase = createSupabaseClient();
   return { title: `${p.name} — stats, club, matchs et mercato`, description: `${p.name} : fiche joueur, statistiques Ligue 1, club, matchs, mercato et actualités.`, alternates: { canonical: `/joueur/${id}` }, openGraph: { title: p.name, description: `Fiche joueur de ${p.name}${p.currentTeam?.name ? ` — ${p.currentTeam.name}` : ""}.` } };
 }
 function ageOf(date) { if (!date) return null; const birth = new Date(date); const now = new Date(); let age = now.getFullYear() - birth.getFullYear(); const m = now.getMonth() - birth.getMonth(); if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--; return age; }
@@ -37,6 +36,7 @@ export default async function PlayerPage({ params, searchParams }) {
   if (result.notFound) notFound();
   if (!result.ok) return <div className="page-shell listing-page"><span className="eyebrow">LIGUE 1 · JOUEUR</span><h1>Fiche joueur</h1><div className="football-setup-box"><h2>Données indisponibles</h2><p>Les données du joueur sont temporairement indisponibles. Réessaie dans quelques instants.</p></div></div>;
   const p = result.data;
+  const supabase = createSupabaseClient();
   const [photoResult, scorersResult, seasonStatsResult, apiProfileResult, teamResult, articles, transfers] = await Promise.all([
     getPlayerPhoto(p.name), getScorers(), getPlayerSeasonStats(id), getApiFootballPlayerProfile(p.name), p.currentTeam?.id ? getTeamById(p.currentTeam.id) : Promise.resolve({ok:false}), getPublishedArticles({limit:50}), getTransfers()
   ]);
