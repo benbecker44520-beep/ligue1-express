@@ -10,11 +10,11 @@ export default async function Page() {
   if (!result.ok) {
     return (
       <div className="page-shell listing-page">
-        <span className="eyebrow">LIGUE 1 · V4.1</span>
-        <h1>Classement</h1>
+        <span className="eyebrow">LIGUE 1 · CLASSEMENT</span>
+        <h1>Classement Ligue 1</h1>
         <div className="football-setup-box">
-          <h2>Connexion football-data.org requise</h2>
-          <p>{result.error || <>Ajoute <code>FOOTBALL_DATA_TOKEN</code> dans <code>.env.local</code>, puis redémarre.</>}</p>
+          <h2>Classement temporairement indisponible</h2>
+          <p>Les données du championnat ne peuvent pas être chargées pour le moment. Réessaie dans quelques instants.</p>
         </div>
       </div>
     );
