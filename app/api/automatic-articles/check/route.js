@@ -41,15 +41,22 @@ async function runSelected(matchId) {
   return NextResponse.json({ok:false,error:friendly},{status:503});
 }
 
+// Déclenchement automatique serveur uniquement : génération globale autorisée ici.
 export async function GET() { return runBulk(); }
 
+// Déclenchement manuel depuis l'administration : un match précis est obligatoire.
 export async function POST(request) {
   try {
     await requireAdmin(request);
     const body=await request.json().catch(()=>({}));
     const matchId=String(body?.matchId||"").trim();
-    if(matchId) return runSelected(matchId);
-    return runBulk({force:true});
+    if(!matchId) {
+      return NextResponse.json(
+        {ok:false,error:"Sélectionne d'abord un match. La génération globale est désactivée depuis l'administration."},
+        {status:400}
+      );
+    }
+    return runSelected(matchId);
   } catch (error) {
     return NextResponse.json({ok:false,error:error?.message||"Accès administrateur requis."},{status:401});
   }
