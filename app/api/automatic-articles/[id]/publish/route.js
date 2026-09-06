@@ -31,18 +31,32 @@ export async function POST(request, { params }) {
     await supabase.from("articles").update({ social_publications: social }).eq("id", article.id);
 
     let push = null;
-    try {
-      push = await broadcastPush({
-        title: "📰 Nouvel article en ligne",
-        body: article.title,
-        icon: "/icon-192.png",
-        badge: "/icon-192.png",
-        type: "article_published",
-        url: `/article/${article.slug}`,
-        tag: `article-${article.id}`
-      });
-    } catch (pushError) {
-      push = { error: pushError?.message || "Notification article impossible" };
+    const eventKey = `article:${article.id}:published`;
+    const { error: markerError } = await supabase.from("live_notification_events").insert({
+      event_key: eventKey,
+      match_id: null,
+      event_type: "article_published",
+      payload: { article_id: article.id, slug: article.slug, title: article.title }
+    });
+
+    if (!markerError) {
+      try {
+        push = await broadcastPush({
+          title: "📰 Nouvel article en ligne",
+          body: article.title,
+          icon: "/icon-192.png",
+          badge: "/icon-192.png",
+          type: "article_published",
+          url: `/article/${article.slug}`,
+          tag: eventKey
+        });
+      } catch (pushError) {
+        push = { error: pushError?.message || "Notification article impossible" };
+      }
+    } else if (markerError.code === "23505") {
+      push = { duplicate: true };
+    } else {
+      push = { error: markerError.message || "Marqueur notification impossible" };
     }
 
     return NextResponse.json({ ok: true, articleId: article.id, social, push });
