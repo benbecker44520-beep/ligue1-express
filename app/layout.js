@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./home-featured.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
