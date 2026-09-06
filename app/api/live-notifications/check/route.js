@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import { getFrenchLiveMatches } from "@/lib/apifootball";
 import { getFrenchLineupCandidates } from "@/lib/lineups";
 import { broadcastPush, sendPush, serviceSupabase } from "@/lib/push-server";
@@ -7,6 +8,7 @@ import { generatePostMatchDrafts } from "@/lib/automatic-articles";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const SUPABASE_CRON_TOKEN_SHA256 = "60c7aac49a913b27596842bfcbc0710ff275901e54d6f3a7cf5817280b547595";
 const PREF_FOR_EVENT = {
   goal: "liveGoal",
   foul: "liveFoul",
@@ -29,7 +31,9 @@ function samePlayer(left, right) {
 function authorized(request) {
   const expected = String(process.env.CRON_SECRET || "").trim();
   const received = String(request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
-  return Boolean(expected && received && expected === received);
+  if (!received) return false;
+  if (expected && expected === received) return true;
+  return createHash("sha256").update(received).digest("hex") === SUPABASE_CRON_TOKEN_SHA256;
 }
 
 function sameClub(match, favorite) {
@@ -202,9 +206,6 @@ async function runCheck(request) {
       const prefs = profile?.alert_preferences || {};
       const followsMatch = followedUsers.has(subscription.user_id);
       const followsPlayer = followedPlayerUsers.has(subscription.user_id);
-
-      // A match explicitly followed has priority over the user's global LIVE preferences.
-      // This guarantees goal/red-card notifications for matches the member chose to follow.
       if (!followsMatch && prefs[preferenceKey] === false) continue;
       if (!followsMatch && !followsPlayer && prefs.favoriteOnly === true && !sameClub(candidate.match, profile?.favorite_club)) continue;
 
