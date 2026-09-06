@@ -56,12 +56,13 @@ export default async function ArticlePage({ params }) {
         <p className="article-lead">{article.excerpt}</p>
       </header>
 
-      <div
-        className={`article-cover article-cover-v3 ${article.accent || "blue"} ${article.image_url ? "has-image" : ""}`}
-        style={article.image_url ? { backgroundImage: `url("${article.image_url}")` } : undefined}
-      >
-        {!article.image_url && <span>⚽</span>}
-      </div>
+      {article.image_url ? (
+        <div className="article-cover article-cover-v3 has-image" style={{aspectRatio:"1200 / 630",height:"auto",background:"#071a46",overflow:"hidden"}}>
+          <img src={article.image_url} alt={article.title} style={{display:"block",width:"100%",height:"100%",objectFit:"contain",objectPosition:"center"}} />
+        </div>
+      ) : (
+        <div className={`article-cover article-cover-v3 ${article.accent || "blue"}`}><span>⚽</span></div>
+      )}
 
       <div className="article-layout-v3">
         <article className="article-copy article-copy-v3">
