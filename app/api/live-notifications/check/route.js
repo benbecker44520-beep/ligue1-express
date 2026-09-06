@@ -108,7 +108,7 @@ async function runCheck(request) {
       if (prefs[preferenceKey] === false) continue;
       const followsMatch = followedUsers.has(subscription.user_id);
       const followsPlayer = followedPlayerUsers.has(subscription.user_id);
-      if (!followsMatch && !followsPlayer && prefs.favoriteOnly !== false && !sameClub(candidate.match, profile?.favorite_club)) continue;
+      if (!followsMatch && !followsPlayer && prefs.favoriteOnly === true && !sameClub(candidate.match, profile?.favorite_club)) continue;
       try {
         await sendPush(subscription, {
           ...copy,
