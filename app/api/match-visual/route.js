@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function safe(value, fallback = "") {
   return String(value || fallback).slice(0, 90);
@@ -18,18 +19,19 @@ function shortName(value) {
 }
 
 async function toDataUrl(url) {
-  if (!url) return "";
+  if (!url || !/^https?:\/\//i.test(url)) return "";
   try {
-    const response = await fetch(url, { cache: "force-cache" });
+    const response = await fetch(url, {
+      cache: "no-store",
+      headers: { "User-Agent": "Foot-Francais-Express/1.0" },
+      signal: AbortSignal.timeout(5000)
+    });
     if (!response.ok) return "";
     const type = response.headers.get("content-type") || "image/png";
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    let binary = "";
-    const chunk = 0x8000;
-    for (let i = 0; i < bytes.length; i += chunk) {
-      binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
-    }
-    return `data:${type};base64,${btoa(binary)}`;
+    if (!type.startsWith("image/")) return "";
+    const buffer = Buffer.from(await response.arrayBuffer());
+    if (!buffer.length || buffer.length > 2_000_000) return "";
+    return `data:${type};base64,${buffer.toString("base64")}`;
   } catch {
     return "";
   }
@@ -42,6 +44,7 @@ export async function GET(request) {
   const hs = safe(params.get("hs"), "0");
   const as = safe(params.get("as"), "0");
   const league = safe(params.get("league"), "FOOT FRANÇAIS");
+
   const [homeLogo, awayLogo] = await Promise.all([
     toDataUrl(params.get("hl") || ""),
     toDataUrl(params.get("al") || "")
@@ -50,7 +53,13 @@ export async function GET(request) {
   const Team = ({ name, logo }) => (
     <div style={{display:"flex",width:"300px",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
       <div style={{display:"flex",width:"155px",height:"155px",alignItems:"center",justifyContent:"center",borderRadius:"26px",background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.12)"}}>
-        {logo ? <img src={logo} width="132" height="132" style={{objectFit:"contain",filter:"drop-shadow(0 8px 18px rgba(0,0,0,.45))"}} /> : <div style={{display:"flex",width:"100px",height:"100px",borderRadius:"50%",border:"4px solid white",alignItems:"center",justifyContent:"center",fontSize:"38px",fontWeight:900}}>{name.slice(0,2).toUpperCase()}</div>}
+        {logo ? (
+          <img src={logo} width="132" height="132" style={{objectFit:"contain"}} />
+        ) : (
+          <div style={{display:"flex",width:"100px",height:"100px",borderRadius:"50%",border:"4px solid white",alignItems:"center",justifyContent:"center",fontSize:"38px",fontWeight:900}}>
+            {name.slice(0,2).toUpperCase()}
+          </div>
+        )}
       </div>
       <div style={{display:"flex",marginTop:"17px",maxWidth:"280px",padding:"9px 16px",borderRadius:"12px",background:"rgba(0,0,0,.42)",fontSize:"25px",fontWeight:900,textTransform:"uppercase",textAlign:"center",lineHeight:1.1}}>{shortName(name)}</div>
     </div>
@@ -77,7 +86,9 @@ export async function GET(request) {
         <Team name={home} logo={homeLogo} />
         <div style={{display:"flex",width:"280px",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
           <div style={{display:"flex",padding:"9px 22px",borderRadius:"999px",background:"#ffd400",color:"#071a46",fontSize:"19px",fontWeight:900}}>SCORE FINAL</div>
-          <div style={{display:"flex",alignItems:"center",gap:"20px",marginTop:"22px",fontSize:"98px",fontWeight:900,lineHeight:1,textShadow:"0 8px 18px rgba(0,0,0,.45)"}}><span>{hs}</span><span style={{color:"#ffd400",fontSize:"52px"}}>–</span><span>{as}</span></div>
+          <div style={{display:"flex",alignItems:"center",gap:"20px",marginTop:"22px",fontSize:"98px",fontWeight:900,lineHeight:1}}>
+            <span>{hs}</span><span style={{color:"#ffd400",fontSize:"52px"}}>–</span><span>{as}</span>
+          </div>
         </div>
         <Team name={away} logo={awayLogo} />
       </div>
