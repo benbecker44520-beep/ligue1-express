@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generatePostMatchDrafts, generatePostMatchDraftForMatch } from "@/lib/automatic-articles";
+import { generatePostMatchDraftForMatch } from "@/lib/automatic-articles";
 import { getRecentlyFinishedFrenchMatches } from "@/lib/apifootball";
 import { serviceSupabase } from "@/lib/push-server";
 import { requireAdmin } from "@/lib/newsletter-server";
@@ -10,18 +10,6 @@ export const maxDuration = 60;
 
 function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
 function retryable(error) { const message=String(error?.message||"").toLowerCase(); return message.includes("fetch failed")||message.includes("apifootball")||message.includes("api-football")||message.includes("tempor")||message.includes("network"); }
-
-async function runBulk({ force = false } = {}) {
-  const supabase = serviceSupabase();
-  let lastError = null;
-  for (let attempt=1; attempt<=3; attempt+=1) {
-    try { const result=await generatePostMatchDrafts(supabase,{force}); return NextResponse.json({ok:true,automaticArticles:result,attempts:attempt}); }
-    catch(error){ lastError=error; if(!retryable(error)||attempt===3) break; await wait(attempt*800); }
-  }
-  const raw=String(lastError?.message||"").trim();
-  const friendly=/fetch failed|network|apifootball|api-football/i.test(raw)?"API-Football est momentanément indisponible. La génération a été retentée 3 fois. Réessaie dans quelques secondes.":raw||"Génération automatique impossible.";
-  return NextResponse.json({ok:false,error:friendly},{status:503});
-}
 
 async function runSelected(matchId) {
   const supabase=serviceSupabase();
@@ -41,8 +29,14 @@ async function runSelected(matchId) {
   return NextResponse.json({ok:false,error:friendly},{status:503});
 }
 
-// Déclenchement automatique serveur uniquement : génération globale autorisée ici.
-export async function GET() { return runBulk(); }
+// Le cron ne crée plus aucun article en masse.
+export async function GET() {
+  return NextResponse.json({
+    ok:true,
+    automaticArticles:{enabled:false,bulkGeneration:false,created:0,notified:0},
+    message:"La génération automatique en masse est désactivée. Les articles sont créés uniquement après sélection d'un match dans l'administration."
+  });
+}
 
 // Déclenchement manuel depuis l'administration : un match précis est obligatoire.
 export async function POST(request) {
