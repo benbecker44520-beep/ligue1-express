@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/newsletter-server";
 import { publishArticleToSocials } from "@/lib/automatic-articles";
+import { broadcastPush } from "@/lib/push-server";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -25,10 +26,26 @@ export async function POST(request, { params }) {
     }).eq("id", article.id);
     if (updateError) throw updateError;
 
-    const social = await publishArticleToSocials({ ...article, status: "published", published_at: publishedAt });
+    const publishedArticle = { ...article, status: "published", published_at: publishedAt };
+    const social = await publishArticleToSocials(publishedArticle);
     await supabase.from("articles").update({ social_publications: social }).eq("id", article.id);
 
-    return NextResponse.json({ ok: true, articleId: article.id, social });
+    let push = null;
+    try {
+      push = await broadcastPush({
+        title: "📰 Nouvel article en ligne",
+        body: article.title,
+        icon: "/icon-192.png",
+        badge: "/icon-192.png",
+        type: "article_published",
+        url: `/article/${article.slug}`,
+        tag: `article-${article.id}`
+      });
+    } catch (pushError) {
+      push = { error: pushError?.message || "Notification article impossible" };
+    }
+
+    return NextResponse.json({ ok: true, articleId: article.id, social, push });
   } catch (error) {
     return NextResponse.json({ error: error?.message || "Publication impossible." }, { status: 500 });
   }
