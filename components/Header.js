@@ -24,14 +24,38 @@ export default function Header() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [connected, setConnected] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+
   useEffect(() => {
     if (!supabase) return;
+
     async function updateAccess(session) {
       setConnected(Boolean(session));
-      if (!session) return setIsAdmin(false);
-      const { data: allowed } = await supabase.rpc("is_current_user_admin");
-      setIsAdmin(Boolean(allowed));
+      if (!session?.access_token) {
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/admin/access-check", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json"
+          },
+          body: "{}",
+          cache: "no-store"
+        });
+        if (!response.ok) {
+          setIsAdmin(false);
+          return;
+        }
+        const allowed = await response.json().catch(() => false);
+        setIsAdmin(allowed === true);
+      } catch {
+        setIsAdmin(false);
+      }
     }
+
     supabase.auth.getSession().then(({ data }) => updateAccess(data.session));
     const { data } = supabase.auth.onAuthStateChange((_event, session) => window.setTimeout(() => updateAccess(session), 0));
     return () => data.subscription.unsubscribe();
@@ -61,7 +85,7 @@ export default function Header() {
           <button className="search-header-button" aria-label="Rechercher" onClick={() => setSearchOpen(!searchOpen)}>⌕</button>
           <Link href="/mes-alertes" className="alerts-header-link" aria-label="Mes alertes">🔔</Link>
           <div className="header-account-menu">
-            <button className="member-header-link" onClick={() => setAccountOpen(!accountOpen)} aria-expanded={accountOpen}>{connected ? "Mon espace" : "Connexion"}<span>⌄</span></button>
+            <button className="member-header-link" onClick={() => setAccountOpen(!accountOpen)} aria-expanded={accountOpen} aria-label="Ouvrir le menu du compte">{connected ? "Mon espace" : "Connexion"}<span>⌄</span></button>
             {accountOpen && <div className="header-account-dropdown">
               <Link href={connected ? "/mon-profil-supporter" : "/connexion"} onClick={() => setAccountOpen(false)}><b>👤 {connected ? "Mon espace membre" : "Connexion / Inscription"}</b><small>{connected ? "Profil, pronostics et badges" : "Retrouver mes préférences"}</small></Link>
               {connected && <Link href="/mon-club" onClick={() => setAccountOpen(false)}><b>★ Mon club</b><small>Mon actualité personnalisée</small></Link>}
