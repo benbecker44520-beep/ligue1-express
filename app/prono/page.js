@@ -65,7 +65,7 @@ export default async function PronoPage() {
       </div>
     </section>
     <section className="editorial-supporters-summary">
-      <div className="duel-summary-title"><span>⚔️ V8.11 · LE DUEL</span><h2>Rédaction contre Supporters</h2><p>Qui lit le mieux les matchs de Foot Français Express ?</p></div>
+      <div className="duel-summary-title"><span>⚔️ LE DUEL</span><h2>Rédaction contre Supporters</h2><p>Qui lit le mieux les matchs de Foot Français Express ?</p></div>
       <div className="duel-summary-score"><div><span>✍️ Rédaction</span><strong>{editorialDuelRate}%</strong><small>{editorialDuelWins} bon{editorialDuelWins > 1 ? "s" : ""} pronostic{editorialDuelWins > 1 ? "s" : ""}</small></div><i>VS</i><div><span>👥 Supporters</span><strong>{supporterDuelRate}%</strong><small>{supporterDuelWins} bon{supporterDuelWins > 1 ? "s" : ""} pronostic{supporterDuelWins > 1 ? "s" : ""}</small></div></div>
       <div className="duel-summary-meta"><b>{evaluatedDuels.length}</b><span>duel{evaluatedDuels.length > 1 ? "s" : ""} terminé{evaluatedDuels.length > 1 ? "s" : ""}</span><b>{agreements}</b><span>avis identique{agreements > 1 ? "s" : ""}</span></div>
     </section>
