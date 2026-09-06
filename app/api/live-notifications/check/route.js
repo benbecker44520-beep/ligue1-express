@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getFrenchLiveMatches } from "@/lib/apifootball";
 import { sendPush, serviceSupabase } from "@/lib/push-server";
+import { generatePostMatchDrafts } from "@/lib/automatic-articles";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -124,9 +125,16 @@ async function runCheck(request) {
     }
   }
 
+  let automaticArticles = null;
+  try {
+    automaticArticles = await generatePostMatchDrafts(supabase);
+  } catch (error) {
+    automaticArticles = { error: error?.message || "Génération automatique impossible" };
+  }
+
   const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   await supabase.from("live_notification_events").delete().lt("created_at", cutoff);
-  return NextResponse.json({ ok: true, liveMatches: live.data.length, detected: candidates.length, newEvents, sent });
+  return NextResponse.json({ ok: true, liveMatches: live.data.length, detected: candidates.length, newEvents, sent, automaticArticles });
 }
 
 export async function GET(request) { return runCheck(request); }

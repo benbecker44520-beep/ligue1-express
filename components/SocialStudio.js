@@ -77,7 +77,8 @@ export default function SocialStudio({ articles = [], predictions = [], upcoming
     if (type === "resultat") { setHeadline(`${matchName(item)} · ${item.score?.fullTime?.home ?? "-"}-${item.score?.fullTime?.away ?? "-"}`); setNote(item.matchday ? `Journée ${item.matchday}` : "Ligue 1"); }
   }, [type, item?.id]);
 
-  const articleUrl = type === "article" && item?.slug ? `https://footfrancaisexpress.fr/article/${item.slug}` : "https://footfrancaisexpress.fr/";
+  const siteBase = process.env.NEXT_PUBLIC_SITE_URL || "https://foot-francais-express.vercel.app";
+  const articleUrl = type === "article" && item?.slug ? `${siteBase}/article/${item.slug}` : `${siteBase}/`;
   const kicker = TYPES[type].kicker;
   const facebookText = `${kicker} ⚽\n\n${headline}${note ? `\n\n${note}` : ""}\n\n👉 ${articleUrl}\n\n#Ligue1 #Ligue1Express`;
   const xText = `${kicker} ⚽\n\n${headline}${note ? `\n${note}` : ""}\n\n${articleUrl}\n\n#Ligue1`;
@@ -181,7 +182,7 @@ export default function SocialStudio({ articles = [], predictions = [], upcoming
     ctx.fillStyle="rgba(7,31,79,.88)"; ctx.fillRect(0,1010,W,190);
     ctx.fillStyle="#ffd51f"; ctx.fillRect(78,1040,360,92);
     ctx.fillStyle="#071f4f"; ctx.font="900 31px Arial"; ctx.fillText("FOOT FRANÇAIS EXPRESS",106,1098);
-    ctx.fillStyle="white"; ctx.font="700 23px Arial"; ctx.fillText("footfrancaisexpress.fr",470,1095);
+    ctx.fillStyle="white"; ctx.font="700 23px Arial"; ctx.fillText("foot-francais-express.vercel.app",470,1095);
 
     if (renderToken !== renderTokenRef.current) return;
     visibleCanvas.width = W; visibleCanvas.height = H;

@@ -3,7 +3,7 @@
   "appName": "Foot Français Express",
   "webDir": "public",
   "server": {
-    "url": "https://footfrancaisexpress.fr",
+    "url": "https://foot-francais-express.vercel.app",
     "cleartext": false
   }
 }
