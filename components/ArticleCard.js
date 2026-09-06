@@ -11,7 +11,7 @@ export default function ArticleCard({ article }) {
       >
         {!article.image_url && (
           <div className="no-image-brand">
-            <span>L1</span>
+            <span>FF</span>
             <strong>EXPRESS</strong>
           </div>
         )}
