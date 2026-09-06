@@ -1,0 +1,16 @@
+name: Automatic post-match articles
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger automatic article generation
+        run: |
+          curl --fail --silent --show-error \
+            --retry 2 \
+            https://foot-francais-express.vercel.app/api/automatic-articles/check
