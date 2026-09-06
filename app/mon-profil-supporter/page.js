@@ -5,7 +5,8 @@ import SupporterDashboard from "@/components/SupporterDashboard";
 export const revalidate = 0;
 export const metadata = {
   title: "Mon espace supporter",
-  description: "Retrouve tes pronostics, tes points, tes séries et tes badges Foot Français Express."
+  description: "Retrouve tes pronostics, tes points, tes séries et tes badges Foot Français Express.",
+  robots: { index: false, follow: false, nocache: true }
 };
 
 export default async function SupporterProfilePage() {
