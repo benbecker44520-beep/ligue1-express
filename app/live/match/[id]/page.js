@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import LiveAutoRefresh from "@/components/LiveAutoRefresh";
 import { getApiFootballMatch, getApiFootballStatistics } from "@/lib/apifootball";
 import FollowMatchButton from "@/components/FollowMatchButton";
+import MatchLineups from "@/components/MatchLineups";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +64,9 @@ export default async function ApiFootballLiveMatchPage({ params }) {
         <div className="live-v83-follow"><FollowMatchButton match={{ ...match, href:`/live/match/${match.id}` }} /></div>
       </section>
 
-      <nav className="live-v821-nav" aria-label="Sections du Centre Match"><a href="#fil-du-match">⚡ Fil du match</a><a href="#statistiques-live">📊 Statistiques</a></nav>
+      <nav className="live-v821-nav" aria-label="Sections du Centre Match"><a href="#compositions">📋 Compositions</a><a href="#fil-du-match">⚡ Fil du match</a><a href="#statistiques-live">📊 Statistiques</a></nav>
+
+      <MatchLineups matchId={match.id} homeName={match.home.name} awayName={match.away.name} />
 
       <section className="live-v821-statistics" id="statistiques-live">
         <div className="live-v83-section-head"><div><h2>Statistiques en direct</h2><small>Dernière actualisation à {updatedAt}</small></div><span>AUTO · 60 S</span></div>
