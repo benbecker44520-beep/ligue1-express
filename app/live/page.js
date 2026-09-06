@@ -63,8 +63,6 @@ export default async function LivePage() {
   if (!hasApiCup && espnCupLive.length) matches = [...matches, ...espnCupLive];
   let l1Fallback = false;
 
-  // Sécurité de continuité : si APIfootball est momentanément indisponible,
-  // la Ligue 1 conserve le flux football-data.org déjà validé en V8.2.
   if (!apiResult.ok) {
     const footballData = await getFixtures().catch(() => null);
     const fallbackMatches = footballData?.ok
@@ -77,7 +75,7 @@ export default async function LivePage() {
   const groups = [
     { id: "168", name: "Ligue 1", matches: matches.filter((m) => m.leagueId === "168" || (m.provider === "football-data" && !m.leagueId)) },
     { id: "164", name: "Ligue 2", matches: matches.filter((m) => m.leagueId === "164") },
-    { id: "167", name: "National", matches: matches.filter((m) => m.leagueId === "167") },
+    { id: "167", name: "Ligue 3", matches: matches.filter((m) => m.leagueId === "167") },
     { id: "165", name: "Coupe de France", matches: matches.filter((m) => m.leagueId === "165") }
   ];
   const total = groups.reduce((sum, group) => sum + group.matches.length, 0);
@@ -90,7 +88,7 @@ export default async function LivePage() {
         <div>
           <p className="eyebrow">FOOT FRANÇAIS EXPRESS · TEMPS RÉEL</p>
           <h1><span>LIVE</span> Scores en direct</h1>
-          <p>Suivez la Ligue 1, la Ligue 2, le National et la Coupe de France. Les scores sont actualisés automatiquement toutes les 60 secondes.</p>
+          <p>Suivez la Ligue 1, la Ligue 2, la Ligue 3 et la Coupe de France. Les scores sont actualisés automatiquement toutes les 60 secondes.</p>
         </div>
         <div className={`live-v82-counter ${total ? "is-live" : ""}`}>
           <i />
@@ -121,7 +119,7 @@ export default async function LivePage() {
         <section className="live-v82-empty">
           <div className="live-v82-ball">⚽</div>
           <h2>Aucun match en direct actuellement</h2>
-          <p>La page se rafraîchit automatiquement. Dès qu'un match de Ligue 1, Ligue 2, National ou Coupe de France démarre, son score apparaît ici.</p>
+          <p>La page se rafraîchit automatiquement. Dès qu'un match de Ligue 1, Ligue 2, Ligue 3 ou Coupe de France démarre, son score apparaît ici.</p>
           <Link href="/resultats">Voir les résultats et prochains matchs →</Link>
         </section>
       )}
@@ -135,7 +133,7 @@ export default async function LivePage() {
       <section className="live-v82-leagues">
         <LeagueStatus number="01" name="Ligue 1" source={l1Fallback ? "football-data.org" : "APIfootball"} active note={l1Fallback ? "Live activé en secours" : "Scores live activés"} />
         <LeagueStatus number="02" name="Ligue 2" source="APIfootball" active={apiResult.ok} note={apiResult.ok ? "Scores live activés" : "En attente du flux principal"} />
-        <LeagueStatus number="03" name="National" source="APIfootball" active={apiResult.ok} note={apiResult.ok ? "Scores live activés" : "En attente du flux principal"} />
+        <LeagueStatus number="03" name="Ligue 3" source="APIfootball" active={apiResult.ok} note={apiResult.ok ? "Scores live activés" : "En attente du flux principal"} />
         <LeagueStatus number="04" name="Coupe de France" source={hasApiCup ? "APIfootball" : "ESPN"} active note="Scores live activés" />
       </section>
     </div>
