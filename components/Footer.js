@@ -7,12 +7,12 @@ export default function Footer() {
     <footer className="footer">
       <div className="footer-grid">
         <div>
-          <Image src="/logo-foot-francais-express.svg" width={174} height={54} alt="Foot Français Express" />
+          <Image src="/logo-ff-express-v2.svg" width={174} height={54} alt="FF Express" unoptimized />
           <p>L'actualité du football français, sans perdre une minute.</p>
         </div>
         <div>
           <h3>Navigation</h3>
-          <p><Link href="/actualites">Actualités</Link> · <Link href="/championnats">Championnats</Link> · <Link href="/prono">Prono</Link> · <Link href="/mercato">Mercato</Link></p>
+          <p><Link href="/live">LIVE</Link> · <Link href="/actualites">Actualités</Link> · <Link href="/championnats">Championnats</Link> · <Link href="/resultats">Résultats</Link> · <Link href="/stats">Stats</Link> · <Link href="/prono">Prono</Link> · <Link href="/mercato">Mercato</Link></p>
         </div>
         <div>
           <h3>Newsletter</h3>
