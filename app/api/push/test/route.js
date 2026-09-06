@@ -13,7 +13,7 @@ export async function POST(request) {
     if (error) throw error;
     if (!data?.length) return NextResponse.json({ error: "Aucun téléphone activé." }, { status: 404 });
     const results = await Promise.allSettled(data.map((subscription) => sendPush(subscription, {
-      title: "Ligue 1 Express",
+      title: "Foot Français Express",
       body: "Tes notifications LIVE sont prêtes ! ⚽",
       icon: "/icon-192.png",
       badge: "/icon-192.png",

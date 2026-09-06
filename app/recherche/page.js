@@ -7,7 +7,7 @@ export const revalidate = 0;
 
 export const metadata = {
   title: "Recherche",
-  description: "Recherchez un club, un joueur ou une actualité sur Ligue 1 Express.",
+  description: "Recherchez un club, un joueur ou une actualité sur Foot Français Express.",
   robots: { index: false, follow: true }
 };
 
@@ -34,7 +34,7 @@ export default async function SearchPage({ searchParams }) {
   const total = articleResults.length + clubResults.length + playerResults.length;
 
   return <div className="page-shell listing-page global-search-page">
-    <span className="eyebrow">LIGUE 1 EXPRESS · RECHERCHE</span>
+    <span className="eyebrow">FOOT FRANÇAIS EXPRESS · RECHERCHE</span>
     <h1>Recherche globale</h1>
     <form action="/recherche" className="global-search-form">
       <span aria-hidden="true">⌕</span>

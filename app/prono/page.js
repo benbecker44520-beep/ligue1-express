@@ -5,7 +5,7 @@ import { getAllSupporterPredictionStats } from "@/lib/supporter-predictions";
 import SupporterProfile from "@/components/SupporterProfile";
 
 export const revalidate = 0;
-export const metadata = { title: "Pronostics", description: "Les pronostics football de la rédaction Ligue 1 Express, expliqués clairement et suivis après chaque match." };
+export const metadata = { title: "Pronostics", description: "Les pronostics football de la rédaction Foot Français Express, expliqués clairement et suivis après chaque match." };
 
 function formatDate(value) { if (!value) return "Date à confirmer"; return new Intl.DateTimeFormat("fr-FR", { weekday:"short", day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit", timeZone:"Europe/Paris" }).format(new Date(value)); }
 function verdictLabel(v) { return v === "won" ? "✅ GAGNÉ" : v === "lost" ? "❌ PERDU" : "⏳ EN ATTENTE"; }
@@ -65,7 +65,7 @@ export default async function PronoPage() {
       </div>
     </section>
     <section className="editorial-supporters-summary">
-      <div className="duel-summary-title"><span>⚔️ V8.11 · LE DUEL</span><h2>Rédaction contre Supporters</h2><p>Qui lit le mieux les matchs de Ligue 1 Express ?</p></div>
+      <div className="duel-summary-title"><span>⚔️ V8.11 · LE DUEL</span><h2>Rédaction contre Supporters</h2><p>Qui lit le mieux les matchs de Foot Français Express ?</p></div>
       <div className="duel-summary-score"><div><span>✍️ Rédaction</span><strong>{editorialDuelRate}%</strong><small>{editorialDuelWins} bon{editorialDuelWins > 1 ? "s" : ""} pronostic{editorialDuelWins > 1 ? "s" : ""}</small></div><i>VS</i><div><span>👥 Supporters</span><strong>{supporterDuelRate}%</strong><small>{supporterDuelWins} bon{supporterDuelWins > 1 ? "s" : ""} pronostic{supporterDuelWins > 1 ? "s" : ""}</small></div></div>
       <div className="duel-summary-meta"><b>{evaluatedDuels.length}</b><span>duel{evaluatedDuels.length > 1 ? "s" : ""} terminé{evaluatedDuels.length > 1 ? "s" : ""}</span><b>{agreements}</b><span>avis identique{agreements > 1 ? "s" : ""}</span></div>
     </section>

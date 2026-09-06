@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export default function HomeHeroMedia({ images = [], title = "Ligue 1 Express" }) {
+export default function HomeHeroMedia({ images = [], title = "Foot Français Express" }) {
   const candidates = [...new Set((images || []).filter(Boolean))];
   const [index, setIndex] = useState(0);
   const current = candidates[index] || null;

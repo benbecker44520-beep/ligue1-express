@@ -183,7 +183,7 @@ export default function NotificationCenter() {
 
       <section className="alerts-roadmap">
         <span>📱 PRÊT POUR LA SUITE</span>
-        <strong>Ces réglages serviront directement à l’application Ligue 1 Express.</strong>
+        <strong>Ces réglages serviront directement à l’application Foot Français Express.</strong>
         <p>Android reçoit les alertes dans Chrome, même fermé. Sur iPhone, ajoute d’abord le site à l’écran d’accueil, puis active les notifications depuis cette page.</p>
       </section>
     </div>

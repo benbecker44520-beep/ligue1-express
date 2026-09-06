@@ -17,7 +17,7 @@ export async function generateMetadata({ params }) {
     title: `${club.team} — effectif, résultats, mercato et actualités`,
     description: `Fiche de ${club.team} : classement, forme, matchs, effectif, buteurs, mercato et actualités.`,
     alternates: { canonical: `/club/${id}` },
-    openGraph: { title: club.team, description: `Toute l’actualité sportive de ${club.team} sur Ligue 1 Express.`, images: club.logo ? [{ url: club.logo }] : undefined }
+    openGraph: { title: club.team, description: `Toute l’actualité sportive de ${club.team} sur Foot Français Express.`, images: club.logo ? [{ url: club.logo }] : undefined }
   };
 }
 

@@ -6,7 +6,7 @@ export const articles = [
     excerpt: "Les faits marquants, les joueurs qui ont brillé et les tendances à surveiller en Ligue 1.",
     body: [
       "Bienvenue dans le Débrief Express. Cette première version du site utilise du contenu de démonstration afin de valider le design et la navigation.",
-      "L'objectif de Ligue 1 Express est simple : aller droit à l'essentiel, sans perdre le contexte. Les articles pourront accompagner les vidéos TikTok avec des analyses plus détaillées, des statistiques et les informations à retenir.",
+      "L'objectif de Foot Français Express est simple : aller droit à l'essentiel, sans perdre le contexte. Les articles pourront accompagner les vidéos TikTok avec des analyses plus détaillées, des statistiques et les informations à retenir.",
       "La prochaine étape sera de connecter les résultats et le classement à une source de données football, puis d'ajouter une véritable interface d'administration."
     ],
     accent: "hero"
@@ -17,7 +17,7 @@ export const articles = [
     title: "Le joueur à suivre ce week-end",
     excerpt: "Forme, rôle tactique et statistiques : pourquoi il peut faire la différence.",
     body: [
-      "Un format court pensé pour compléter les vidéos Ligue 1 Express.",
+      "Un format court pensé pour compléter les vidéos Foot Français Express.",
       "Ici pourront apparaître les statistiques clés du joueur, son importance dans le système de son équipe et les duels à surveiller."
     ],
     accent: "blue"
@@ -39,7 +39,7 @@ export const articles = [
     title: "Analyse : pourquoi ce système pose autant de problèmes",
     excerpt: "Une lecture simple du plan de jeu, avec les clés tactiques à retenir.",
     body: [
-      "Ligue 1 Express pourra proposer des analyses accessibles, avec des schémas et des séquences vidéo.",
+      "Foot Français Express pourra proposer des analyses accessibles, avec des schémas et des séquences vidéo.",
       "Le but n'est pas de rendre le football compliqué, mais de montrer rapidement ce qui fait basculer un match."
     ],
     accent: "yellow"

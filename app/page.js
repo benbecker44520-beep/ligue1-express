@@ -15,7 +15,7 @@ export const revalidate = 0;
 function EmptyState({ title, text, href, cta }) {
   return (
     <div className="editorial-empty">
-      <span className="eyebrow">LIGUE 1 EXPRESS</span>
+      <span className="eyebrow">FOOT FRANÇAIS EXPRESS</span>
       <h3>{title}</h3>
       <p>{text}</p>
       <Link href={href} className="text-link">{cta} →</Link>
@@ -120,7 +120,7 @@ export default async function HomePage() {
 
   const hero = featuredArticle || allArticles[0] || {
     slug: "debrief-express-journee",
-    title: "Ligue 1 Express",
+    title: "Foot Français Express",
     excerpt: "L'actualité de la Ligue 1, en un clin d'œil."
   };
 

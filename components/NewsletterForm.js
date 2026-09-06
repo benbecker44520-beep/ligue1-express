@@ -40,7 +40,7 @@ export default function NewsletterForm() {
       <input type="email" aria-label="Adresse e-mail" placeholder="Ton e-mail" value={email} onChange={(e) => setEmail(e.target.value)} required />
       <button type="submit" disabled={saving}>{saving ? "Inscription..." : "S'inscrire"}</button>
     </div>
-    <label className="newsletter-consent"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} required /> <span>J'accepte de recevoir la newsletter Ligue 1 Express.</span></label>
+    <label className="newsletter-consent"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} required /> <span>J'accepte de recevoir la newsletter Foot Français Express.</span></label>
     {status && <p className="newsletter-status" aria-live="polite">{status}</p>}
   </form>;
 }

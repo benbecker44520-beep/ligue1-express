@@ -7,7 +7,7 @@ export default async function Page() {
   const articles = await getPublishedArticles({ limit: 30});
   return (
     <div className="page-shell listing-page">
-      <span className="eyebrow">LIGUE 1 EXPRESS</span>
+      <span className="eyebrow">FOOT FRANÇAIS EXPRESS</span>
       <h1>Actualités</h1>
       <p>Les informations à retenir, sans détour.</p>
       <div className="cards-grid">

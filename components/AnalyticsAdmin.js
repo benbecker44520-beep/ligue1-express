@@ -55,7 +55,7 @@ export default function AnalyticsAdmin() {
     <section className="analytics-admin-panel admin-panel-standalone">
       <div className="panel-heading analytics-admin-heading">
         <div>
-          <span className="eyebrow">AUDIENCE LIGUE 1 EXPRESS</span>
+          <span className="eyebrow">AUDIENCE FOOT FRANÇAIS EXPRESS</span>
           <h2>Statistiques du site</h2>
           <p>Visites anonymisées, pages consultées et tendances d'audience.</p>
         </div>

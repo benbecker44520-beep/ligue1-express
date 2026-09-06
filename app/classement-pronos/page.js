@@ -4,7 +4,7 @@ import { getSupporterLeaderboards } from "@/lib/supporter-leaderboard";
 import SupporterLeaderboard from "@/components/SupporterLeaderboard";
 
 export const revalidate = 0;
-export const metadata = { title: "Classement des pronostiqueurs", description: "Le classement hebdomadaire et général des supporters de Ligue 1 Express." };
+export const metadata = { title: "Classement des pronostiqueurs", description: "Le classement hebdomadaire et général des supporters de Foot Français Express." };
 
 export default async function SupporterRankingPage() {
   const predictions = await getPublishedPredictions();

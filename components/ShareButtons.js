@@ -23,14 +23,14 @@ export default function ShareButtons({ title, path = "", compact = false }) {
 
   function shareX() {
     const url = currentUrl();
-    open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title || "Ligue 1 Express")}&url=${encodeURIComponent(url)}`);
+    open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title || "Foot Français Express")}&url=${encodeURIComponent(url)}`);
   }
 
   async function shareInstagram() {
     const url = currentUrl();
     if (navigator.share) {
       try {
-        await navigator.share({ title: title || "Ligue 1 Express", text: title || "Ligue 1 Express", url });
+        await navigator.share({ title: title || "Foot Français Express", text: title || "Foot Français Express", url });
         return;
       } catch (error) {
         if (error?.name === "AbortError") return;
