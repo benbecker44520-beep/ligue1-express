@@ -61,7 +61,9 @@ const emptyForm = {
   tiktok_url: "",
   image_url: "",
   related_club_ids: [],
-  status: "draft"
+  status: "draft",
+  auto_generated: false,
+  review_status: "manual"
 };
 
 export default function AdminPage() {
@@ -105,6 +107,7 @@ export default function AdminPage() {
     player_out: "",
     reason: ""
   });
+  const [publishingArticleId, setPublishingArticleId] = useState(null);
 
   useEffect(() => {
     if (!supabase) return;
@@ -543,6 +546,8 @@ export default function AdminPage() {
       image_url: article.image_url || "",
       related_club_ids: article.related_club_ids || [],
       status: article.status || "draft"
+      ,auto_generated: Boolean(article.auto_generated)
+      ,review_status: article.review_status || "manual"
     });
     setImageFile(null);
     setPreview(article.image_url || "");
@@ -610,6 +615,10 @@ export default function AdminPage() {
   }
 
   async function toggleStatus(article) {
+    if (article.auto_generated && article.status !== "published") {
+      await publishAutomaticArticle(article);
+      return;
+    }
     const next = article.status === "published" ? "draft" : "published";
     const { error } = await supabase
       .from("articles")
@@ -624,6 +633,31 @@ export default function AdminPage() {
     else {
       setMessage(next === "published" ? "Article publié ✅" : "Article repassé en brouillon.");
       loadArticles();
+    }
+  }
+
+  async function publishAutomaticArticle(article) {
+    const confirmed = window.confirm(
+      `Valider et publier « ${article.title} » ?\n\nL'article sera publié sur le site. Facebook et X seront également alimentés si leurs accès sont configurés.`
+    );
+    if (!confirmed) return;
+    setPublishingArticleId(article.id);
+    setMessage("Publication de l’article et partage social en cours…");
+    try {
+      const response = await fetch(`/api/automatic-articles/${article.id}/publish`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json?.error || "Publication impossible.");
+      const facebook = json.social?.facebook?.status === "published" ? "Facebook ✅" : "Facebook non configuré";
+      const x = json.social?.x?.status === "published" ? "X ✅" : "X non configuré";
+      setMessage(`Article validé et publié ✅ · ${facebook} · ${x}`);
+      await loadArticles();
+    } catch (error) {
+      setMessage(adminError(error, "Impossible de publier l’article automatique."));
+    } finally {
+      setPublishingArticleId(null);
     }
   }
 
@@ -702,6 +736,8 @@ export default function AdminPage() {
     return <div className="page-shell admin-page"><section className="admin-access-denied"><span>🔒 ACCÈS PROTÉGÉ</span><h1>Accès réservé à la rédaction</h1><p>{adminAccessError || "Ce compte ne possède pas le rôle administrateur."}</p><div><a href="/">Retourner au site</a><button type="button" onClick={logout}>Se déconnecter</button></div></section></div>;
   }
 
+  const pendingAutomaticArticles = articles.filter((article) => article.auto_generated && article.review_status === "pending_review");
+
   return (
     <div className="page-shell admin-page">
       <div className="admin-title-row">
@@ -714,7 +750,7 @@ export default function AdminPage() {
       </div>
 
       <nav className="admin-dashboard-menu" aria-label="Menu administration">
-        <button type="button" className={adminSection === "articles" ? "active" : ""} onClick={() => setAdminSection("articles")}><span>📰</span><strong>Articles</strong><small>Publier, modifier et mettre à la Une</small></button>
+        <button type="button" className={adminSection === "articles" ? "active" : ""} onClick={() => setAdminSection("articles")}><span>📰</span><strong>Articles {pendingAutomaticArticles.length > 0 && <b className="admin-review-count">{pendingAutomaticArticles.length}</b>}</strong><small>Publier, modifier et valider les brouillons</small></button>
         <button type="button" className={adminSection === "predictions" ? "active" : ""} onClick={() => setAdminSection("predictions")}><span>🎯</span><strong>Pronostics</strong><small>Pronostics de la rédaction</small></button>
         <button type="button" className={adminSection === "transfers" ? "active" : ""} onClick={() => setAdminSection("transfers")}><span>🔁</span><strong>Mercato</strong><small>Arrivées, départs et rumeurs</small></button>
         <button type="button" className={adminSection === "scorers" ? "active" : ""} onClick={() => setAdminSection("scorers")}><span>⚽</span><strong>Buteurs</strong><small>Buteurs des matchs terminés</small></button>
@@ -726,6 +762,11 @@ export default function AdminPage() {
 
       {adminSection === "articles" && <>
       {message && <div className="admin-message-box">{message}</div>}
+
+      {pendingAutomaticArticles.length > 0 && <div className="automatic-review-alert">
+        <span>📝</span>
+        <div><strong>{pendingAutomaticArticles.length} article{pendingAutomaticArticles.length > 1 ? "s" : ""} automatique{pendingAutomaticArticles.length > 1 ? "s" : ""} à relire</strong><p>Vérifie le titre, le résumé et les faits marquants avant de valider la publication.</p></div>
+      </div>}
 
       <div className="admin-section-heading"><div><span className="eyebrow">RÉDACTION</span><h2>{form.id ? "Modifier l'article" : "Publier un article"}</h2></div>{form.id && <button className="mini-button" onClick={resetForm}>Nouvel article</button>}</div>
       <div className="admin-grid admin-grid-v3">
@@ -791,9 +832,11 @@ export default function AdminPage() {
             Publication
             <select value={form.status} onChange={e => setForm({...form, status:e.target.value})}>
               <option value="draft">Brouillon</option>
-              <option value="published">Publié</option>
+              {!form.auto_generated && <option value="published">Publié</option>}
             </select>
           </label>
+
+          {form.auto_generated && <div className="automatic-editor-note">🤖 Brouillon automatique : enregistre d’abord tes corrections, puis utilise « Valider et publier » dans la liste.</div>}
 
           <button type="button" className="primary-button" disabled={saving} onClick={saveArticle}>
             {saving ? "Enregistrement..." : form.id ? "Enregistrer les modifications" : "Enregistrer l'article"}
@@ -816,6 +859,8 @@ export default function AdminPage() {
               <div className="article-admin-meta">
                 <span className="tag">{article.category}</span>
                 <div className="admin-badges">
+                  {article.auto_generated && article.review_status === "pending_review" && <span className="review-pill">📝 À RELIRE</span>}
+                  {article.auto_generated && article.review_status === "approved" && <span className="approved-pill">✓ VALIDÉ</span>}
                   {article.is_featured && <span className="featured-pill">⭐ À LA UNE</span>}
                   <span className={`status-pill ${article.status}`}>
                     {article.status === "published" ? "Publié" : "Brouillon"}
@@ -825,12 +870,12 @@ export default function AdminPage() {
               <strong>{article.title}</strong>
               <p>{article.excerpt}</p>
               <div className="admin-actions">
-                <button className="mini-button" onClick={() => editArticle(article)}>Modifier</button>
+                <button className="mini-button" onClick={() => editArticle(article)}>{article.review_status === "pending_review" ? "Relire et modifier" : "Modifier"}</button>
                 {!article.is_featured && article.status === "published" && (
                   <button className="mini-button featured-button" onClick={() => featureArticle(article)}>⭐ Mettre à la Une</button>
                 )}
-                <button className="mini-button" onClick={() => toggleStatus(article)}>
-                  {article.status === "published" ? "Dépublier" : "Publier"}
+                <button className={article.review_status === "pending_review" ? "mini-button approve-article-button" : "mini-button"} disabled={publishingArticleId === article.id} onClick={() => toggleStatus(article)}>
+                  {publishingArticleId === article.id ? "Publication…" : article.status === "published" ? "Dépublier" : article.review_status === "pending_review" ? "✓ Valider et publier" : "Publier"}
                 </button>
                 <button className="mini-button danger" onClick={() => removeArticle(article)}>Supprimer</button>
               </div>
@@ -840,6 +885,10 @@ export default function AdminPage() {
                   <ShareButtons compact title={article.title} path={`/article/${article.slug}`} />
                 </div>
               )}
+              {article.auto_generated && article.social_publications && Object.keys(article.social_publications).length > 0 && <div className="social-publication-status">
+                <span>Facebook : {article.social_publications.facebook?.status === "published" ? "publié ✅" : article.social_publications.facebook?.status === "failed" ? "échec ⚠️" : "non configuré"}</span>
+                <span>X : {article.social_publications.x?.status === "published" ? "publié ✅" : article.social_publications.x?.status === "failed" ? "échec ⚠️" : "non configuré"}</span>
+              </div>}
             </div>
           ))}
         </div>
