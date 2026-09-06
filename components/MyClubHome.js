@@ -105,7 +105,7 @@ export default function MyClubHome() {
 
     {open && <div className="my-club-modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
       <div className="my-club-modal" role="dialog" aria-modal="true" aria-labelledby="my-club-title">
-        <div className="my-club-modal-head"><div><span>★ PERSONNALISE LIGUE 1 EXPRESS</span><h2 id="my-club-title">Quel club supportes-tu ?</h2><p>Ton choix reste uniquement enregistré dans ton navigateur.</p></div><button type="button" aria-label="Fermer" onClick={() => setOpen(false)}>×</button></div>
+        <div className="my-club-modal-head"><div><span>★ PERSONNALISE FOOT FRANÇAIS EXPRESS</span><h2 id="my-club-title">Quel club supportes-tu ?</h2><p>Ton choix reste uniquement enregistré dans ton navigateur.</p></div><button type="button" aria-label="Fermer" onClick={() => setOpen(false)}>×</button></div>
         <input className="my-club-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un club…" autoFocus />
         <div className="my-club-picker-list">
           {loading ? <div className="my-club-picker-empty">Chargement des clubs…</div> : filteredLeagues.length ? filteredLeagues.map((league) => <section key={league.slug}><h3>{league.name}</h3><div className="my-club-picker-grid">{league.clubs.map((club) => <button type="button" key={`${league.slug}-${club.teamId || club.team}`} onClick={() => selectClub(club)}><span>{club.logo ? <img src={club.logo} alt="" /> : "⚽"}</span><div><strong>{club.shortName || club.team}</strong><small>{club.rank ? `${club.rank}e · ${club.points} pts` : league.name}</small></div><b>→</b></button>)}</div></section>) : <div className="my-club-picker-empty">Aucun club trouvé.</div>}

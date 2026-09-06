@@ -10,7 +10,7 @@ function formatDate(value) {
 
 export default function NewsletterAdmin({ session, articles = [], subscribers = [], onRefreshSubscribers, onRemoveSubscriber }) {
   const publishedArticles = useMemo(() => articles.filter((article) => article.status === "published"), [articles]);
-  const [subject, setSubject] = useState("L'essentiel Ligue 1 Express");
+  const [subject, setSubject] = useState("L'essentiel Foot Français Express");
   const [intro, setIntro] = useState("Retrouve les dernières actualités, analyses et infos mercato de la rédaction.");
   const [selectedArticleIds, setSelectedArticleIds] = useState([]);
   const [testEmail, setTestEmail] = useState(session?.user?.email || "");
@@ -95,7 +95,7 @@ export default function NewsletterAdmin({ session, articles = [], subscribers = 
             </div>)}
             {!selectedArticleIds.length && <em>Sélectionne un ou plusieurs articles pour voir l'aperçu.</em>}
           </div>
-          <small className="newsletter-preview-footer">Tu reçois cet e-mail car tu es inscrit à la newsletter Ligue 1 Express. Un lien de désinscription sera ajouté automatiquement.</small>
+          <small className="newsletter-preview-footer">Tu reçois cet e-mail car tu es inscrit à la newsletter Foot Français Express. Un lien de désinscription sera ajouté automatiquement.</small>
         </div>
       </div>
     </div>

@@ -28,7 +28,7 @@ export default function MyClubCompact() {
   if (!favorite) {
     return <Link href="/mon-club" className="my-club-compact is-empty">
       <span className="my-club-compact-icon">★</span>
-      <div><small>MON CLUB</small><strong>Crée ton espace supporter</strong><p>Choisis ton équipe pour personnaliser Ligue 1 Express.</p></div>
+      <div><small>MON CLUB</small><strong>Crée ton espace supporter</strong><p>Choisis ton équipe pour personnaliser Foot Français Express.</p></div>
       <b>Choisir →</b>
     </Link>;
   }

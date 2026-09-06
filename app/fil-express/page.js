@@ -14,7 +14,7 @@ export default async function FilExpressPage() {
   const items = await getExpressFeed({ limit: 100 });
   let currentDay = "";
   return <div className="page-shell express-page">
-    <section className="express-hero"><div><span className="eyebrow">LIGUE 1 EXPRESS · EN CONTINU</span><h1>⚡ Fil Express</h1><p>Les infos qui comptent, publiées à la minute par la rédaction.</p></div><div className="express-live-dot"><i></i> ACTUALISÉ EN CONTINU</div></section>
+    <section className="express-hero"><div><span className="eyebrow">FOOT FRANÇAIS EXPRESS · EN CONTINU</span><h1>⚡ Fil Express</h1><p>Les infos qui comptent, publiées à la minute par la rédaction.</p></div><div className="express-live-dot"><i></i> ACTUALISÉ EN CONTINU</div></section>
     <div className="express-category-row">{Object.entries(EXPRESS_CATEGORIES).map(([key, meta]) => <span key={key}>{meta.icon} {meta.label}</span>)}</div>
     <section className="express-timeline">
       {items.length === 0 ? <div className="editorial-empty"><span className="eyebrow">FIL EXPRESS</span><h3>Le fil est prêt</h3><p>Les premières brèves publiées depuis l'administration apparaîtront ici.</p></div> : items.map(item => {

@@ -14,12 +14,12 @@ export async function generateMetadata({ params }) {
   if (!article) return { title: "Article introuvable", robots: { index: false } };
   return {
     title: article.title,
-    description: article.excerpt || "Actualité Ligue 1 sur Ligue 1 Express.",
+    description: article.excerpt || "Actualité Ligue 1 sur Foot Français Express.",
     alternates: { canonical: `/article/${slug}` },
     openGraph: {
       type: "article",
       title: article.title,
-      description: article.excerpt || "Actualité Ligue 1 sur Ligue 1 Express.",
+      description: article.excerpt || "Actualité Ligue 1 sur Foot Français Express.",
       images: article.image_url ? [{ url: article.image_url }] : undefined,
       publishedTime: article.published_at || undefined,
       modifiedTime: article.updated_at || undefined

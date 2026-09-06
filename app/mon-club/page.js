@@ -1,7 +1,7 @@
 import MyClubSpace from "@/components/MyClubSpace";
 
 export const metadata = {
-  title: "Mon Club | Ligue 1 Express",
+  title: "Mon Club | Foot Français Express",
   description: "Ton espace supporter personnalisé : matchs, classement, actualités, mercato et alertes."
 };
 

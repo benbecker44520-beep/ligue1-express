@@ -88,7 +88,7 @@ export default async function LivePage() {
 
       <section className="live-v82-hero">
         <div>
-          <p className="eyebrow">LIGUE 1 EXPRESS · TEMPS RÉEL</p>
+          <p className="eyebrow">FOOT FRANÇAIS EXPRESS · TEMPS RÉEL</p>
           <h1><span>LIVE</span> Scores en direct</h1>
           <p>Suivez la Ligue 1, la Ligue 2, le National et la Coupe de France. Les scores sont actualisés automatiquement toutes les 60 secondes.</p>
         </div>

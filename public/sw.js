@@ -1,10 +1,10 @@
-const CACHE_NAME = "ligue1-express-v8-19";
+const CACHE_NAME = "foot-francais-express-v1";
 const OFFLINE_URL = "/offline";
 const PRECACHE = [
   "/offline",
   "/icon-192.png",
   "/icon-512.png",
-  "/logo-ligue1-express.png"
+  "/logo-foot-francais-express.svg"
 ];
 
 self.addEventListener("install", (event) => {
@@ -52,7 +52,7 @@ self.addEventListener("fetch", (event) => {
 self.addEventListener("push", (event) => {
   let payload = {};
   try { payload = event.data?.json() || {}; } catch { payload = { body: event.data?.text() || "Nouvel événement LIVE" }; }
-  event.waitUntil(self.registration.showNotification(payload.title || "Ligue 1 Express", {
+  event.waitUntil(self.registration.showNotification(payload.title || "Foot Français Express", {
     body: payload.body || "Nouvel événement LIVE",
     icon: payload.icon || "/icon-192.png",
     badge: payload.badge || "/icon-192.png",

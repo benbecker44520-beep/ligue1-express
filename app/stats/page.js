@@ -40,7 +40,7 @@ export default async function StatsPage() {
   return <div className="page-shell listing-page stats-page">
     <span className="eyebrow">LIGUE 1 · SAISON {standings.season || "ACTUELLE"}</span>
     <h1>Statistiques Ligue 1</h1>
-    <p className="stats-intro">Les chiffres essentiels du championnat, mis à jour avec les données de Ligue 1 Express.</p>
+    <p className="stats-intro">Les chiffres essentiels du championnat, mis à jour avec les données de Foot Français Express.</p>
 
     <section className="stats-card stats-scorers stats-scorers-featured">
       <div className="stats-card-title">

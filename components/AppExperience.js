@@ -57,10 +57,10 @@ export default function AppExperience() {
   return (
     <>
       {showInstall && (
-        <aside className="app-install-banner" aria-label="Installer Ligue 1 Express">
+        <aside className="app-install-banner" aria-label="Installer Foot Français Express">
           <div className="app-install-copy">
             <span>📱 MODE APP</span>
-            <strong>Installe Ligue 1 Express sur ton téléphone</strong>
+            <strong>Installe Foot Français Express sur ton téléphone</strong>
             <p>Accès plein écran, raccourci direct et navigation pensée mobile.</p>
           </div>
           <div className="app-install-actions">

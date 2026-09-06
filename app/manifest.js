@@ -1,8 +1,8 @@
 export default function manifest() {
   return {
-    name: "Ligue 1 Express",
-    short_name: "L1 Express",
-    description: "Actualités, résultats, classement, statistiques, clubs et joueurs de Ligue 1.",
+    name: "Foot Français Express",
+    short_name: "Foot Express",
+    description: "Actualités, résultats, classements, statistiques, clubs et joueurs du football français.",
     id: "/",
     start_url: "/",
     scope: "/",

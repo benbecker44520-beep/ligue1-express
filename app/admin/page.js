@@ -669,7 +669,7 @@ export default function AdminPage() {
   if (!configured) {
     return (
       <div className="page-shell admin-page">
-        <span className="eyebrow">LIGUE 1 EXPRESS · V3</span>
+        <span className="eyebrow">FOOT FRANÇAIS EXPRESS · V3</span>
         <h1>Administration</h1>
         <div className="setup-box">
           <h2>Connexion Supabase requise</h2>
@@ -706,7 +706,7 @@ export default function AdminPage() {
     <div className="page-shell admin-page">
       <div className="admin-title-row">
         <div>
-          <span className="eyebrow">BACK-OFFICE LIGUE 1 EXPRESS</span>
+          <span className="eyebrow">BACK-OFFICE FOOT FRANÇAIS EXPRESS</span>
           <h1>Administration</h1>
           <p className="admin-dashboard-subtitle">Choisis ce que tu veux gérer.</p>
         </div>
@@ -1120,7 +1120,7 @@ export default function AdminPage() {
 
       {adminSection === "newsletter" && <section className="predictions-admin-panel admin-panel-standalone">
         <div className="panel-heading scorers-admin-heading">
-          <div><span className="eyebrow">NEWSLETTER · V5.8</span><h2>Newsletter Ligue 1 Express</h2><p>Prépare, teste et envoie une édition aux abonnés actifs.</p></div>
+          <div><span className="eyebrow">NEWSLETTER · V5.8</span><h2>Newsletter Foot Français Express</h2><p>Prépare, teste et envoie une édition aux abonnés actifs.</p></div>
         </div>
         {newsletterMessage && <div className="admin-message-box">{newsletterMessage}</div>}
         <NewsletterAdmin session={session} articles={articles} subscribers={newsletterSubscribers} onRefreshSubscribers={loadNewsletterSubscribers} onRemoveSubscriber={removeNewsletterSubscriber} />

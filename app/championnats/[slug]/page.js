@@ -26,7 +26,7 @@ function MatchLine({ match, championshipSlug }) {
 export async function generateMetadata({ params }) {
   const { slug } = await params; const config = getChampionshipConfig(slug);
   if (!config) return { title: "Championnat introuvable", robots: { index: false } };
-  return { title: config.name, description: `${config.name} : classement complet, statistiques, résultats, calendrier et meilleurs buteurs sur Ligue 1 Express.`, alternates: { canonical: `/championnats/${config.slug}` } };
+  return { title: config.name, description: `${config.name} : classement complet, statistiques, résultats, calendrier et meilleurs buteurs sur Foot Français Express.`, alternates: { canonical: `/championnats/${config.slug}` } };
 }
 
 export default async function ChampionshipPage({ params }) {

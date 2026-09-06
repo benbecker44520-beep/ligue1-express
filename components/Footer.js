@@ -7,8 +7,8 @@ export default function Footer() {
     <footer className="footer">
       <div className="footer-grid">
         <div>
-          <Image src="/logo-ligue1-express.png" width={131} height={54} alt="Ligue 1 Express" />
-          <p>L'actualité du football français, en un clin d'œil.</p>
+          <Image src="/logo-foot-francais-express.svg" width={174} height={54} alt="Foot Français Express" />
+          <p>L'actualité du football français, sans perdre une minute.</p>
         </div>
         <div>
           <h3>Navigation</h3>
@@ -19,7 +19,7 @@ export default function Footer() {
           <NewsletterForm />
         </div>
       </div>
-      <div className="footer-bottom">© Ligue 1 Express · Football français</div>
+      <div className="footer-bottom">© Foot Français Express · Football français</div>
     </footer>
   );
 }
