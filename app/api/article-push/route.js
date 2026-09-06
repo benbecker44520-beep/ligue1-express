@@ -23,7 +23,7 @@ export async function POST(request) {
     const eventKey = `article:${article.id}:published`;
     const { error: markerError } = await supabase.from("live_notification_events").insert({
       event_key: eventKey,
-      match_id: null,
+      match_id: `article:${article.id}`,
       event_type: "article_published",
       payload: { article_id: article.id, slug: article.slug, title: article.title }
     });
