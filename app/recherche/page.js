@@ -15,6 +15,10 @@ function norm(value = "") {
   return String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 }
 function matches(value, query) { return norm(value).includes(norm(query)); }
+function articleSearchValues(article) {
+  const body = Array.isArray(article.body) ? article.body : article.body ? [article.body] : [];
+  return [article.title, article.excerpt, article.category, ...body];
+}
 
 export default async function SearchPage({ searchParams }) {
   const params = await searchParams;
@@ -23,7 +27,7 @@ export default async function SearchPage({ searchParams }) {
     getPublishedArticles({ limit: 100 }), getStandings(), getScorers(), getLeaguePlayers()
   ]);
 
-  const articleResults = q ? articles.filter(a => [a.title, a.excerpt, a.category, ...(a.body || [])].some(v => matches(v, q))).slice(0, 12) : [];
+  const articleResults = q ? articles.filter(a => articleSearchValues(a).some(v => matches(v, q))).slice(0, 12) : [];
   const clubResults = q && standings.ok ? standings.data.filter(c => matches(c.team, q) || matches(c.shortName, q)).slice(0, 8) : [];
   const scorerByPlayer = new Map((scorers.ok ? scorers.data : []).map((p) => [String(p.playerId), p]));
   const searchablePlayers = leaguePlayers.ok && leaguePlayers.data.length ? leaguePlayers.data : (scorers.ok ? scorers.data : []);
@@ -48,7 +52,11 @@ export default async function SearchPage({ searchParams }) {
 
       {clubResults.length > 0 && <section className="search-section"><div className="search-section-title"><span>🛡️ CLUBS</span><strong>{clubResults.length}</strong></div><div className="search-club-grid">{clubResults.map(c => <Link href={`/club/${c.teamId}`} key={c.teamId}>{c.logo && <Image src={c.logo} width={48} height={48} alt="" unoptimized />}<div><strong>{c.team}</strong><span>{c.rank}e · {c.points} pts</span></div><b>Voir →</b></Link>)}</div></section>}
 
-      {playerResults.length > 0 && <section className="search-section"><div className="search-section-title"><span>👤 JOUEURS</span><strong>{playerResults.length}</strong></div><div className="search-player-grid">{playerResults.map(p => <Link href={`/joueur/${p.playerId}?club=${p.teamId}`} key={p.playerId}><div><strong>{p.name}</strong><span>{p.teamName || "Ligue 1"}</span></div><em>{Number.isFinite(p.goals) ? `${p.goals} but${p.goals > 1 ? "s" : ""}` : (p.position || "Joueur")}</em><b>Voir →</b></Link>)}</div></section>}
+      {playerResults.length > 0 && <section className="search-section"><div className="search-section-title"><span>👤 JOUEURS</span><strong>{playerResults.length}</strong></div><div className="search-player-grid">{playerResults.map(p => {
+        const href = `/joueur/${p.playerId}${p.teamId ? `?club=${p.teamId}` : ""}`;
+        const goals = Number(p.goals);
+        return <Link href={href} key={p.playerId}><div><strong>{p.name}</strong><span>{p.teamName || "Ligue 1"}</span></div><em>{Number.isFinite(goals) ? `${goals} but${goals > 1 ? "s" : ""}` : (p.position || "Joueur")}</em><b>Voir →</b></Link>;
+      })}</div></section>}
 
       {articleResults.length > 0 && <section className="search-section"><div className="search-section-title"><span>📰 ACTUALITÉS</span><strong>{articleResults.length}</strong></div><div className="search-article-list">{articleResults.map(a => <Link href={`/article/${a.slug}`} key={a.slug}><span>{a.category}</span><strong>{a.title}</strong><small>Lire l’article →</small></Link>)}</div></section>}
     </>}
