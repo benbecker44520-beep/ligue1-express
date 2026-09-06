@@ -16,30 +16,36 @@ export async function GET(request) {
   const awayLogo = params.get("al") || "";
   const league = safe(params.get("league"), "FOOT FRANÇAIS");
 
+  const teamBox = (name, logo) => (
+    <div style={{display:"flex",width:"360px",height:"390px",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+      <div style={{display:"flex",width:"210px",height:"210px",alignItems:"center",justifyContent:"center",filter:"drop-shadow(0 10px 16px rgba(0,0,0,.45))"}}>
+        {logo ? <img src={logo} width="190" height="190" style={{objectFit:"contain"}} /> : <div style={{display:"flex",width:"150px",height:"150px",borderRadius:"50%",border:"5px solid #fff",alignItems:"center",justifyContent:"center",fontSize:"50px",fontWeight:900}}>{name.slice(0,2).toUpperCase()}</div>}
+      </div>
+      <div style={{display:"flex",marginTop:"18px",padding:"10px 24px",borderRadius:"12px",background:"rgba(0,0,0,.55)",fontSize:"32px",fontWeight:900,textTransform:"uppercase",textAlign:"center"}}>{name}</div>
+    </div>
+  );
+
   return new ImageResponse(
-    <div style={{ width:"1200px", height:"630px", display:"flex", flexDirection:"column", background:"linear-gradient(135deg,#06183f 0%,#0d326b 70%,#071a46 100%)", color:"white", padding:"54px 64px", fontFamily:"Arial", position:"relative" }}>
-      <div style={{ position:"absolute", right:"-90px", top:"-140px", width:"480px", height:"480px", borderRadius:"50%", background:"rgba(255,211,0,.10)" }} />
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <div style={{ display:"flex", fontSize:"25px", fontWeight:900, letterSpacing:"2px", color:"#ffd300" }}>FOOT FRANÇAIS EXPRESS</div>
-        <div style={{ display:"flex", fontSize:"19px", fontWeight:700, opacity:.85 }}>{league.toUpperCase()} · APRÈS-MATCH</div>
+    <div style={{width:"1200px",height:"630px",display:"flex",flexDirection:"column",position:"relative",overflow:"hidden",background:"linear-gradient(#03162f 0%,#062852 55%,#07331f 100%)",color:"white",fontFamily:"Arial"}}>
+      <div style={{position:"absolute",inset:0,display:"flex",background:"radial-gradient(ellipse at 50% 35%, rgba(35,115,180,.42) 0%, rgba(4,21,48,.25) 35%, rgba(0,7,20,.86) 100%)"}} />
+      <div style={{position:"absolute",left:"-90px",top:"105px",width:"470px",height:"7px",background:"white",transform:"rotate(-17deg)",boxShadow:"0 0 22px 9px rgba(255,255,255,.75)"}} />
+      <div style={{position:"absolute",right:"-90px",top:"105px",width:"470px",height:"7px",background:"white",transform:"rotate(17deg)",boxShadow:"0 0 22px 9px rgba(255,255,255,.75)"}} />
+      <div style={{position:"absolute",left:0,right:0,bottom:0,height:"175px",display:"flex",background:"linear-gradient(180deg,#0b542e 0%,#083c22 100%)",borderTop:"4px solid rgba(255,255,255,.18)"}} />
+      <div style={{position:"absolute",left:"50%",bottom:"0",width:"7px",height:"175px",background:"rgba(255,255,255,.8)",transform:"translateX(-50%)"}} />
+      <div style={{position:"relative",display:"flex",height:"105px",padding:"30px 48px 0",alignItems:"flex-start",justifyContent:"space-between"}}>
+        <div style={{display:"flex",flexDirection:"column"}}><div style={{display:"flex",fontSize:"29px",fontWeight:900}}>FOOT FRANÇAIS</div><div style={{display:"flex",marginTop:"2px",padding:"3px 13px",background:"#ffd400",color:"#071a46",fontSize:"25px",fontWeight:900,transform:"skew(-7deg)"}}>EXPRESS</div></div>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end"}}><div style={{display:"flex",fontSize:"24px",fontWeight:900}}>{league.toUpperCase()}</div><div style={{display:"flex",marginTop:"5px",width:"160px",height:"5px",background:"#ffd400"}} /></div>
       </div>
-      <div style={{ display:"flex", flex:1, alignItems:"center", justifyContent:"space-between", marginTop:"20px" }}>
-        <div style={{ display:"flex", width:"350px", flexDirection:"column", alignItems:"center", textAlign:"center" }}>
-          {homeLogo ? <img src={homeLogo} width="128" height="128" style={{ objectFit:"contain" }} /> : null}
-          <div style={{ display:"flex", marginTop:"24px", fontSize:"35px", fontWeight:900 }}>{home}</div>
+      <div style={{position:"relative",display:"flex",flex:1,alignItems:"center",justifyContent:"space-between",padding:"0 35px 70px"}}>
+        {teamBox(home,homeLogo)}
+        <div style={{display:"flex",width:"330px",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+          <div style={{display:"flex",padding:"9px 24px",borderRadius:"8px",background:"#ffd400",color:"#071a46",fontSize:"22px",fontWeight:900}}>SCORE FINAL</div>
+          <div style={{display:"flex",alignItems:"center",gap:"25px",marginTop:"20px",fontSize:"112px",fontWeight:900,lineHeight:1,textShadow:"0 8px 18px rgba(0,0,0,.55)"}}><span>{hs}</span><span style={{color:"#ffd400",fontSize:"60px"}}>–</span><span>{as}</span></div>
         </div>
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center" }}>
-          <div style={{ display:"flex", fontSize:"22px", fontWeight:800, color:"#ffd300", letterSpacing:"2px" }}>SCORE FINAL</div>
-          <div style={{ display:"flex", alignItems:"center", gap:"28px", marginTop:"10px", fontSize:"108px", fontWeight:900, lineHeight:1 }}><span>{hs}</span><span style={{ color:"#ffd300", fontSize:"58px" }}>–</span><span>{as}</span></div>
-          <div style={{ display:"flex", marginTop:"22px", padding:"11px 22px", borderRadius:"999px", background:"#ffd300", color:"#071a46", fontSize:"20px", fontWeight:900 }}>LE DÉBRIEF DE LA RÉDACTION</div>
-        </div>
-        <div style={{ display:"flex", width:"350px", flexDirection:"column", alignItems:"center", textAlign:"center" }}>
-          {awayLogo ? <img src={awayLogo} width="128" height="128" style={{ objectFit:"contain" }} /> : null}
-          <div style={{ display:"flex", marginTop:"24px", fontSize:"35px", fontWeight:900 }}>{away}</div>
-        </div>
+        {teamBox(away,awayLogo)}
       </div>
-      <div style={{ display:"flex", borderTop:"2px solid rgba(255,255,255,.16)", paddingTop:"18px", justifyContent:"space-between", fontSize:"18px", fontWeight:700 }}><span>Sans perdre une minute.</span><span style={{ color:"#ffd300" }}>foot-francais-express.vercel.app</span></div>
+      <div style={{position:"absolute",bottom:"22px",left:"50%",transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center"}}><div style={{display:"flex",fontSize:"19px",fontWeight:900,fontStyle:"italic"}}>FOOT FRANÇAIS</div><div style={{display:"flex",marginTop:"2px",padding:"3px 22px",background:"#ffd400",color:"#071a46",fontSize:"20px",fontWeight:900}}>EXPRESS</div></div>
     </div>,
-    { width:1200, height:630 }
+    {width:1200,height:630}
   );
 }
