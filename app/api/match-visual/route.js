@@ -8,17 +8,25 @@ const initials = (name) => clean(name, "FC").split(/\s+/).filter(Boolean).slice(
 
 export async function GET(request) {
   try {
-    const p = new URL(request.url).searchParams;
+    const reqUrl = new URL(request.url);
+    const p = reqUrl.searchParams;
     const home = clean(p.get("home"), "Domicile");
     const away = clean(p.get("away"), "Extérieur");
     const hs = clean(p.get("hs"), "0");
     const as = clean(p.get("as"), "0");
     const league = clean(p.get("league"), "Football français");
     const round = clean(p.get("round"), "");
+    const rawHomeLogo = p.get("hl") || "";
+    const rawAwayLogo = p.get("al") || "";
+    const proxiedLogo = (url) => url && /^https?:\/\//i.test(url) ? `${reqUrl.origin}/api/team-logo?url=${encodeURIComponent(url)}` : "";
+    const homeLogo = proxiedLogo(rawHomeLogo);
+    const awayLogo = proxiedLogo(rawAwayLogo);
 
-    const Team = ({ name }) => (
+    const Team = ({ name, logo }) => (
       <div style={{ display:"flex", width:330, flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
-        <div style={{ display:"flex", width:178, height:178, borderRadius:90, alignItems:"center", justifyContent:"center", background:"linear-gradient(145deg,#0d3768,#071a46)", border:"7px solid #ffd400", boxShadow:"0 16px 38px rgba(0,0,0,.45), inset 0 0 0 3px rgba(255,255,255,.14)", fontSize:62, fontWeight:900 }}>{initials(name)}</div>
+        <div style={{ display:"flex", width:178, height:178, borderRadius:90, alignItems:"center", justifyContent:"center", background:"linear-gradient(145deg,#0d3768,#071a46)", border:"7px solid #ffd400", boxShadow:"0 16px 38px rgba(0,0,0,.45), inset 0 0 0 3px rgba(255,255,255,.14)", fontSize:62, fontWeight:900 }}>
+          {logo ? <img src={logo} width="145" height="145" style={{ objectFit:"contain" }} /> : initials(name)}
+        </div>
         <div style={{ display:"flex", marginTop:18, maxWidth:320, fontSize:name.length > 16 ? 27 : 33, fontWeight:900, textTransform:"uppercase", textAlign:"center", lineHeight:1.05 }}>{name}</div>
       </div>
     );
@@ -44,12 +52,12 @@ export async function GET(request) {
         </div>
 
         <div style={{ position:"relative", display:"flex", flex:1, alignItems:"center", justifyContent:"space-between", padding:"0 70px 90px" }}>
-          <Team name={home} />
+          <Team name={home} logo={homeLogo} />
           <div style={{ display:"flex", width:330, flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
             <div style={{ display:"flex", padding:"10px 28px", borderRadius:8, background:"#ffd400", color:"#071a46", fontSize:24, fontWeight:900 }}>SCORE FINAL</div>
             <div style={{ display:"flex", marginTop:20, alignItems:"center", gap:20, fontSize:112, fontWeight:900, lineHeight:1, textShadow:"0 8px 20px rgba(0,0,0,.55)" }}><span>{hs}</span><span style={{ color:"#ffd400", fontSize:62 }}>–</span><span>{as}</span></div>
           </div>
-          <Team name={away} />
+          <Team name={away} logo={awayLogo} />
         </div>
 
         <div style={{ position:"absolute", left:0, right:0, bottom:0, height:82, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"rgba(0,7,17,.72)", borderTop:"1px solid rgba(255,255,255,.14)" }}>
