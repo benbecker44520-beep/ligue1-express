@@ -1,21 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="360" height="112" viewBox="0 0 360 112" role="img" aria-labelledby="title desc">
-  <title id="title">FF Express</title>
-  <desc id="desc">Logo bleu nuit et jaune FF Express</desc>
-  <defs>
-    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0a255a"/>
-      <stop offset="1" stop-color="#041333"/>
-    </linearGradient>
-  </defs>
-  <rect width="360" height="112" rx="14" fill="url(#panel)"/>
-  <path d="M17 82h326" stroke="#ffd500" stroke-width="4" stroke-linecap="round"/>
-  <g transform="translate(18 17)">
-    <circle cx="37" cy="37" r="31" fill="#fff" stroke="#ffd500" stroke-width="4"/>
-    <path d="m37 19 11 8-4 13H30l-4-13 11-8Zm-11 21-11 8 4 13 13 3 7-11-9-13Zm18 0 11 8-4 13-13 3-7-11 9-13Z" fill="#0a255a"/>
-  </g>
-  <g font-family="Arial, Helvetica, sans-serif" font-weight="900" font-style="italic">
-    <text x="96" y="45" font-size="34" fill="#fff" letter-spacing="1.5">FF</text>
-    <rect x="92" y="51" width="244" height="39" rx="6" fill="#ffd500"/>
-    <text x="105" y="80" font-size="31" fill="#071a46" letter-spacing="1.4">EXPRESS</text>
-  </g>
+<title id="title">FF Express</title><desc id="desc">Logo dynamique FF Express bleu nuit et jaune</desc>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b2c68"/><stop offset="1" stop-color="#041333"/></linearGradient></defs>
+<rect width="360" height="112" rx="14" fill="url(#bg)"/>
+<g fill="#ffd500" opacity=".95"><path d="M8 43h42l-15 7H3z"/><path d="M3 56h45l-17 7H0z"/><path d="M10 69h38l-14 6H5z"/></g>
+<g transform="translate(36 16)"><circle cx="39" cy="39" r="35" fill="#fff" stroke="#ffd500" stroke-width="5"/><path d="m39 19 12 9-5 14H32l-5-14 12-9Zm-12 23-13 9 5 15 15 3 7-12-9-15Zm24 0 13 9-5 15-15 3-7-12 9-15Z" fill="#0a255a"/></g>
+<g font-family="Arial,Helvetica,sans-serif" font-weight="900" font-style="italic"><text x="118" y="51" font-size="43" fill="#fff" letter-spacing="2">FF</text><path d="M108 59h222l-8 39H100z" fill="#ffd500"/><text x="120" y="89" font-size="31" fill="#071a46" letter-spacing="1.4">EXPRESS</text></g>
+<path d="M18 99h318" stroke="#ffd500" stroke-width="3" stroke-linecap="round"/>
 </svg>
