@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="112" viewBox="0 0 360 112" role="img" aria-labelledby="title desc">
+<title id="title">FF Express</title><desc id="desc">Logo dynamique FF Express bleu nuit et jaune</desc>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b2c68"/><stop offset="1" stop-color="#041333"/></linearGradient></defs>
+<rect width="360" height="112" rx="14" fill="url(#bg)"/>
+<g fill="#ffd500"><path d="M8 43h42l-15 7H3z"/><path d="M3 56h45l-17 7H0z"/><path d="M10 69h38l-14 6H5z"/></g>
+<g transform="translate(36 16)"><circle cx="39" cy="39" r="35" fill="#fff" stroke="#ffd500" stroke-width="5"/><path d="m39 19 12 9-5 14H32l-5-14 12-9Zm-12 23-13 9 5 15 15 3 7-12-9-15Zm24 0 13 9-5 15-15 3-7-12 9-15Z" fill="#0a255a"/></g>
+<g font-family="Arial,Helvetica,sans-serif" font-weight="900" font-style="italic"><text x="118" y="51" font-size="43" fill="#fff" letter-spacing="2">FF</text><path d="M108 59h222l-8 39H100z" fill="#ffd500"/><text x="120" y="89" font-size="31" fill="#071a46" letter-spacing="1.4">EXPRESS</text></g>
+<path d="M18 99h318" stroke="#ffd500" stroke-width="3" stroke-linecap="round"/>
+</svg>
