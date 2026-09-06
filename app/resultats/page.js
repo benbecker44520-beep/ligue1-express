@@ -21,7 +21,7 @@ export default async function Page({ searchParams }) {
   const result = await getFixtures();
 
   if (!result.ok) {
-    return <div className="page-shell listing-page"><span className="eyebrow">LIGUE 1 · V4.2</span><h1>Résultats & calendrier</h1><div className="football-setup-box"><h2>Connexion football-data.org requise</h2><p>{result.error || <>Ajoute <code>FOOTBALL_DATA_TOKEN</code> dans <code>.env.local</code>, puis redémarre.</>}</p></div></div>;
+    return <div className="page-shell listing-page"><span className="eyebrow">LIGUE 1 · RÉSULTATS</span><h1>Résultats & calendrier</h1><div className="football-setup-box"><h2>Données temporairement indisponibles</h2><p>Les résultats et le calendrier ne peuvent pas être chargés pour le moment. Réessaie dans quelques instants.</p></div></div>;
   }
 
   const rounds = new Map();
