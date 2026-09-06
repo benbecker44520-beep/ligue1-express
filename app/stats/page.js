@@ -11,19 +11,53 @@ function teamLink(row) {
   </Link>;
 }
 
+function resultForTeam(match, teamId) {
+  const homeId = match.home?.id ?? match.homeTeam?.id;
+  const awayId = match.away?.id ?? match.awayTeam?.id;
+  const score = match.score?.fullTime || match.score || {};
+  const homeScore = score.home ?? null;
+  const awayScore = score.away ?? null;
+  const isHome = String(homeId) === String(teamId);
+  const gf = isHome ? homeScore : awayScore;
+  const ga = isHome ? awayScore : homeScore;
+  if (!Number.isFinite(Number(gf)) || !Number.isFinite(Number(ga))) return null;
+  return Number(gf) > Number(ga) ? "V" : Number(gf) < Number(ga) ? "D" : "N";
+}
+
 function formForTeam(matches, teamId) {
   return matches
     .filter(m => m.status === "FINISHED" && (String(m.home.id) === String(teamId) || String(m.away.id) === String(teamId)))
     .sort((a,b) => b.timestamp-a.timestamp)
     .slice(0,5)
-    .map(m => {
-      const home = String(m.home.id) === String(teamId);
-      const gf = home ? m.score.home : m.score.away;
-      const ga = home ? m.score.away : m.score.home;
-      return gf > ga ? "V" : gf < ga ? "D" : "N";
-    });
+    .map(m => resultForTeam(m, teamId))
+    .filter(Boolean);
 }
 
+async function fetchFiveRealMatches(teamId, fallbackMatches) {
+  const fallback = formForTeam(fallbackMatches, teamId);
+  const token = process.env.FOOTBALL_DATA_TOKEN;
+  if (!token || !teamId) return fallback;
+
+  try {
+    const from = new Date(Date.now() - 220 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const to = new Date().toISOString().slice(0, 10);
+    const response = await fetch(
+      `https://api.football-data.org/v4/teams/${teamId}/matches?status=FINISHED&dateFrom=${from}&dateTo=${to}&limit=20`,
+      { headers: { "X-Auth-Token": token }, cache: "no-store" }
+    );
+    if (!response.ok) return fallback;
+    const json = await response.json().catch(() => ({}));
+    const results = (json.matches || [])
+      .filter(m => m.status === "FINISHED")
+      .sort((a,b) => new Date(b.utcDate).getTime() - new Date(a.utcDate).getTime())
+      .map(m => resultForTeam(m, teamId))
+      .filter(Boolean)
+      .slice(0,5);
+    return results.length === 5 ? results : fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 export default async function StatsPage() {
   const [standings, fixtures, scorersResult] = await Promise.all([getStandings(), getFixtures(), getScorers()]);
@@ -33,7 +67,9 @@ export default async function StatsPage() {
   const attacks = [...rows].sort((a,b) => b.goalsFor-a.goalsFor || b.points-a.points).slice(0,5);
   const defenses = [...rows].sort((a,b) => a.goalsAgainst-b.goalsAgainst || b.points-a.points).slice(0,5);
   const diffs = [...rows].sort((a,b) => b.diff-a.diff || b.points-a.points).slice(0,5);
-  const forms = rows.map(r => ({...r, form: formForTeam(fixtures.data, r.teamId)}));
+  const topFormRows = rows.slice(0,10);
+  const fiveMatchForms = await Promise.all(topFormRows.map(r => fetchFiveRealMatches(r.teamId, fixtures.data)));
+  const forms = topFormRows.map((r, index) => ({ ...r, form: fiveMatchForms[index] }));
 
   const scorers = scorersResult.ok ? scorersResult.data.slice(0,10) : [];
 
@@ -64,7 +100,7 @@ export default async function StatsPage() {
       <section className="stats-card stats-card-wide"><div className="stats-card-title"><span>⚽ MEILLEURES ATTAQUES</span><small>Buts marqués</small></div>{attacks.map((r,i)=><div className="stats-row" key={r.teamId}><b>{i+1}</b>{teamLink(r)}<strong>{r.goalsFor}</strong></div>)}</section>
       <section className="stats-card stats-card-wide"><div className="stats-card-title"><span>🛡️ MEILLEURES DÉFENSES</span><small>Buts encaissés</small></div>{defenses.map((r,i)=><div className="stats-row" key={r.teamId}><b>{i+1}</b>{teamLink(r)}<strong>{r.goalsAgainst}</strong></div>)}</section>
       <section className="stats-card"><div className="stats-card-title"><span>📈 DIFFÉRENCE DE BUTS</span><small>Top 5</small></div>{diffs.map((r,i)=><div className="stats-row" key={r.teamId}><b>{i+1}</b>{teamLink(r)}<strong>{r.diff>0?`+${r.diff}`:r.diff}</strong></div>)}</section>
-      <section className="stats-card"><div className="stats-card-title"><span>🔥 FORME RÉCENTE</span><small>5 derniers matchs</small></div>{forms.slice(0,10).map(r=><div className="stats-form-row" key={r.teamId}>{teamLink(r)}<div className="stats-form">{r.form.length?r.form.map((x,i)=><span key={i} className={`form-badge form-${x.toLowerCase()}`}>{x}</span>):<small>—</small>}</div></div>)}</section>
+      <section className="stats-card"><div className="stats-card-title"><span>🔥 FORME RÉCENTE</span><small>5 derniers matchs officiels</small></div>{forms.map(r=><div className="stats-form-row" key={r.teamId}>{teamLink(r)}<div className="stats-form">{r.form.length?r.form.map((x,i)=><span key={i} className={`form-badge form-${x.toLowerCase()}`}>{x}</span>):<small>—</small>}</div></div>)}</section>
     </div>
   </div>;
 }
