@@ -1,72 +1,95 @@
-import { ImageResponse } from "next/og";
-
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const clean = (v, fallback = "") => String(v || fallback).trim().slice(0, 70);
+const esc = (v) => String(v || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
 const initials = (name) => clean(name, "FC").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+
+async function logoData(url) {
+  if (!url || !/^https?:\/\//i.test(url)) return "";
+  try {
+    const r = await fetch(url, {
+      cache: "no-store",
+      headers: { "User-Agent": "Mozilla/5.0 Foot-Francais-Express/1.0", Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8" },
+      signal: AbortSignal.timeout(7000)
+    });
+    if (!r.ok) return "";
+    const type = r.headers.get("content-type") || "image/png";
+    if (!type.startsWith("image/")) return "";
+    const buf = Buffer.from(await r.arrayBuffer());
+    if (!buf.length || buf.length > 3_000_000) return "";
+    return `data:${type};base64,${buf.toString("base64")}`;
+  } catch {
+    return "";
+  }
+}
+
+function teamBlock({ x, name, logo, anchor = "middle" }) {
+  const label = esc(name);
+  const size = name.length > 16 ? 31 : 37;
+  const fallback = esc(initials(name));
+  const logoSvg = logo
+    ? `<image href="${logo}" x="${x-92}" y="238" width="184" height="184" preserveAspectRatio="xMidYMid meet"/>`
+    : `<circle cx="${x}" cy="330" r="84" fill="#0d3768" stroke="#ffd400" stroke-width="7"/><text x="${x}" y="350" text-anchor="middle" font-family="Arial,sans-serif" font-size="62" font-weight="900" fill="#fff">${fallback}</text>`;
+  return `${logoSvg}<text x="${x}" y="470" text-anchor="${anchor}" font-family="Arial,sans-serif" font-size="${size}" font-weight="900" fill="#fff">${label}</text>`;
+}
 
 export async function GET(request) {
   try {
-    const reqUrl = new URL(request.url);
-    const p = reqUrl.searchParams;
+    const p = new URL(request.url).searchParams;
     const home = clean(p.get("home"), "Domicile");
     const away = clean(p.get("away"), "Extérieur");
     const hs = clean(p.get("hs"), "0");
     const as = clean(p.get("as"), "0");
     const league = clean(p.get("league"), "Football français");
     const round = clean(p.get("round"), "");
-    const rawHomeLogo = p.get("hl") || "";
-    const rawAwayLogo = p.get("al") || "";
-    const proxiedLogo = (url) => url && /^https?:\/\//i.test(url) ? `${reqUrl.origin}/api/team-logo?url=${encodeURIComponent(url)}` : "";
-    const homeLogo = proxiedLogo(rawHomeLogo);
-    const awayLogo = proxiedLogo(rawAwayLogo);
+    const [homeLogo, awayLogo] = await Promise.all([logoData(p.get("hl") || ""), logoData(p.get("al") || "")]);
 
-    const Team = ({ name, logo }) => (
-      <div style={{ display:"flex", width:330, flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
-        <div style={{ display:"flex", width:178, height:178, borderRadius:90, alignItems:"center", justifyContent:"center", background:"linear-gradient(145deg,#0d3768,#071a46)", border:"7px solid #ffd400", boxShadow:"0 16px 38px rgba(0,0,0,.45), inset 0 0 0 3px rgba(255,255,255,.14)", fontSize:62, fontWeight:900 }}>
-          {logo ? <img src={logo} width="145" height="145" style={{ objectFit:"contain" }} /> : initials(name)}
-        </div>
-        <div style={{ display:"flex", marginTop:18, maxWidth:320, fontSize:name.length > 16 ? 27 : 33, fontWeight:900, textTransform:"uppercase", textAlign:"center", lineHeight:1.05 }}>{name}</div>
-      </div>
-    );
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#031326"/><stop offset="0.58" stop-color="#062a55"/><stop offset="1" stop-color="#020b17"/></linearGradient>
+    <radialGradient id="glow" cx="50%" cy="42%" r="60%"><stop offset="0" stop-color="#1d75c5" stop-opacity=".5"/><stop offset=".48" stop-color="#031731" stop-opacity=".1"/><stop offset="1" stop-color="#00050d" stop-opacity=".78"/></radialGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity=".55"/></filter>
+  </defs>
+  <rect width="1200" height="630" rx="28" fill="url(#bg)"/>
+  <rect width="1200" height="630" rx="28" fill="url(#glow)"/>
+  <rect x="0" y="158" width="1200" height="190" fill="#184f7d" opacity=".16" stroke="#fff" stroke-opacity=".08"/>
+  <line x1="-20" y1="150" x2="320" y2="65" stroke="#fff" stroke-width="6" opacity=".9"/>
+  <line x1="1220" y1="150" x2="880" y2="65" stroke="#fff" stroke-width="6" opacity=".9"/>
+  <line x1="40" y1="48" x2="190" y2="18" stroke="#ffd400" stroke-width="5"/>
+  <line x1="1010" y1="570" x2="1160" y2="540" stroke="#ffd400" stroke-width="5"/>
 
-    return new ImageResponse(
-      <div style={{ width:1200, height:630, display:"flex", position:"relative", flexDirection:"column", overflow:"hidden", background:"linear-gradient(180deg,#031326 0%,#062a55 58%,#020b17 100%)", color:"white", fontFamily:"Arial" }}>
-        <div style={{ position:"absolute", inset:0, display:"flex", background:"radial-gradient(ellipse at 50% 42%,rgba(29,117,197,.50) 0%,rgba(3,23,49,.15) 42%,rgba(0,5,13,.78) 100%)" }} />
-        <div style={{ position:"absolute", left:0, right:0, top:158, height:190, display:"flex", borderTop:"2px solid rgba(255,255,255,.12)", borderBottom:"2px solid rgba(255,255,255,.10)", background:"linear-gradient(180deg,rgba(24,79,125,.28),rgba(0,10,24,.12))" }} />
-        <div style={{ position:"absolute", left:-40, top:128, width:380, height:5, display:"flex", background:"white", transform:"rotate(-14deg)", boxShadow:"0 0 24px 9px rgba(255,255,255,.52)" }} />
-        <div style={{ position:"absolute", right:-40, top:128, width:380, height:5, display:"flex", background:"white", transform:"rotate(14deg)", boxShadow:"0 0 24px 9px rgba(255,255,255,.52)" }} />
-        <div style={{ position:"absolute", left:40, top:48, width:150, height:5, display:"flex", background:"#ffd400", transform:"rotate(-11deg)" }} />
-        <div style={{ position:"absolute", right:40, bottom:70, width:150, height:5, display:"flex", background:"#ffd400", transform:"rotate(-11deg)" }} />
+  <text x="68" y="48" font-family="Arial,sans-serif" font-size="27" font-weight="900" font-style="italic" fill="#fff">⚽ FOOT FRANÇAIS</text>
+  <rect x="68" y="57" width="170" height="39" rx="3" fill="#ffd400"/>
+  <text x="153" y="84" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="900" font-style="italic" fill="#071a46">EXPRESS</text>
+  <text x="1132" y="48" text-anchor="end" font-family="Arial,sans-serif" font-size="24" font-weight="900" fill="#fff">${esc(league.toUpperCase())}</text>
+  ${round ? `<text x="1132" y="76" text-anchor="end" font-family="Arial,sans-serif" font-size="18" font-weight="800" fill="#ffd400">JOURNÉE ${esc(round)}</text>` : ""}
 
-        <div style={{ position:"relative", display:"flex", height:128, padding:"25px 68px 0", alignItems:"flex-start", justifyContent:"space-between" }}>
-          <div style={{ display:"flex", flexDirection:"column" }}>
-            <div style={{ display:"flex", fontSize:27, fontWeight:900, fontStyle:"italic" }}>⚽ FOOT FRANÇAIS</div>
-            <div style={{ display:"flex", alignSelf:"flex-start", marginTop:3, padding:"3px 18px", background:"#ffd400", color:"#071a46", fontSize:27, fontWeight:900, fontStyle:"italic" }}>EXPRESS</div>
-          </div>
-          <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end" }}>
-            <div style={{ display:"flex", fontSize:24, fontWeight:900 }}>{league.toUpperCase()}</div>
-            {round ? <div style={{ display:"flex", marginTop:5, color:"#ffd400", fontSize:18, fontWeight:800 }}>JOURNÉE {round}</div> : null}
-          </div>
-        </div>
+  ${teamBlock({x:300,name:home,logo:homeLogo})}
+  ${teamBlock({x:900,name:away,logo:awayLogo})}
 
-        <div style={{ position:"relative", display:"flex", flex:1, alignItems:"center", justifyContent:"space-between", padding:"0 70px 90px" }}>
-          <Team name={home} logo={homeLogo} />
-          <div style={{ display:"flex", width:330, flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
-            <div style={{ display:"flex", padding:"10px 28px", borderRadius:8, background:"#ffd400", color:"#071a46", fontSize:24, fontWeight:900 }}>SCORE FINAL</div>
-            <div style={{ display:"flex", marginTop:20, alignItems:"center", gap:20, fontSize:112, fontWeight:900, lineHeight:1, textShadow:"0 8px 20px rgba(0,0,0,.55)" }}><span>{hs}</span><span style={{ color:"#ffd400", fontSize:62 }}>–</span><span>{as}</span></div>
-          </div>
-          <Team name={away} logo={awayLogo} />
-        </div>
+  <rect x="493" y="247" width="214" height="52" rx="10" fill="#ffd400"/>
+  <text x="600" y="281" text-anchor="middle" font-family="Arial,sans-serif" font-size="24" font-weight="900" fill="#071a46">SCORE FINAL</text>
+  <g filter="url(#shadow)">
+    <text x="515" y="408" text-anchor="middle" font-family="Arial,sans-serif" font-size="112" font-weight="900" fill="#fff">${esc(hs)}</text>
+    <text x="600" y="396" text-anchor="middle" font-family="Arial,sans-serif" font-size="62" font-weight="900" fill="#ffd400">–</text>
+    <text x="685" y="408" text-anchor="middle" font-family="Arial,sans-serif" font-size="112" font-weight="900" fill="#fff">${esc(as)}</text>
+  </g>
 
-        <div style={{ position:"absolute", left:0, right:0, bottom:0, height:82, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"rgba(0,7,17,.72)", borderTop:"1px solid rgba(255,255,255,.14)" }}>
-          <div style={{ display:"flex", padding:"5px 28px", background:"#ffd400", color:"#071a46", fontSize:21, fontWeight:900, fontStyle:"italic" }}>LE DÉBRIEF DE LA RÉDACTION</div>
-          <div style={{ display:"flex", marginTop:7, fontSize:15, letterSpacing:4, opacity:.9 }}>foot-francais-express.vercel.app</div>
-        </div>
-      </div>,
-      { width:1200, height:630 }
-    );
+  <rect x="0" y="548" width="1200" height="82" fill="#000711" opacity=".76"/>
+  <rect x="410" y="557" width="380" height="38" rx="3" fill="#ffd400"/>
+  <text x="600" y="583" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" font-weight="900" font-style="italic" fill="#071a46">LE DÉBRIEF DE LA RÉDACTION</text>
+  <text x="600" y="615" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" letter-spacing="4" fill="#fff" opacity=".9">foot-francais-express.vercel.app</text>
+</svg>`;
+
+    return new Response(svg, {
+      status: 200,
+      headers: {
+        "content-type": "image/svg+xml; charset=utf-8",
+        "cache-control": "public, max-age=60, s-maxage=300, stale-while-revalidate=3600"
+      }
+    });
   } catch (error) {
     return new Response(`match-visual error: ${error?.message || "unknown"}`, { status:500, headers:{"content-type":"text/plain; charset=utf-8"} });
   }
