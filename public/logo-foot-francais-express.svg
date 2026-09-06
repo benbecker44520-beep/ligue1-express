@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="360" height="112" viewBox="0 0 360 112" role="img" aria-labelledby="title desc">
-  <title id="title">Foot Français Express</title>
-  <desc id="desc">Logo bleu nuit et jaune de Foot Français Express</desc>
+  <title id="title">FF Express</title>
+  <desc id="desc">Logo bleu nuit et jaune FF Express</desc>
   <defs>
     <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#0a255a"/>
@@ -14,7 +14,7 @@
     <path d="m37 19 11 8-4 13H30l-4-13 11-8Zm-11 21-11 8 4 13 13 3 7-11-9-13Zm18 0 11 8-4 13-13 3-7-11 9-13Z" fill="#0a255a"/>
   </g>
   <g font-family="Arial, Helvetica, sans-serif" font-weight="900" font-style="italic">
-    <text x="94" y="42" font-size="25" fill="#fff" letter-spacing=".8">FOOT FRANÇAIS</text>
+    <text x="96" y="45" font-size="34" fill="#fff" letter-spacing="1.5">FF</text>
     <rect x="92" y="51" width="244" height="39" rx="6" fill="#ffd500"/>
     <text x="105" y="80" font-size="31" fill="#071a46" letter-spacing="1.4">EXPRESS</text>
   </g>
