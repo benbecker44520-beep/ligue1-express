@@ -66,7 +66,7 @@ async function processArticleNotifications(supabase) {
     const eventKey = `article:${article.id}:published`;
     const { error: markerError } = await supabase.from("live_notification_events").insert({
       event_key: eventKey,
-      match_id: null,
+      match_id: `article:${article.id}`,
       event_type: "article_published",
       payload: { article_id: article.id, slug: article.slug, title: article.title }
     });
@@ -119,8 +119,9 @@ async function processLineupNotifications(supabase) {
     for (const subscription of subscriptions || []) {
       const profile = profilesByUser.get(subscription.user_id);
       const prefs = profile?.alert_preferences || {};
-      if (prefs.lineup === false) continue;
-      const interested = followedUsers.has(subscription.user_id) || sameClub(match, profile?.favorite_club);
+      const followsMatch = followedUsers.has(subscription.user_id);
+      if (!followsMatch && prefs.lineup === false) continue;
+      const interested = followsMatch || sameClub(match, profile?.favorite_club);
       if (!interested) continue;
       try {
         await sendPush(subscription, {
@@ -184,7 +185,7 @@ async function runCheck(request) {
 
     const { data: subscriptions, error: subscriptionsError } = await supabase.from("push_subscriptions").select("id,user_id,endpoint,p256dh,auth");
     if (subscriptionsError) throw subscriptionsError;
-    const userIds = [...new Set((subscriptions || []).map((item) => item.user_id))];
+    const userIds = [...new Set((subscriptions || []).map((item) => item.user_id).filter(Boolean))];
     const { data: profiles } = userIds.length
       ? await supabase.from("supporter_profiles").select("user_id,favorite_club,alert_preferences").in("user_id", userIds)
       : { data: [] };
@@ -199,10 +200,14 @@ async function runCheck(request) {
     for (const subscription of subscriptions || []) {
       const profile = profilesByUser.get(subscription.user_id);
       const prefs = profile?.alert_preferences || {};
-      if (prefs[preferenceKey] === false) continue;
       const followsMatch = followedUsers.has(subscription.user_id);
       const followsPlayer = followedPlayerUsers.has(subscription.user_id);
+
+      // A match explicitly followed has priority over the user's global LIVE preferences.
+      // This guarantees goal/red-card notifications for matches the member chose to follow.
+      if (!followsMatch && prefs[preferenceKey] === false) continue;
       if (!followsMatch && !followsPlayer && prefs.favoriteOnly === true && !sameClub(candidate.match, profile?.favorite_club)) continue;
+
       try {
         await sendPush(subscription, {
           ...copy,
