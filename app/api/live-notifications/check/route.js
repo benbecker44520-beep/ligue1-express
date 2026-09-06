@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getFrenchLiveMatches } from "@/lib/apifootball";
+import { getFrenchLineupCandidates } from "@/lib/lineups";
 import { sendPush, serviceSupabase } from "@/lib/push-server";
 import { generatePostMatchDrafts } from "@/lib/automatic-articles";
 
@@ -35,8 +36,8 @@ function sameClub(match, favorite) {
   if (!favorite) return false;
   const ids = [match.home?.id, match.away?.id].map(String);
   if (favorite.teamId && ids.includes(String(favorite.teamId))) return true;
-  const wanted = String(favorite.team || favorite.shortName || "").toLowerCase();
-  return wanted && [match.home?.name, match.home?.shortName, match.away?.name, match.away?.shortName]
+  const wanted = String(favorite.team || favorite.shortName || favorite.name || "").toLowerCase();
+  return wanted && [match.home?.name, match.away?.name]
     .some((name) => String(name || "").toLowerCase().includes(wanted) || wanted.includes(String(name || "").toLowerCase()));
 }
 
@@ -49,11 +50,65 @@ function notificationFor(match, event) {
   return { title: `🛑 Faute · ${minute}`, body: `${event.player || "Action"} · ${teams}` };
 }
 
+async function processLineupNotifications(supabase) {
+  const result = await getFrenchLineupCandidates();
+  if (!result.ok) return { checked:0, newLineups:0, sent:0, error:result.error };
+  let newLineups = 0;
+  let sent = 0;
+
+  for (const match of result.data || []) {
+    const eventKey = `lineup:${match.provider}:${match.id}`;
+    const { error: markerError } = await supabase.from("live_notification_events").insert({
+      event_key:eventKey,
+      match_id:match.id,
+      event_type:"lineup",
+      payload:{ league:match.leagueName, home:match.home, away:match.away }
+    });
+    if (markerError?.code === "23505") continue;
+    if (markerError) throw markerError;
+    newLineups += 1;
+
+    const { data:subscriptions, error:subscriptionsError } = await supabase.from("push_subscriptions").select("id,user_id,endpoint,p256dh,auth");
+    if (subscriptionsError) throw subscriptionsError;
+    const userIds = [...new Set((subscriptions || []).map((item) => item.user_id).filter(Boolean))];
+    const { data:profiles } = userIds.length
+      ? await supabase.from("supporter_profiles").select("user_id,favorite_club,alert_preferences").in("user_id", userIds)
+      : { data:[] };
+    const profilesByUser = new Map((profiles || []).map((profile) => [profile.user_id, profile]));
+    const { data:followedRows } = await supabase.from("followed_matches").select("user_id").eq("provider", match.provider).eq("match_id", String(match.id));
+    const followedUsers = new Set((followedRows || []).map((row) => row.user_id));
+
+    for (const subscription of subscriptions || []) {
+      const profile = profilesByUser.get(subscription.user_id);
+      const prefs = profile?.alert_preferences || {};
+      if (prefs.lineup === false) continue;
+      const interested = followedUsers.has(subscription.user_id) || sameClub(match, profile?.favorite_club);
+      if (!interested) continue;
+      try {
+        await sendPush(subscription, {
+          title:"📋 Compositions officielles",
+          body:`${match.home.name} - ${match.away.name} · Les deux onze sont disponibles.`,
+          type:"lineup",
+          icon:"/icon-192.png",
+          badge:"/icon-192.png",
+          url:`/live/match/${match.id}#compositions`,
+          tag:eventKey
+        });
+        sent += 1;
+      } catch (error) {
+        if ([404, 410].includes(error?.statusCode)) await supabase.from("push_subscriptions").delete().eq("id", subscription.id);
+      }
+    }
+  }
+  return { checked:result.data?.length || 0, newLineups, sent };
+}
+
 async function runCheck(request) {
   if (!authorized(request)) return NextResponse.json({ error: "Accès refusé." }, { status: 401 });
   const live = await getFrenchLiveMatches();
   if (!live.ok) return NextResponse.json({ error: live.error || "Flux LIVE indisponible." }, { status: 503 });
   const supabase = serviceSupabase();
+  const lineupNotifications = await processLineupNotifications(supabase).catch((error) => ({ checked:0, newLineups:0, sent:0, error:error?.message || "Compositions indisponibles" }));
   const candidates = live.data.flatMap((match) => (match.events || [])
     .filter((event) => PREF_FOR_EVENT[event.type] || PLAYER_HISTORY_EVENTS.has(event.type))
     .map((event) => ({ match, event, eventKey: `${match.provider}:${match.id}:${event.type}:${event.id}` })));
@@ -134,7 +189,7 @@ async function runCheck(request) {
 
   const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   await supabase.from("live_notification_events").delete().lt("created_at", cutoff);
-  return NextResponse.json({ ok: true, liveMatches: live.data.length, detected: candidates.length, newEvents, sent, automaticArticles });
+  return NextResponse.json({ ok: true, liveMatches: live.data.length, detected: candidates.length, newEvents, sent, lineupNotifications, automaticArticles });
 }
 
 export async function GET(request) { return runCheck(request); }
