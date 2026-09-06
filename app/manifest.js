@@ -1,7 +1,7 @@
 export default function manifest() {
   return {
     name: "Foot Français Express",
-    short_name: "Foot Express",
+    short_name: "FF Express",
     description: "Actualités, résultats, classements, statistiques, clubs et joueurs du football français.",
     id: "/",
     start_url: "/",
