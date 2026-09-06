@@ -42,11 +42,12 @@ export default function Header() {
       <div className="header-inner">
         <Link href="/" className="brand" onClick={() => setOpen(false)}>
           <Image
-            src="/logo-foot-francais-express.svg"
+            src="/logo-ff-express-v2.svg"
             width={174}
             height={54}
-            alt="Foot Français Express"
+            alt="FF Express"
             priority
+            unoptimized
           />
         </Link>
 
