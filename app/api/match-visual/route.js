@@ -6,6 +6,17 @@ function safe(value, fallback = "") {
   return String(value || fallback).slice(0, 90);
 }
 
+function shortName(value) {
+  const name = String(value || "").trim();
+  if (name.length <= 16) return name;
+  return name
+    .replace(/Football Club/gi, "FC")
+    .replace(/Olympique/gi, "OL")
+    .replace(/Racing Club/gi, "RC")
+    .replace(/Association Sportive/gi, "AS")
+    .slice(0, 18);
+}
+
 export async function GET(request) {
   const params = new URL(request.url).searchParams;
   const home = safe(params.get("home"), "Domicile");
@@ -16,35 +27,52 @@ export async function GET(request) {
   const awayLogo = params.get("al") || "";
   const league = safe(params.get("league"), "FOOT FRANÇAIS");
 
-  const teamBox = (name, logo) => (
-    <div style={{display:"flex",width:"360px",height:"390px",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-      <div style={{display:"flex",width:"210px",height:"210px",alignItems:"center",justifyContent:"center",filter:"drop-shadow(0 10px 16px rgba(0,0,0,.45))"}}>
-        {logo ? <img src={logo} width="190" height="190" style={{objectFit:"contain"}} /> : <div style={{display:"flex",width:"150px",height:"150px",borderRadius:"50%",border:"5px solid #fff",alignItems:"center",justifyContent:"center",fontSize:"50px",fontWeight:900}}>{name.slice(0,2).toUpperCase()}</div>}
+  const Team = ({ name, logo }) => (
+    <div style={{display:"flex",width:"320px",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+      <div style={{display:"flex",width:"170px",height:"170px",alignItems:"center",justifyContent:"center",borderRadius:"28px",background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.12)"}}>
+        {logo ? <img src={logo} width="145" height="145" style={{objectFit:"contain",filter:"drop-shadow(0 8px 18px rgba(0,0,0,.45))"}} /> : <div style={{display:"flex",width:"112px",height:"112px",borderRadius:"50%",border:"4px solid white",alignItems:"center",justifyContent:"center",fontSize:"42px",fontWeight:900}}>{name.slice(0,2).toUpperCase()}</div>}
       </div>
-      <div style={{display:"flex",marginTop:"18px",padding:"10px 24px",borderRadius:"12px",background:"rgba(0,0,0,.55)",fontSize:"32px",fontWeight:900,textTransform:"uppercase",textAlign:"center"}}>{name}</div>
+      <div style={{display:"flex",marginTop:"18px",maxWidth:"300px",padding:"10px 18px",borderRadius:"12px",background:"rgba(0,0,0,.42)",fontSize:"28px",fontWeight:900,textTransform:"uppercase",textAlign:"center",lineHeight:1.1}}>{shortName(name)}</div>
     </div>
   );
 
   return new ImageResponse(
-    <div style={{width:"1200px",height:"630px",display:"flex",flexDirection:"column",position:"relative",overflow:"hidden",background:"linear-gradient(#03162f 0%,#062852 55%,#07331f 100%)",color:"white",fontFamily:"Arial"}}>
-      <div style={{position:"absolute",inset:0,display:"flex",background:"radial-gradient(ellipse at 50% 35%, rgba(35,115,180,.42) 0%, rgba(4,21,48,.25) 35%, rgba(0,7,20,.86) 100%)"}} />
-      <div style={{position:"absolute",left:"-90px",top:"105px",width:"470px",height:"7px",background:"white",transform:"rotate(-17deg)",boxShadow:"0 0 22px 9px rgba(255,255,255,.75)"}} />
-      <div style={{position:"absolute",right:"-90px",top:"105px",width:"470px",height:"7px",background:"white",transform:"rotate(17deg)",boxShadow:"0 0 22px 9px rgba(255,255,255,.75)"}} />
-      <div style={{position:"absolute",left:0,right:0,bottom:0,height:"175px",display:"flex",background:"linear-gradient(180deg,#0b542e 0%,#083c22 100%)",borderTop:"4px solid rgba(255,255,255,.18)"}} />
-      <div style={{position:"absolute",left:"50%",bottom:"0",width:"7px",height:"175px",background:"rgba(255,255,255,.8)",transform:"translateX(-50%)"}} />
-      <div style={{position:"relative",display:"flex",height:"105px",padding:"30px 48px 0",alignItems:"flex-start",justifyContent:"space-between"}}>
-        <div style={{display:"flex",flexDirection:"column"}}><div style={{display:"flex",fontSize:"29px",fontWeight:900}}>FOOT FRANÇAIS</div><div style={{display:"flex",marginTop:"2px",padding:"3px 13px",background:"#ffd400",color:"#071a46",fontSize:"25px",fontWeight:900,transform:"skew(-7deg)"}}>EXPRESS</div></div>
-        <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end"}}><div style={{display:"flex",fontSize:"24px",fontWeight:900}}>{league.toUpperCase()}</div><div style={{display:"flex",marginTop:"5px",width:"160px",height:"5px",background:"#ffd400"}} /></div>
-      </div>
-      <div style={{position:"relative",display:"flex",flex:1,alignItems:"center",justifyContent:"space-between",padding:"0 35px 70px"}}>
-        {teamBox(home,homeLogo)}
-        <div style={{display:"flex",width:"330px",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-          <div style={{display:"flex",padding:"9px 24px",borderRadius:"8px",background:"#ffd400",color:"#071a46",fontSize:"22px",fontWeight:900}}>SCORE FINAL</div>
-          <div style={{display:"flex",alignItems:"center",gap:"25px",marginTop:"20px",fontSize:"112px",fontWeight:900,lineHeight:1,textShadow:"0 8px 18px rgba(0,0,0,.55)"}}><span>{hs}</span><span style={{color:"#ffd400",fontSize:"60px"}}>–</span><span>{as}</span></div>
+    <div style={{width:"1200px",height:"630px",display:"flex",flexDirection:"column",position:"relative",overflow:"hidden",background:"linear-gradient(180deg,#03162f 0%,#062852 58%,#071a46 100%)",color:"white",fontFamily:"Arial"}}>
+      <div style={{position:"absolute",inset:0,display:"flex",background:"radial-gradient(circle at 50% 38%, rgba(45,120,190,.28), transparent 33%)"}} />
+      <div style={{position:"absolute",left:"-90px",top:"125px",width:"440px",height:"6px",background:"rgba(255,255,255,.92)",transform:"rotate(-15deg)",boxShadow:"0 0 24px 8px rgba(255,255,255,.35)"}} />
+      <div style={{position:"absolute",right:"-90px",top:"125px",width:"440px",height:"6px",background:"rgba(255,255,255,.92)",transform:"rotate(15deg)",boxShadow:"0 0 24px 8px rgba(255,255,255,.35)"}} />
+      <div style={{position:"absolute",left:"70px",right:"70px",bottom:"88px",height:"1px",background:"rgba(255,255,255,.12)"}} />
+
+      <div style={{position:"relative",display:"flex",height:"106px",padding:"28px 74px 0",alignItems:"flex-start",justifyContent:"space-between"}}>
+        <div style={{display:"flex",flexDirection:"column"}}>
+          <div style={{display:"flex",fontSize:"27px",fontWeight:900,letterSpacing:"1px"}}>FOOT FRANÇAIS</div>
+          <div style={{display:"flex",alignSelf:"flex-start",marginTop:"3px",padding:"4px 14px",background:"#ffd400",color:"#071a46",fontSize:"22px",fontWeight:900}}>EXPRESS</div>
         </div>
-        {teamBox(away,awayLogo)}
+        <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end"}}>
+          <div style={{display:"flex",fontSize:"20px",fontWeight:900,opacity:.92}}>{league.toUpperCase()}</div>
+          <div style={{display:"flex",marginTop:"6px",width:"150px",height:"4px",background:"#ffd400"}} />
+        </div>
       </div>
-      <div style={{position:"absolute",bottom:"22px",left:"50%",transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center"}}><div style={{display:"flex",fontSize:"19px",fontWeight:900,fontStyle:"italic"}}>FOOT FRANÇAIS</div><div style={{display:"flex",marginTop:"2px",padding:"3px 22px",background:"#ffd400",color:"#071a46",fontSize:"20px",fontWeight:900}}>EXPRESS</div></div>
+
+      <div style={{position:"relative",display:"flex",flex:1,alignItems:"center",justifyContent:"space-between",padding:"0 76px 70px"}}>
+        <Team name={home} logo={homeLogo} />
+
+        <div style={{display:"flex",width:"310px",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+          <div style={{display:"flex",padding:"9px 22px",borderRadius:"999px",background:"#ffd400",color:"#071a46",fontSize:"20px",fontWeight:900,letterSpacing:".5px"}}>SCORE FINAL</div>
+          <div style={{display:"flex",alignItems:"center",gap:"22px",marginTop:"22px",fontSize:"104px",fontWeight:900,lineHeight:1,textShadow:"0 8px 18px rgba(0,0,0,.45)"}}>
+            <span>{hs}</span>
+            <span style={{color:"#ffd400",fontSize:"56px"}}>–</span>
+            <span>{as}</span>
+          </div>
+        </div>
+
+        <Team name={away} logo={awayLogo} />
+      </div>
+
+      <div style={{position:"absolute",left:"74px",right:"74px",bottom:"28px",display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:"16px",fontWeight:800,opacity:.85}}>
+        <span>LE DÉBRIEF DE LA RÉDACTION</span>
+        <span style={{color:"#ffd400"}}>foot-francais-express.vercel.app</span>
+      </div>
     </div>,
     {width:1200,height:630}
   );
