@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getFrenchLiveMatches } from "@/lib/apifootball";
 import { getFrenchLineupCandidates } from "@/lib/lineups";
-import { sendPush, serviceSupabase } from "@/lib/push-server";
+import { broadcastPush, sendPush, serviceSupabase } from "@/lib/push-server";
 import { generatePostMatchDrafts } from "@/lib/automatic-articles";
 
 export const runtime = "nodejs";
@@ -48,6 +48,44 @@ function notificationFor(match, event) {
   if (event.type === "red_card") return { title: `🟥 Carton rouge · ${minute}`, body: `${event.player || "Joueur"} · ${teams}` };
   if (event.type === "offside") return { title: `🚩 Hors-jeu · ${minute}`, body: `${event.player || "Action"} · ${teams}` };
   return { title: `🛑 Faute · ${minute}`, body: `${event.player || "Action"} · ${teams}` };
+}
+
+async function processArticleNotifications(supabase) {
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data: articles, error } = await supabase
+    .from("articles")
+    .select("id,slug,title,published_at,updated_at")
+    .eq("status", "published")
+    .or(`published_at.gte.${since},updated_at.gte.${since}`)
+    .order("published_at", { ascending: true, nullsFirst: false });
+  if (error) throw error;
+
+  let detected = 0;
+  let sent = 0;
+  for (const article of articles || []) {
+    const eventKey = `article:${article.id}:published`;
+    const { error: markerError } = await supabase.from("live_notification_events").insert({
+      event_key: eventKey,
+      match_id: null,
+      event_type: "article_published",
+      payload: { article_id: article.id, slug: article.slug, title: article.title }
+    });
+    if (markerError?.code === "23505") continue;
+    if (markerError) throw markerError;
+    detected += 1;
+
+    const result = await broadcastPush({
+      title: "📰 Nouvel article en ligne",
+      body: article.title,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      type: "article_published",
+      url: `/article/${article.slug}`,
+      tag: eventKey
+    });
+    sent += Number(result?.sent || 0);
+  }
+  return { checked: articles?.length || 0, detected, sent };
 }
 
 async function processLineupNotifications(supabase) {
@@ -108,6 +146,7 @@ async function runCheck(request) {
   const live = await getFrenchLiveMatches();
   if (!live.ok) return NextResponse.json({ error: live.error || "Flux LIVE indisponible." }, { status: 503 });
   const supabase = serviceSupabase();
+  const articleNotifications = await processArticleNotifications(supabase).catch((error) => ({ checked:0, detected:0, sent:0, error:error?.message || "Notifications articles indisponibles" }));
   const lineupNotifications = await processLineupNotifications(supabase).catch((error) => ({ checked:0, newLineups:0, sent:0, error:error?.message || "Compositions indisponibles" }));
   const candidates = live.data.flatMap((match) => (match.events || [])
     .filter((event) => PREF_FOR_EVENT[event.type] || PLAYER_HISTORY_EVENTS.has(event.type))
@@ -189,7 +228,7 @@ async function runCheck(request) {
 
   const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   await supabase.from("live_notification_events").delete().lt("created_at", cutoff);
-  return NextResponse.json({ ok: true, liveMatches: live.data.length, detected: candidates.length, newEvents, sent, lineupNotifications, automaticArticles });
+  return NextResponse.json({ ok: true, liveMatches: live.data.length, detected: candidates.length, newEvents, sent, articleNotifications, lineupNotifications, automaticArticles });
 }
 
 export async function GET(request) { return runCheck(request); }
