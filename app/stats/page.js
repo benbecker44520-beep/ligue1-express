@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getFixtures, getStandings, getScorers } from "@/lib/football";
+import { getPreviousLigue1Matches } from "@/lib/form-history";
 
 export const revalidate = 0;
 
@@ -11,65 +12,84 @@ function teamLink(row) {
   </Link>;
 }
 
-function resultForTeam(match, teamId) {
+function normalizeName(value = "") {
+  return String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/paris saint[- ]germain/g, "psg")
+    .replace(/olympique de marseille/g, "marseille")
+    .replace(/olympique lyonnais/g, "lyon")
+    .replace(/as monaco(?: fc)?/g, "monaco")
+    .replace(/losc lille/g, "lille")
+    .replace(/stade rennais(?: fc)?/g, "rennes")
+    .replace(/\b(fc|ac|sc|rc|as|ogc|stade|club|football)\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function namesMatch(a, b) {
+  const na = normalizeName(a);
+  const nb = normalizeName(b);
+  if (!na || !nb) return false;
+  return na === nb || na.includes(nb) || nb.includes(na);
+}
+
+function teamIsInMatch(match, row) {
+  const teamId = row.teamId;
   const homeId = match.home?.id ?? match.homeTeam?.id;
   const awayId = match.away?.id ?? match.awayTeam?.id;
+  if (teamId && (String(homeId) === String(teamId) || String(awayId) === String(teamId))) return true;
+  const names = [row.team, row.shortName].filter(Boolean);
+  const homeNames = [match.home?.name, match.home?.shortName, match.homeTeam?.name, match.homeTeam?.shortName].filter(Boolean);
+  const awayNames = [match.away?.name, match.away?.shortName, match.awayTeam?.name, match.awayTeam?.shortName].filter(Boolean);
+  return names.some((name) => homeNames.some((candidate) => namesMatch(name, candidate)) || awayNames.some((candidate) => namesMatch(name, candidate)));
+}
+
+function resultForTeam(match, row) {
+  const teamId = row.teamId;
+  const homeId = match.home?.id ?? match.homeTeam?.id;
+  const awayId = match.away?.id ?? match.awayTeam?.id;
+  const homeNames = [match.home?.name, match.home?.shortName, match.homeTeam?.name, match.homeTeam?.shortName].filter(Boolean);
+  const rowNames = [row.team, row.shortName].filter(Boolean);
+  const isHomeById = teamId && String(homeId) === String(teamId);
+  const isAwayById = teamId && String(awayId) === String(teamId);
+  const isHomeByName = rowNames.some((name) => homeNames.some((candidate) => namesMatch(name, candidate)));
+  const isHome = isHomeById || (!isAwayById && isHomeByName);
   const score = match.score?.fullTime || match.score || {};
   const homeScore = score.home ?? null;
   const awayScore = score.away ?? null;
-  const isHome = String(homeId) === String(teamId);
   const gf = isHome ? homeScore : awayScore;
   const ga = isHome ? awayScore : homeScore;
   if (!Number.isFinite(Number(gf)) || !Number.isFinite(Number(ga))) return null;
   return Number(gf) > Number(ga) ? "V" : Number(gf) < Number(ga) ? "D" : "N";
 }
 
-function formForTeam(matches, teamId) {
+function formForTeam(matches, row) {
   return matches
-    .filter(m => m.status === "FINISHED" && (String(m.home.id) === String(teamId) || String(m.away.id) === String(teamId)))
+    .filter((m) => m.status === "FINISHED" && teamIsInMatch(m, row))
     .sort((a,b) => b.timestamp-a.timestamp)
     .slice(0,5)
-    .map(m => resultForTeam(m, teamId))
+    .map((m) => resultForTeam(m, row))
     .filter(Boolean);
 }
 
-async function fetchFiveRealMatches(teamId, fallbackMatches) {
-  const fallback = formForTeam(fallbackMatches, teamId);
-  const token = process.env.FOOTBALL_DATA_TOKEN;
-  if (!token || !teamId) return fallback;
-
-  try {
-    const from = new Date(Date.now() - 220 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    const to = new Date().toISOString().slice(0, 10);
-    const response = await fetch(
-      `https://api.football-data.org/v4/teams/${teamId}/matches?status=FINISHED&dateFrom=${from}&dateTo=${to}&limit=20`,
-      { headers: { "X-Auth-Token": token }, cache: "no-store" }
-    );
-    if (!response.ok) return fallback;
-    const json = await response.json().catch(() => ({}));
-    const results = (json.matches || [])
-      .filter(m => m.status === "FINISHED")
-      .sort((a,b) => new Date(b.utcDate).getTime() - new Date(a.utcDate).getTime())
-      .map(m => resultForTeam(m, teamId))
-      .filter(Boolean)
-      .slice(0,5);
-    return results.length === 5 ? results : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 export default async function StatsPage() {
-  const [standings, fixtures, scorersResult] = await Promise.all([getStandings(), getFixtures(), getScorers()]);
+  const [standings, fixtures, scorersResult, previousSeasonMatches] = await Promise.all([
+    getStandings(),
+    getFixtures(),
+    getScorers(),
+    getPreviousLigue1Matches()
+  ]);
   if (!standings.ok || !fixtures.ok) return <div className="page-shell listing-page"><span className="eyebrow">LIGUE 1 · STATS</span><h1>Statistiques Ligue 1</h1><div className="football-setup-box"><h2>Données indisponibles</h2><p>{standings.error || fixtures.error}</p></div></div>;
 
   const rows = standings.data;
   const attacks = [...rows].sort((a,b) => b.goalsFor-a.goalsFor || b.points-a.points).slice(0,5);
   const defenses = [...rows].sort((a,b) => a.goalsAgainst-b.goalsAgainst || b.points-a.points).slice(0,5);
   const diffs = [...rows].sort((a,b) => b.diff-a.diff || b.points-a.points).slice(0,5);
-  const topFormRows = rows.slice(0,10);
-  const fiveMatchForms = await Promise.all(topFormRows.map(r => fetchFiveRealMatches(r.teamId, fixtures.data)));
-  const forms = topFormRows.map((r, index) => ({ ...r, form: fiveMatchForms[index] }));
+  const formMatches = [...fixtures.data, ...(previousSeasonMatches || [])];
+  const forms = rows.slice(0,10).map((r) => ({ ...r, form: formForTeam(formMatches, r) }));
 
   const scorers = scorersResult.ok ? scorersResult.data.slice(0,10) : [];
 
@@ -100,7 +120,7 @@ export default async function StatsPage() {
       <section className="stats-card stats-card-wide"><div className="stats-card-title"><span>⚽ MEILLEURES ATTAQUES</span><small>Buts marqués</small></div>{attacks.map((r,i)=><div className="stats-row" key={r.teamId}><b>{i+1}</b>{teamLink(r)}<strong>{r.goalsFor}</strong></div>)}</section>
       <section className="stats-card stats-card-wide"><div className="stats-card-title"><span>🛡️ MEILLEURES DÉFENSES</span><small>Buts encaissés</small></div>{defenses.map((r,i)=><div className="stats-row" key={r.teamId}><b>{i+1}</b>{teamLink(r)}<strong>{r.goalsAgainst}</strong></div>)}</section>
       <section className="stats-card"><div className="stats-card-title"><span>📈 DIFFÉRENCE DE BUTS</span><small>Top 5</small></div>{diffs.map((r,i)=><div className="stats-row" key={r.teamId}><b>{i+1}</b>{teamLink(r)}<strong>{r.diff>0?`+${r.diff}`:r.diff}</strong></div>)}</section>
-      <section className="stats-card"><div className="stats-card-title"><span>🔥 FORME RÉCENTE</span><small>5 derniers matchs officiels</small></div>{forms.map(r=><div className="stats-form-row" key={r.teamId}>{teamLink(r)}<div className="stats-form">{r.form.length?r.form.map((x,i)=><span key={i} className={`form-badge form-${x.toLowerCase()}`}>{x}</span>):<small>—</small>}</div></div>)}</section>
+      <section className="stats-card"><div className="stats-card-title"><span>🔥 FORME RÉCENTE</span><small>5 derniers matchs</small></div>{forms.map(r=><div className="stats-form-row" key={r.teamId}>{teamLink(r)}<div className="stats-form">{r.form.length?r.form.map((x,i)=><span key={i} className={`form-badge form-${x.toLowerCase()}`}>{x}</span>):<small>—</small>}</div></div>)}</section>
     </div>
   </div>;
 }
