@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/newsletter-server";
-import { publishArticleToSocials } from "@/lib/automatic-articles";
 import { publishArticleToFacebook } from "@/lib/facebook";
 import { broadcastPush } from "@/lib/push-server";
 
@@ -32,14 +31,18 @@ export async function POST(request, { params }) {
     if (updateError) throw updateError;
 
     const publishedArticle = { ...article, status: "published", published_at: publishedAt };
-    const social = await publishArticleToSocials(publishedArticle);
 
+    // Facebook est le seul réseau publié automatiquement.
+    // X reste volontairement en publication manuelle pour éviter l’API payante.
     const facebook = await publishArticleToFacebook(publishedArticle);
-    social.facebook = facebook.ok
-      ? { status: "published", id: facebook.postId || null }
-      : facebook.configured === false
-        ? { status: "not_configured", error: facebook.error || null }
-        : { status: "failed", error: facebook.error || "Publication Facebook impossible" };
+    const social = {
+      facebook: facebook.ok
+        ? { status: "published", id: facebook.postId || null }
+        : facebook.configured === false
+          ? { status: "not_configured", error: facebook.error || null }
+          : { status: "failed", error: facebook.error || "Publication Facebook impossible" },
+      x: { status: "manual" }
+    };
 
     await supabase.from("articles").update({ social_publications: social }).eq("id", article.id);
 
