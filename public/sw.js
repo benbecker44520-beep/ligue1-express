@@ -1,4 +1,4 @@
-const CACHE_NAME = "foot-francais-express-v1";
+const CACHE_NAME = "foot-francais-express-v2";
 const OFFLINE_URL = "/offline";
 const PRECACHE = [
   "/offline",
@@ -49,22 +49,46 @@ self.addEventListener("fetch", (event) => {
   }
 });
 
+function notificationActions(type) {
+  if (type === "article_published") return [{ action: "open", title: "Lire l'article" }];
+  if (type === "lineup") return [{ action: "open", title: "Voir les compos" }];
+  if (["goal", "red_card", "offside", "foul"].includes(type)) return [{ action: "open", title: "Voir le LIVE" }];
+  return [{ action: "open", title: "Ouvrir FF Express" }];
+}
+
 self.addEventListener("push", (event) => {
   let payload = {};
-  try { payload = event.data?.json() || {}; } catch { payload = { body: event.data?.text() || "Nouvel événement LIVE" }; }
-  event.waitUntil(self.registration.showNotification(payload.title || "Foot Français Express", {
-    body: payload.body || "Nouvel événement LIVE",
+  try {
+    payload = event.data?.json() || {};
+  } catch {
+    payload = { body: event.data?.text() || "Nouvelle actualité sur FF Express" };
+  }
+
+  const type = payload.type || "generic";
+  const options = {
+    body: payload.body || "Ouvre FF Express pour découvrir la suite.",
     icon: payload.icon || "/icon-192.png",
-    badge: payload.badge || "/icon-192.png",
-    tag: payload.tag || "ligue1-express-live",
+    tag: payload.tag || `ff-express-${type}`,
     renotify: true,
-    data: { url: payload.url || "/live" }
-  }));
+    timestamp: Date.now(),
+    data: { url: payload.url || "/" },
+    actions: notificationActions(type)
+  };
+
+  // Android affichait un gros carré blanc quand le logo complet était utilisé comme badge.
+  // On n'impose donc plus de badge : Android garde son rendu natif propre.
+  if (payload.image) options.image = payload.image;
+  if (type === "goal") options.vibrate = [140, 70, 140];
+  else if (type === "red_card") options.vibrate = [120, 60, 120];
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title || "FF Express", options)
+  );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const target = new URL(event.notification.data?.url || "/live", self.location.origin).href;
+  const target = new URL(event.notification.data?.url || "/", self.location.origin).href;
   event.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
     const existing = windows.find((client) => client.url === target);
     if (existing) return existing.focus();
