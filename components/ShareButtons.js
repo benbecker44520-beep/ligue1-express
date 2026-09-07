@@ -51,12 +51,24 @@ export default function ShareButtons({ title, path = "", compact = false }) {
   }
 
   return (
-    <div className={`share-actions ${compact ? "share-actions-compact" : ""}`}>
-      <button type="button" onClick={shareFacebook} aria-label="Partager sur Facebook">Facebook</button>
-      <button type="button" onClick={shareX} aria-label="Publier sur X">Publier sur X ↗</button>
-      <button type="button" onClick={shareInstagram} aria-label="Partager via Instagram">Instagram</button>
-      <button type="button" onClick={() => copyLink()} aria-label="Copier le lien">Copier le lien</button>
-      {message && <small className="share-message">{message}</small>}
-    </div>
+    <>
+      <div className={`share-actions ${compact ? "share-actions-compact" : ""}`}>
+        <button type="button" onClick={shareFacebook} aria-label="Partager sur Facebook">Facebook</button>
+        <button type="button" onClick={shareX} aria-label="Publier sur X">Publier sur X ↗</button>
+        <button type="button" onClick={shareInstagram} aria-label="Partager via Instagram">Instagram</button>
+        <button type="button" onClick={() => copyLink()} aria-label="Copier le lien">Copier le lien</button>
+        {message && <small className="share-message">{message}</small>}
+      </div>
+      {compact && (
+        <style jsx global>{`
+          .social-publication-status span:nth-child(2) {
+            display: none !important;
+          }
+          .social-publication-status::after {
+            content: "X : publication manuelle";
+          }
+        `}</style>
+      )}
+    </>
   );
 }
