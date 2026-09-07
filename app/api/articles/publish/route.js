@@ -21,7 +21,6 @@ export async function POST(request) {
     if (error) throw error;
     if (!article) return NextResponse.json({ error: "Article introuvable." }, { status: 404 });
 
-    // Sécurité anti-doublon : un second clic sur Publier ne renvoie ni push ni post Facebook.
     if (article.status === "published") {
       return NextResponse.json({
         ok: true,
@@ -42,10 +41,10 @@ export async function POST(request) {
     let push = null;
     try {
       push = await broadcastPush({
-        title: "📰 Nouvel article en ligne",
-        body: article.title,
+        title: "🔥 À la une sur FF Express",
+        body: `${article.title} · Appuie pour lire l’article.`,
         icon: "/icon-192.png",
-        badge: "/icon-192.png",
+        image: article.image_url || undefined,
         type: "article_published",
         url: `/article/${article.slug}`,
         tag: `article-${article.id}`
