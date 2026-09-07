@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/newsletter-server";
 import { broadcastPush } from "@/lib/push-server";
+import { publishArticleToFacebook } from "@/lib/facebook";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -19,6 +20,17 @@ export async function POST(request) {
       .maybeSingle();
     if (error) throw error;
     if (!article) return NextResponse.json({ error: "Article introuvable." }, { status: 404 });
+
+    // Sécurité anti-doublon : un second clic sur Publier ne renvoie ni push ni post Facebook.
+    if (article.status === "published") {
+      return NextResponse.json({
+        ok: true,
+        articleId: article.id,
+        alreadyPublished: true,
+        push: { skipped: true },
+        facebook: { skipped: true }
+      });
+    }
 
     const publishedAt = new Date().toISOString();
     const { error: updateError } = await supabase
@@ -39,7 +51,14 @@ export async function POST(request) {
         tag: `article-${article.id}`
       });
     } catch (pushError) {
-      push = { error: pushError?.message || "Notification article impossible" };
+      push = { ok: false, error: pushError?.message || "Notification article impossible" };
+    }
+
+    let facebook = null;
+    try {
+      facebook = await publishArticleToFacebook({ ...article, status: "published", published_at: publishedAt });
+    } catch (facebookError) {
+      facebook = { ok: false, error: facebookError?.message || "Publication Facebook impossible" };
     }
 
     try {
@@ -47,11 +66,21 @@ export async function POST(request) {
         event_key: `article:${article.id}`,
         match_id: null,
         event_type: "article_published",
-        payload: { article_id: article.id, slug: article.slug, title: article.title }
+        payload: {
+          article_id: article.id,
+          slug: article.slug,
+          title: article.title,
+          facebook: facebook?.ok ? { ok: true, post_id: facebook.postId || null } : { ok: false, error: facebook?.error || null }
+        }
       });
     } catch {}
 
-    return NextResponse.json({ ok: true, articleId: article.id, push });
+    return NextResponse.json({
+      ok: true,
+      articleId: article.id,
+      push,
+      facebook
+    });
   } catch (error) {
     return NextResponse.json({ error: error?.message || "Publication impossible." }, { status: 500 });
   }
