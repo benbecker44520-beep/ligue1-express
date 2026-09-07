@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/newsletter-server";
 import { publishArticleToSocials } from "@/lib/automatic-articles";
+import { publishArticleToFacebook } from "@/lib/facebook";
 import { broadcastPush } from "@/lib/push-server";
 
 export const runtime = "nodejs";
@@ -15,6 +16,10 @@ export async function POST(request, { params }) {
     if (!article) return NextResponse.json({ error: "Article introuvable." }, { status: 404 });
     if (!article.auto_generated) return NextResponse.json({ error: "Cet article n’est pas un brouillon automatique." }, { status: 400 });
 
+    if (article.status === "published") {
+      return NextResponse.json({ ok: true, articleId: article.id, alreadyPublished: true, social: article.social_publications || {}, push: { skipped: true } });
+    }
+
     const publishedAt = new Date().toISOString();
     const { error: updateError } = await supabase.from("articles").update({
       status: "published",
@@ -28,6 +33,16 @@ export async function POST(request, { params }) {
 
     const publishedArticle = { ...article, status: "published", published_at: publishedAt };
     const social = await publishArticleToSocials(publishedArticle);
+
+    // Facebook passe par le helper commun utilisé aussi par les articles manuels.
+    // Cela garantit les mêmes variables Vercel et le même diagnostic partout.
+    const facebook = await publishArticleToFacebook(publishedArticle);
+    social.facebook = facebook.ok
+      ? { status: "published", id: facebook.postId || null }
+      : facebook.configured === false
+        ? { status: "not_configured", error: facebook.error || null }
+        : { status: "failed", error: facebook.error || "Publication Facebook impossible" };
+
     await supabase.from("articles").update({ social_publications: social }).eq("id", article.id);
 
     let push = null;
@@ -36,7 +51,7 @@ export async function POST(request, { params }) {
       event_key: eventKey,
       match_id: `article:${article.id}`,
       event_type: "article_published",
-      payload: { article_id: article.id, slug: article.slug, title: article.title }
+      payload: { article_id: article.id, slug: article.slug, title: article.title, facebook: social.facebook }
     });
 
     if (!markerError) {
