@@ -34,8 +34,6 @@ export async function POST(request, { params }) {
     const publishedArticle = { ...article, status: "published", published_at: publishedAt };
     const social = await publishArticleToSocials(publishedArticle);
 
-    // Facebook passe par le helper commun utilisé aussi par les articles manuels.
-    // Cela garantit les mêmes variables Vercel et le même diagnostic partout.
     const facebook = await publishArticleToFacebook(publishedArticle);
     social.facebook = facebook.ok
       ? { status: "published", id: facebook.postId || null }
@@ -57,10 +55,10 @@ export async function POST(request, { params }) {
     if (!markerError) {
       try {
         push = await broadcastPush({
-          title: "📰 Nouvel article en ligne",
-          body: article.title,
+          title: "🔥 À la une sur FF Express",
+          body: `${article.title} · Appuie pour lire l’article.`,
           icon: "/icon-192.png",
-          badge: "/icon-192.png",
+          image: article.image_url || undefined,
           type: "article_published",
           url: `/article/${article.slug}`,
           tag: eventKey
