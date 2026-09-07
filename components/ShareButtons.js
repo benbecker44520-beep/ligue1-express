@@ -23,7 +23,8 @@ export default function ShareButtons({ title, path = "", compact = false }) {
 
   function shareX() {
     const url = currentUrl();
-    open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title || "Foot Français Express")}&url=${encodeURIComponent(url)}`);
+    const text = `📰 ${title || "FF Express"}\n\nÀ lire sur FF Express 👇`;
+    open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
   }
 
   async function shareInstagram() {
@@ -52,7 +53,7 @@ export default function ShareButtons({ title, path = "", compact = false }) {
   return (
     <div className={`share-actions ${compact ? "share-actions-compact" : ""}`}>
       <button type="button" onClick={shareFacebook} aria-label="Partager sur Facebook">Facebook</button>
-      <button type="button" onClick={shareX} aria-label="Partager sur X">X</button>
+      <button type="button" onClick={shareX} aria-label="Publier sur X">Publier sur X ↗</button>
       <button type="button" onClick={shareInstagram} aria-label="Partager via Instagram">Instagram</button>
       <button type="button" onClick={() => copyLink()} aria-label="Copier le lien">Copier le lien</button>
       {message && <small className="share-message">{message}</small>}
