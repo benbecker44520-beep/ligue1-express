@@ -38,7 +38,7 @@ function LiveCard({ match, league, href }) {
         </div>
         <div className="live-v82-open">Ouvrir le Centre Match →</div>
       </Link>
-      {match.provider === "apifootball" && <FollowMatchButton compact match={{ ...match, href, leagueName:league }} />}
+      {match.provider === "apifootball" && <FollowMatchButton compact match={{ ...match, href, leagueName: league }} />}
     </article>
   );
 }
@@ -58,6 +58,7 @@ export default async function LivePage() {
     getFrenchLiveMatches(),
     getEspnCupLiveMatches().catch(() => [])
   ]);
+
   let matches = apiResult.ok ? apiResult.data : [];
   const hasApiCup = matches.some((m) => m.leagueId === "165");
   if (!hasApiCup && espnCupLive.length) matches = [...matches, ...espnCupLive];
@@ -76,9 +77,14 @@ export default async function LivePage() {
     { id: "168", name: "Ligue 1", matches: matches.filter((m) => m.leagueId === "168" || (m.provider === "football-data" && !m.leagueId)) },
     { id: "164", name: "Ligue 2", matches: matches.filter((m) => m.leagueId === "164") },
     { id: "167", name: "Ligue 3", matches: matches.filter((m) => m.leagueId === "167") },
-    { id: "165", name: "Coupe de France", matches: matches.filter((m) => m.leagueId === "165") }
+    { id: "165", name: "Coupe de France", matches: matches.filter((m) => m.leagueId === "165") },
+    { id: "ldc", name: "Ligue des champions", matches: matches.filter((m) => m.league?.slug === "ligue-des-champions") },
+    { id: "uel", name: "Europa League", matches: matches.filter((m) => m.league?.slug === "europa-league") },
+    { id: "uecl", name: "Conference League", matches: matches.filter((m) => m.league?.slug === "conference-league") }
   ];
+
   const total = groups.reduce((sum, group) => sum + group.matches.length, 0);
+  const europeanLive = groups.slice(4).reduce((sum, group) => sum + group.matches.length, 0);
 
   return (
     <div className="container live-v82-page">
@@ -88,7 +94,7 @@ export default async function LivePage() {
         <div>
           <p className="eyebrow">FOOT FRANÇAIS EXPRESS · TEMPS RÉEL</p>
           <h1><span>LIVE</span> Scores en direct</h1>
-          <p>Suivez la Ligue 1, la Ligue 2, la Ligue 3 et la Coupe de France. Les scores sont actualisés automatiquement toutes les 60 secondes.</p>
+          <p>Suivez le football français et, en Europe, uniquement les matchs des clubs français en Ligue des champions, Europa League et Conference League. Actualisation automatique toutes les 60 secondes.</p>
         </div>
         <div className={`live-v82-counter ${total ? "is-live" : ""}`}>
           <i />
@@ -103,14 +109,14 @@ export default async function LivePage() {
             <section className="live-v83-section" key={group.id}>
               <div className="live-v83-section-head"><h2>{group.name}</h2><span>{group.matches.length} LIVE</span></div>
               <div className="live-v82-grid">
-                {group.matches.map((match) => (
-                  <LiveCard
-                    key={`${group.id}-${match.id}`}
-                    match={match}
-                    league={group.name}
-                    href={match.provider === "apifootball" ? `/live/match/${match.id}` : match.provider === "espn" ? "/championnats/coupe-de-france" : `/match/${match.id}`}
-                  />
-                ))}
+                {group.matches.map((match) => {
+                  const href = match.provider === "apifootball"
+                    ? `/live/match/${match.id}`
+                    : match.provider === "espn"
+                      ? "/championnats/coupe-de-france"
+                      : `/match/${match.id}`;
+                  return <LiveCard key={`${group.id}-${match.id}`} match={match} league={group.name} href={href} />;
+                })}
               </div>
             </section>
           ))}
@@ -119,14 +125,14 @@ export default async function LivePage() {
         <section className="live-v82-empty">
           <div className="live-v82-ball">⚽</div>
           <h2>Aucun match en direct actuellement</h2>
-          <p>La page se rafraîchit automatiquement. Dès qu'un match de Ligue 1, Ligue 2, Ligue 3 ou Coupe de France démarre, son score apparaît ici.</p>
+          <p>La page se rafraîchit automatiquement. Les matchs européens apparaissent uniquement lorsqu'un club français est concerné.</p>
           <Link href="/resultats">Voir les résultats et prochains matchs →</Link>
         </section>
       )}
 
       {!apiResult.ok && (
         <div className="live-v83-source-note">
-          APIfootball est momentanément indisponible. La Ligue 1 utilise automatiquement le flux de secours football-data.org.
+          APIfootball est momentanément indisponible. La Ligue 1 utilise automatiquement le flux de secours football-data.org ; les compétitions européennes attendent le retour du flux principal.
         </div>
       )}
 
@@ -135,6 +141,7 @@ export default async function LivePage() {
         <LeagueStatus number="02" name="Ligue 2" source="APIfootball" active={apiResult.ok} note={apiResult.ok ? "Scores live activés" : "En attente du flux principal"} />
         <LeagueStatus number="03" name="Ligue 3" source="APIfootball" active={apiResult.ok} note={apiResult.ok ? "Scores live activés" : "En attente du flux principal"} />
         <LeagueStatus number="04" name="Coupe de France" source={hasApiCup ? "APIfootball" : "ESPN"} active note="Scores live activés" />
+        <LeagueStatus number="05" name="Coupes d'Europe" source="APIfootball" active={apiResult.ok} note={europeanLive ? `${europeanLive} match(s) français en direct` : "Clubs français uniquement"} />
       </section>
     </div>
   );
