@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getPublishedArticles, getFeaturedArticle } from "@/lib/articles";
 import ArticleCard from "@/components/ArticleCard";
-import { getFixtures, getHomeSnapshot, getScorers, getStandings } from "@/lib/football";
+import { getFixtures, getScorers, getStandings } from "@/lib/football";
 import { getPublishedPredictions } from "@/lib/predictions";
 import { getTransfers } from "@/lib/transfers";
 import { sameEntityName } from "@/lib/content-links";
@@ -10,7 +10,7 @@ import HomeHeroMedia from "@/components/HomeHeroMedia";
 import { getAllSupporterPredictionStats } from "@/lib/supporter-predictions";
 import MatchOfTheWeek from "@/components/MatchOfTheWeek";
 
-export const revalidate = 0;
+export const revalidate = 60;
 
 function EmptyState({ title, text, href, cta }) {
   return (
@@ -83,8 +83,24 @@ function headToHead(fixtures, homeId, awayId, excludedMatchId) {
   return fixtures.filter((match) => match.status === "FINISHED" && String(match.id) !== String(excludedMatchId) && [String(match.home.id), String(match.away.id)].includes(String(homeId)) && [String(match.home.id), String(match.away.id)].includes(String(awayId))).sort((a, b) => b.timestamp - a.timestamp).slice(0, 3);
 }
 
+function homeSnapshotFromFixtures(fixtures = []) {
+  const now = Math.floor(Date.now() / 1000);
+  const liveStatuses = new Set(["IN_PLAY", "PAUSED", "LIVE"]);
+  const live = fixtures
+    .filter((match) => liveStatuses.has(match.status))
+    .sort((a, b) => a.timestamp - b.timestamp)[0] || null;
+  const next = fixtures
+    .filter((match) => match.status !== "FINISHED" && !liveStatuses.has(match.status) && match.timestamp >= now)
+    .sort((a, b) => a.timestamp - b.timestamp)[0] || null;
+  const latest = fixtures
+    .filter((match) => match.status === "FINISHED")
+    .sort((a, b) => b.timestamp - a.timestamp)[0] || null;
+
+  return { live, next, latest };
+}
+
 export default async function HomePage() {
-  const [allArticles, featuredArticle, mercatoArticles, analyses, predictions, transfers, scorersResult, standingsResult, fixturesResult, snapshotResult, supporterStats] = await Promise.all([
+  const [allArticles, featuredArticle, mercatoArticles, analyses, predictions, transfers, scorersResult, standingsResult, fixturesResult, supporterStats] = await Promise.all([
     getPublishedArticles({ limit: 14 }),
     getFeaturedArticle(),
     getPublishedArticles({ category: "MERCATO", limit: 3 }),
@@ -94,7 +110,6 @@ export default async function HomePage() {
     getScorers(),
     getStandings(),
     getFixtures(),
-    getHomeSnapshot(),
     getAllSupporterPredictionStats()
   ]);
 
@@ -102,7 +117,7 @@ export default async function HomePage() {
   const scorers = scorersResult.ok ? scorersResult.data.slice(0, 5) : [];
   const fixtures = fixturesResult.ok ? fixturesResult.data : [];
   const formTeams = formTable(fixtures, standings);
-  const snapshot = snapshotResult.ok ? snapshotResult.data : {};
+  const snapshot = homeSnapshotFromFixtures(fixtures);
   const now = Date.now();
   const activePredictions = predictions.filter((prediction) => {
     if (prediction.verdict !== "pending" || prediction.match?.status === "FINISHED") return false;
@@ -149,7 +164,6 @@ export default async function HomePage() {
 
       {weekPrediction && <MatchOfTheWeek prediction={weekPrediction} match={weekMatch} stats={weekStats} homeForm={weekHomeForm} awayForm={weekAwayForm} meetings={weekMeetings} />}
 
-
       {secondary.length > 0 && (
         <section className="home-headlines" aria-label="À suivre">
           <div className="home-headlines-label">À SUIVRE</div>
@@ -191,8 +205,6 @@ export default async function HomePage() {
           </section>
         </aside>
       </section>
-
-
 
       <nav className="media-shortcuts" aria-label="Accès rapides Ligue 1">
         <Link href="/actualites" className="media-shortcut"><div><span>À LA UNE</span><strong>Dernières actualités</strong></div><b>→</b></Link>
