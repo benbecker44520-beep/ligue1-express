@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/newsletter-server";
-import { publishArticleToFacebook } from "@/lib/facebook";
 import { broadcastPush } from "@/lib/push-server";
 
 export const runtime = "nodejs";
@@ -30,17 +29,10 @@ export async function POST(request, { params }) {
     }).eq("id", article.id);
     if (updateError) throw updateError;
 
-    const publishedArticle = { ...article, status: "published", published_at: publishedAt };
-
-    // Facebook est le seul réseau publié automatiquement.
-    // X reste volontairement en publication manuelle pour éviter l’API payante.
-    const facebook = await publishArticleToFacebook(publishedArticle);
+    // Les réseaux sociaux restent volontairement en publication manuelle.
+    // Cela évite toute dépendance à une API sociale payante ou à un jeton Meta instable.
     const social = {
-      facebook: facebook.ok
-        ? { status: "published", id: facebook.postId || null }
-        : facebook.configured === false
-          ? { status: "not_configured", error: facebook.error || null }
-          : { status: "failed", error: facebook.error || "Publication Facebook impossible" },
+      facebook: { status: "manual" },
       x: { status: "manual" }
     };
 
