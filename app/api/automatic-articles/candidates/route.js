@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getRecentlyFinishedFrenchMatches } from "@/lib/apifootball";
+import { getFinishedMatchesForAutomaticArticles, matchLocalDate } from "@/lib/automatic-match-source";
 import { requireAdmin } from "@/lib/newsletter-server";
 
 export const runtime = "nodejs";
@@ -22,11 +22,11 @@ export async function GET(request) {
       return NextResponse.json({ ok:false, error:"Date invalide." }, { status:400 });
     }
 
-    const result = await getRecentlyFinishedFrenchMatches({ days: daysBack(date) });
+    const result = await getFinishedMatchesForAutomaticArticles({ days: daysBack(date) });
     if (!result.ok) throw new Error(result.error || "Matchs terminés indisponibles");
 
     const matches = (result.data || [])
-      .filter((match) => String(match.utcDate || "").slice(0, 10) === date)
+      .filter((match) => matchLocalDate(match.utcDate) === date)
       .map((match) => ({
         id: String(match.id),
         league: match.leagueName,
@@ -35,7 +35,8 @@ export async function GET(request) {
         homeLogo: match.home?.logo || null,
         awayLogo: match.away?.logo || null,
         score: { home: match.score?.home ?? 0, away: match.score?.away ?? 0 },
-        utcDate: match.utcDate
+        utcDate: match.utcDate,
+        source: match.source || match.provider || null
       }));
 
     return NextResponse.json({ ok:true, date, matches });
