@@ -16,8 +16,26 @@ export default function ShareButtons({ title, path = "", compact = false }) {
     window.open(url, "_blank", "noopener,noreferrer,width=760,height=680");
   }
 
-  function shareFacebook() {
+  function socialText() {
+    return `📰 ${title || "FF Express"}\n\nÀ lire sur FF Express 👇\n${currentUrl()}`;
+  }
+
+  async function shareFacebook() {
     const url = currentUrl();
+    const text = socialText();
+
+    // Facebook n'autorise plus le préremplissage automatique du texte
+    // dans son Share Dialog. On copie donc le texte complet dans le
+    // presse-papiers avant d'ouvrir Facebook : il ne reste qu'à coller.
+    try {
+      await navigator.clipboard.writeText(text);
+      setMessage("Texte Facebook copié ✅ Ouvre Facebook puis colle-le dans ta publication.");
+      window.setTimeout(() => setMessage(""), 6000);
+    } catch {
+      setMessage("Facebook va s’ouvrir. Copie le titre et le lien manuellement si nécessaire.");
+      window.setTimeout(() => setMessage(""), 6000);
+    }
+
     open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`);
   }
 
