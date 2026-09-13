@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { generatePostMatchDraftForMatch } from "@/lib/automatic-articles";
-import { getRecentlyFinishedFrenchMatches } from "@/lib/apifootball";
+import { getFinishedAutomaticMatchById } from "@/lib/automatic-match-source";
 import { serviceSupabase } from "@/lib/push-server";
 import { requireAdmin } from "@/lib/newsletter-server";
 
@@ -8,25 +8,23 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
-function retryable(error) { const message=String(error?.message||"").toLowerCase(); return message.includes("fetch failed")||message.includes("apifootball")||message.includes("api-football")||message.includes("tempor")||message.includes("network"); }
-
 async function runSelected(matchId) {
-  const supabase=serviceSupabase();
-  let lastError=null;
-  for(let attempt=1;attempt<=3;attempt+=1){
-    try{
-      const result=await getRecentlyFinishedFrenchMatches({days:14});
-      if(!result.ok) throw new Error(result.error||"Matchs terminés indisponibles");
-      const match=(result.data||[]).find((item)=>String(item.id)===String(matchId));
-      if(!match) return NextResponse.json({ok:false,error:"Ce match terminé n'est plus disponible dans le flux API-Football."},{status:404});
-      const automaticArticles=await generatePostMatchDraftForMatch(supabase,match);
-      return NextResponse.json({ok:true,automaticArticles,attempts:attempt,match:{id:match.id,home:match.home.name,away:match.away.name}});
-    }catch(error){ lastError=error; if(!retryable(error)||attempt===3) break; await wait(attempt*800); }
+  const supabase = serviceSupabase();
+  const result = await getFinishedAutomaticMatchById(matchId);
+  if (!result.ok || !result.data) {
+    return NextResponse.json(
+      { ok:false, error:result.error || "Match terminé introuvable." },
+      { status:404 }
+    );
   }
-  const raw=String(lastError?.message||"").trim();
-  const friendly=/fetch failed|network|apifootball|api-football/i.test(raw)?"API-Football est momentanément indisponible. Réessaie dans quelques secondes.":raw||"Génération automatique impossible.";
-  return NextResponse.json({ok:false,error:friendly},{status:503});
+
+  const match = result.data;
+  const automaticArticles = await generatePostMatchDraftForMatch(supabase, match);
+  return NextResponse.json({
+    ok:true,
+    automaticArticles,
+    match:{ id:match.id, home:match.home?.name, away:match.away?.name }
+  });
 }
 
 // Le cron ne crée plus aucun article en masse.
@@ -42,16 +40,19 @@ export async function GET() {
 export async function POST(request) {
   try {
     await requireAdmin(request);
-    const body=await request.json().catch(()=>({}));
-    const matchId=String(body?.matchId||"").trim();
-    if(!matchId) {
+    const body = await request.json().catch(() => ({}));
+    const matchId = String(body?.matchId || "").trim();
+    if (!matchId) {
       return NextResponse.json(
-        {ok:false,error:"Sélectionne d'abord un match. La génération globale est désactivée depuis l'administration."},
-        {status:400}
+        { ok:false, error:"Sélectionne d'abord un match. La génération globale est désactivée depuis l'administration." },
+        { status:400 }
       );
     }
     return runSelected(matchId);
   } catch (error) {
-    return NextResponse.json({ok:false,error:error?.message||"Accès administrateur requis."},{status:401});
+    return NextResponse.json(
+      { ok:false, error:error?.message || "Génération automatique impossible." },
+      { status:500 }
+    );
   }
 }
