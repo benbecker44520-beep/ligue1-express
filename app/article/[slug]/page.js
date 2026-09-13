@@ -12,17 +12,36 @@ export async function generateMetadata({ params }) {
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
   if (!article) return { title: "Article introuvable", robots: { index: false } };
+
+  const description = article.excerpt || "Actualité du football français sur Foot Français Express.";
+  const articlePath = `/article/${slug}`;
+  const socialImage = article.image_url || "/icon-512.png";
+
   return {
     title: article.title,
-    description: article.excerpt || "Actualité Ligue 1 sur Foot Français Express.",
-    alternates: { canonical: `/article/${slug}` },
+    description,
+    alternates: { canonical: articlePath },
     openGraph: {
       type: "article",
+      locale: "fr_FR",
+      siteName: "Foot Français Express",
+      url: articlePath,
       title: article.title,
-      description: article.excerpt || "Actualité Ligue 1 sur Foot Français Express.",
-      images: article.image_url ? [{ url: article.image_url }] : undefined,
+      description,
+      images: [{
+        url: socialImage,
+        width: 1200,
+        height: 630,
+        alt: article.title
+      }],
       publishedTime: article.published_at || undefined,
       modifiedTime: article.updated_at || undefined
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: article.title,
+      description,
+      images: [socialImage]
     }
   };
 }
