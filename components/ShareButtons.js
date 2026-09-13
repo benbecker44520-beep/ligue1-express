@@ -53,7 +53,7 @@ export default function ShareButtons({ title, path = "", compact = false }) {
   return (
     <>
       <div className={`share-actions ${compact ? "share-actions-compact" : ""}`}>
-        <button type="button" onClick={shareFacebook} aria-label="Partager sur Facebook">Facebook</button>
+        <button type="button" onClick={shareFacebook} aria-label="Publier sur Facebook">Publier sur Facebook ↗</button>
         <button type="button" onClick={shareX} aria-label="Publier sur X">Publier sur X ↗</button>
         <button type="button" onClick={shareInstagram} aria-label="Partager via Instagram">Instagram</button>
         <button type="button" onClick={() => copyLink()} aria-label="Copier le lien">Copier le lien</button>
@@ -61,11 +61,11 @@ export default function ShareButtons({ title, path = "", compact = false }) {
       </div>
       {compact && (
         <style jsx global>{`
-          .social-publication-status span:nth-child(2) {
+          .social-publication-status span {
             display: none !important;
           }
           .social-publication-status::after {
-            content: "X : publication manuelle";
+            content: "Facebook : publication manuelle · X : publication manuelle";
           }
         `}</style>
       )}
