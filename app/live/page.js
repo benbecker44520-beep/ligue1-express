@@ -1,9 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import LiveAutoRefresh from "@/components/LiveAutoRefresh";
-import { getFrenchLiveMatches } from "@/lib/apifootball";
+import { getFrenchLiveMatches } from "@/lib/free-football";
 import { getFixtures } from "@/lib/football";
-import { getEspnCupLiveMatches } from "@/lib/espn";
 import FollowMatchButton from "@/components/FollowMatchButton";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +37,7 @@ function LiveCard({ match, league, href }) {
         </div>
         <div className="live-v82-open">Ouvrir le Centre Match →</div>
       </Link>
-      {match.provider === "apifootball" && <FollowMatchButton compact match={{ ...match, href, leagueName: league }} />}
+      {match.provider === "espn-free" && <FollowMatchButton compact match={{ ...match, href, leagueName: league }} />}
     </article>
   );
 }
@@ -54,34 +53,30 @@ function LeagueStatus({ number, name, source, active, note }) {
 }
 
 export default async function LivePage() {
-  const [apiResult, espnCupLive] = await Promise.all([
-    getFrenchLiveMatches(),
-    getEspnCupLiveMatches().catch(() => [])
-  ]);
-
-  let matches = apiResult.ok ? apiResult.data : [];
-  const hasApiCup = matches.some((m) => m.leagueId === "165");
-  if (!hasApiCup && espnCupLive.length) matches = [...matches, ...espnCupLive];
+  const freeResult = await getFrenchLiveMatches();
+  let matches = freeResult.ok ? freeResult.data : [];
   let l1Fallback = false;
 
-  if (!apiResult.ok) {
+  if (!freeResult.ok) {
     const footballData = await getFixtures().catch(() => null);
-    const fallbackMatches = footballData?.ok
+    matches = footballData?.ok
       ? (footballData.data || []).filter((match) => LIVE_STATUSES.has(match.status)).map((match) => ({ ...match, provider: "football-data" }))
       : [];
-    matches = fallbackMatches;
     l1Fallback = true;
   }
 
   const groups = [
-    { id: "168", name: "Ligue 1", matches: matches.filter((m) => m.leagueId === "168" || (m.provider === "football-data" && !m.leagueId)) },
-    { id: "164", name: "Ligue 2", matches: matches.filter((m) => m.leagueId === "164") },
-    { id: "167", name: "Ligue 3", matches: matches.filter((m) => m.leagueId === "167") },
-    { id: "165", name: "Coupe de France", matches: matches.filter((m) => m.leagueId === "165") },
-    { id: "ldc", name: "Ligue des champions", matches: matches.filter((m) => m.league?.slug === "ligue-des-champions") },
-    { id: "uel", name: "Europa League", matches: matches.filter((m) => m.league?.slug === "europa-league") },
-    { id: "uecl", name: "Conference League", matches: matches.filter((m) => m.league?.slug === "conference-league") }
-  ];
+    { id: "l1", slug: "ligue-1", name: "Ligue 1" },
+    { id: "l2", slug: "ligue-2", name: "Ligue 2" },
+    { id: "l3", slug: "ligue-3", name: "Ligue 3" },
+    { id: "cdf", slug: "coupe-de-france", name: "Coupe de France" },
+    { id: "ldc", slug: "ligue-des-champions", name: "Ligue des champions" },
+    { id: "uel", slug: "europa-league", name: "Europa League" },
+    { id: "uecl", slug: "conference-league", name: "Conference League" }
+  ].map((group) => ({
+    ...group,
+    matches: matches.filter((match) => match.league?.slug === group.slug || (group.slug === "ligue-1" && match.provider === "football-data" && !match.league?.slug))
+  }));
 
   const total = groups.reduce((sum, group) => sum + group.matches.length, 0);
   const europeanLive = groups.slice(4).reduce((sum, group) => sum + group.matches.length, 0);
@@ -94,13 +89,9 @@ export default async function LivePage() {
         <div>
           <p className="eyebrow">FOOT FRANÇAIS EXPRESS · TEMPS RÉEL</p>
           <h1><span>LIVE</span> Scores en direct</h1>
-          <p>Suivez le football français et, en Europe, uniquement les matchs des clubs français en Ligue des champions, Europa League et Conference League. Actualisation automatique toutes les 60 secondes.</p>
+          <p>Suivez le football français et, en Europe, uniquement les matchs des clubs français. Le flux LIVE fonctionne désormais avec des sources gratuites et se rafraîchit automatiquement.</p>
         </div>
-        <div className={`live-v82-counter ${total ? "is-live" : ""}`}>
-          <i />
-          <strong>{total}</strong>
-          <span>match{total > 1 ? "s" : ""} en direct</span>
-        </div>
+        <div className={`live-v82-counter ${total ? "is-live" : ""}`}><i /><strong>{total}</strong><span>match{total > 1 ? "s" : ""} en direct</span></div>
       </section>
 
       {total > 0 ? (
@@ -110,11 +101,7 @@ export default async function LivePage() {
               <div className="live-v83-section-head"><h2>{group.name}</h2><span>{group.matches.length} LIVE</span></div>
               <div className="live-v82-grid">
                 {group.matches.map((match) => {
-                  const href = match.provider === "apifootball"
-                    ? `/live/match/${match.id}`
-                    : match.provider === "espn"
-                      ? "/championnats/coupe-de-france"
-                      : `/match/${match.id}`;
+                  const href = match.provider === "espn-free" ? `/live/match/${encodeURIComponent(match.id)}` : `/match/${match.id}`;
                   return <LiveCard key={`${group.id}-${match.id}`} match={match} league={group.name} href={href} />;
                 })}
               </div>
@@ -123,25 +110,20 @@ export default async function LivePage() {
         </div>
       ) : (
         <section className="live-v82-empty">
-          <div className="live-v82-ball">⚽</div>
-          <h2>Aucun match en direct actuellement</h2>
+          <div className="live-v82-ball">⚽</div><h2>Aucun match en direct actuellement</h2>
           <p>La page se rafraîchit automatiquement. Les matchs européens apparaissent uniquement lorsqu'un club français est concerné.</p>
           <Link href="/resultats">Voir les résultats et prochains matchs →</Link>
         </section>
       )}
 
-      {!apiResult.ok && (
-        <div className="live-v83-source-note">
-          APIfootball est momentanément indisponible. La Ligue 1 utilise automatiquement le flux de secours football-data.org ; les compétitions européennes attendent le retour du flux principal.
-        </div>
-      )}
+      {!freeResult.ok && <div className="live-v83-source-note">Le flux ESPN gratuit est momentanément indisponible. La Ligue 1 utilise automatiquement football-data.org en secours.</div>}
 
       <section className="live-v82-leagues">
-        <LeagueStatus number="01" name="Ligue 1" source={l1Fallback ? "football-data.org" : "APIfootball"} active note={l1Fallback ? "Live activé en secours" : "Scores live activés"} />
-        <LeagueStatus number="02" name="Ligue 2" source="APIfootball" active={apiResult.ok} note={apiResult.ok ? "Scores live activés" : "En attente du flux principal"} />
-        <LeagueStatus number="03" name="Ligue 3" source="APIfootball" active={apiResult.ok} note={apiResult.ok ? "Scores live activés" : "En attente du flux principal"} />
-        <LeagueStatus number="04" name="Coupe de France" source={hasApiCup ? "APIfootball" : "ESPN"} active note="Scores live activés" />
-        <LeagueStatus number="05" name="Coupes d'Europe" source="APIfootball" active={apiResult.ok} note={europeanLive ? `${europeanLive} match(s) français en direct` : "Clubs français uniquement"} />
+        <LeagueStatus number="01" name="Ligue 1" source={l1Fallback ? "football-data.org" : "ESPN"} active note={l1Fallback ? "Live activé en secours" : "Scores live gratuits"} />
+        <LeagueStatus number="02" name="Ligue 2" source="ESPN" active={freeResult.ok} note="Flux gratuit" />
+        <LeagueStatus number="03" name="Ligue 3" source="ESPN / sources gratuites" active={freeResult.ok} note="Selon disponibilité du flux" />
+        <LeagueStatus number="04" name="Coupe de France" source="ESPN" active={freeResult.ok} note="Scores live gratuits" />
+        <LeagueStatus number="05" name="Coupes d'Europe" source="ESPN" active={freeResult.ok} note={europeanLive ? `${europeanLive} match(s) français en direct` : "Clubs français uniquement"} />
       </section>
     </div>
   );
