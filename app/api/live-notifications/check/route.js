@@ -150,7 +150,12 @@ async function runCheck(request) {
   if (!authorized(request)) return NextResponse.json({ error: "Accès refusé." }, { status: 401 });
   const live = await getFrenchLiveMatches().catch((error) => ({ ok:false, data:[], error:error?.message || "Flux LIVE indisponible." }));
   const supabase = serviceSupabase();
-  await supabase.from("article_automation_runs").upsert({ run_key:"autopilot-heartbeat", last_run_at:new Date().toISOString() }, { onConflict:"run_key" }).catch(() => null);
+  // Le client Supabase renvoie les erreurs SQL dans le résultat (il ne les throw pas).
+  // Le heartbeat reste volontairement non bloquant pour ne jamais casser le cron principal.
+  await supabase.from("article_automation_runs").upsert(
+    { run_key:"autopilot-heartbeat", last_run_at:new Date().toISOString() },
+    { onConflict:"run_key" }
+  );
   const articleNotifications = await processArticleNotifications(supabase).catch((error) => ({ checked:0, detected:0, sent:0, error:error?.message || "Notifications articles indisponibles" }));
   const lineupNotifications = await processLineupNotifications(supabase).catch((error) => ({ checked:0, newLineups:0, sent:0, error:error?.message || "Compositions indisponibles" }));
   const candidates = (live.ok ? live.data : []).flatMap((match) => (match.events || [])
