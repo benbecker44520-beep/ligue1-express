@@ -57,12 +57,18 @@ export default async function LivePage() {
   let matches = freeResult.ok ? freeResult.data : [];
   let l1Fallback = false;
 
-  if (!freeResult.ok) {
+  const hasEspnL1 = matches.some((match) => match.league?.slug === "ligue-1");
+  if (!freeResult.ok || !hasEspnL1) {
     const footballData = await getFixtures().catch(() => null);
-    matches = footballData?.ok
+    const fallbackMatches = footballData?.ok
       ? (footballData.data || []).filter((match) => LIVE_STATUSES.has(match.status)).map((match) => ({ ...match, provider: "football-data" }))
       : [];
-    l1Fallback = true;
+    if (fallbackMatches.length) {
+      matches = [...matches, ...fallbackMatches];
+      l1Fallback = true;
+    } else if (!freeResult.ok) {
+      l1Fallback = true;
+    }
   }
 
   const groups = [
@@ -116,7 +122,7 @@ export default async function LivePage() {
         </section>
       )}
 
-      {!freeResult.ok && <div className="live-v83-source-note">Le flux ESPN gratuit est momentanément indisponible. La Ligue 1 utilise automatiquement football-data.org en secours.</div>}
+      {l1Fallback && <div className="live-v83-source-note">La Ligue 1 utilise football-data.org en secours lorsque le flux ESPN gratuit ne fournit pas le match en direct.</div>}
 
       <section className="live-v82-leagues">
         <LeagueStatus number="01" name="Ligue 1" source={l1Fallback ? "football-data.org" : "ESPN"} active note={l1Fallback ? "Live activé en secours" : "Scores live gratuits"} />
