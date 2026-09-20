@@ -148,12 +148,11 @@ async function processLineupNotifications(supabase) {
 
 async function runCheck(request) {
   if (!authorized(request)) return NextResponse.json({ error: "Accès refusé." }, { status: 401 });
-  const live = await getFrenchLiveMatches();
-  if (!live.ok) return NextResponse.json({ error: live.error || "Flux LIVE indisponible." }, { status: 503 });
+  const live = await getFrenchLiveMatches().catch((error) => ({ ok:false, data:[], error:error?.message || "Flux LIVE indisponible." }));
   const supabase = serviceSupabase();
   const articleNotifications = await processArticleNotifications(supabase).catch((error) => ({ checked:0, detected:0, sent:0, error:error?.message || "Notifications articles indisponibles" }));
   const lineupNotifications = await processLineupNotifications(supabase).catch((error) => ({ checked:0, newLineups:0, sent:0, error:error?.message || "Compositions indisponibles" }));
-  const candidates = live.data.flatMap((match) => (match.events || [])
+  const candidates = (live.ok ? live.data : []).flatMap((match) => (match.events || [])
     .filter((event) => PREF_FOR_EVENT[event.type] || PLAYER_HISTORY_EVENTS.has(event.type))
     .map((event) => ({ match, event, eventKey: `${match.provider}:${match.id}:${event.type}:${event.id}` })));
   let newEvents = 0;
@@ -234,7 +233,7 @@ async function runCheck(request) {
 
   const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   await supabase.from("live_notification_events").delete().lt("created_at", cutoff);
-  return NextResponse.json({ ok: true, liveMatches: live.data.length, detected: candidates.length, newEvents, sent, articleNotifications, lineupNotifications, automaticArticles });
+  return NextResponse.json({ ok: true, live: { ok:live.ok, error:live.ok ? null : live.error }, liveMatches: live.ok ? live.data.length : 0, detected: candidates.length, newEvents, sent, articleNotifications, lineupNotifications, automaticArticles });
 }
 
 export async function GET(request) { return runCheck(request); }
