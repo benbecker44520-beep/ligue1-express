@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getFixtures } from "@/lib/football";
 import { reconcileFinishedMatchScores } from "@/lib/match-score";
 
-export const revalidate = 0;
+export const revalidate = 60;
 
 function statusLabel(match) {
   if (match.status === "FINISHED") return "Terminé";
