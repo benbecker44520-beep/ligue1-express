@@ -133,7 +133,7 @@ export default async function HomePage() {
   const weekAwayForm = weekMatch ? recentForm(fixtures, weekMatch.away.id, weekMatch.id) : [];
   const weekMeetings = weekMatch ? headToHead(fixtures, weekMatch.home.id, weekMatch.away.id, weekMatch.id) : [];
 
-  const hero = featuredArticle || allArticles[0] || {
+  const hero = allArticles[0] || featuredArticle || {
     slug: "debrief-express-journee",
     title: "Foot Français Express",
     excerpt: "L'actualité de la Ligue 1, en un clin d'œil."
@@ -261,7 +261,7 @@ export default async function HomePage() {
 
       <section className="content-section v8-news-section">
         <div className="section-title"><div><span className="eyebrow section-eyebrow">FIL INFO</span><h2>Dernières actualités</h2></div><Link href="/actualites">Voir toutes les actus →</Link></div>
-        {latest.length > 0 ? <div className="cards-grid">{latest.map((a) => <ArticleCard key={a.slug} article={a} />)}</div> : <EmptyState title="La rédaction attend ton prochain article" text="Publie un deuxième article depuis l'admin : il apparaîtra ici automatiquement." href="/admin" cta="Publier un article" />}
+        {latest.length > 0 ? <div className="cards-grid">{latest.map((a) => <ArticleCard key={a.slug} article={a} />)}</div> : <EmptyState title="La rédaction attend ton prochain article" text="Les prochaines actualités publiées automatiquement apparaîtront ici." href="/admin" cta="Publier un article" />}
       </section>
 
       <section className="editorial-grid">
