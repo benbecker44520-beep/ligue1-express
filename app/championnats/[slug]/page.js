@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { CHAMPIONSHIPS, getChampionshipConfig, getChampionshipSnapshot, normalizeChampionshipSlug } from "@/lib/championships";
 import { secondaryMatchHref, secondaryTeamHref } from "@/lib/futpythontrader";
 
-export const revalidate = 0;
+export const revalidate = 60;
 
 function formatMatchDate(match) {
   if (!match.utcDate) return "Horaire à confirmer";
