@@ -27,12 +27,13 @@ async function runSelected(matchId) {
   });
 }
 
-// Le cron ne crée plus aucun article en masse.
+// État public de l'Autopilot. L'exécution planifiée reste centralisée dans
+// /api/live-notifications/check, protégé par CRON_SECRET.
 export async function GET() {
   return NextResponse.json({
     ok:true,
-    automaticArticles:{enabled:false,bulkGeneration:false,created:0,notified:0},
-    message:"La génération automatique en masse est désactivée. Les articles sont créés uniquement après sélection d'un match dans l'administration."
+    automaticArticles:{enabled:true,mode:"autopilot",historicalBackfill:false},
+    message:"FF Express Autopilot est actif : les nouveaux matchs terminés peuvent générer et publier automatiquement leur débrief. Aucun rattrapage historique n'est effectué."
   });
 }
 
@@ -44,7 +45,7 @@ export async function POST(request) {
     const matchId = String(body?.matchId || "").trim();
     if (!matchId) {
       return NextResponse.json(
-        { ok:false, error:"Sélectionne d'abord un match. La génération globale est désactivée depuis l'administration." },
+        { ok:false, error:"Sélectionne d'abord un match pour une génération manuelle. L'Autopilot traite séparément les nouveaux matchs terminés." },
         { status:400 }
       );
     }
