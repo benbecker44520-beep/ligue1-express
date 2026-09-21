@@ -28,6 +28,27 @@ function birthFr(value) { if (!value) return "—"; return new Intl.DateTimeForm
 function opponent(match, teamId) { return String(match.home.id) === String(teamId) ? match.away : match.home; }
 function resultFor(match, teamId) { const home=String(match.home.id)===String(teamId); const gf=home?match.score.home:match.score.away; const ga=home?match.score.away:match.score.home; if(gf==null||ga==null)return "—"; return gf>ga?"V":gf<ga?"D":"N"; }
 function matchDateFr(value) { if (!value) return "—"; return new Intl.DateTimeFormat("fr-FR", { weekday:"short", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit", timeZone:"Europe/Paris" }).format(new Date(value)); }
+function seasonStatRows(seasonStats, apiProfile, scorer) {
+  const detailed = seasonStats ? [
+    ["MATCHS JOUÉS", seasonStats.matchesOnPitch],
+    ["TITULARISATIONS", seasonStats.startingXI],
+    ["MINUTES", seasonStats.minutesPlayed],
+    ["BUTS", seasonStats.goals ?? apiProfile?.goals],
+    ["PASSES D.", seasonStats.assists ?? apiProfile?.assists],
+    ["JAUNES", apiProfile?.yellowCards],
+    ["ROUGES", apiProfile?.redCards]
+  ].filter(([, value]) => value != null) : [];
+
+  if (detailed.length) return detailed;
+
+  return [
+    ["MATCHS JOUÉS", apiProfile?.appearances],
+    ["BUTS", apiProfile?.goals ?? scorer?.goals],
+    ["PASSES D.", apiProfile?.assists ?? scorer?.assists],
+    ["JAUNES", apiProfile?.yellowCards],
+    ["ROUGES", apiProfile?.redCards]
+  ].filter(([, value]) => value != null);
+}
 
 export default async function PlayerPage({ params, searchParams }) {
   const { id } = await params;
@@ -68,7 +89,7 @@ export default async function PlayerPage({ params, searchParams }) {
 
     <section id="profil" className="player-info-card"><div><span>POSTE</span><strong>{positionFr(p.position)}</strong></div><div><span>NATIONALITÉ</span><strong>{nationalityFr(p.nationality)}</strong></div><div><span>ÂGE</span><strong>{age != null ? `${age} ans` : "—"}</strong></div><div><span>DATE DE NAISSANCE</span><strong>{birthFr(p.dateOfBirth)}</strong></div>{p.shirtNumber != null && <div><span>NUMÉRO</span><strong>#{p.shirtNumber}</strong></div>}</section>
 
-    <section id="stats" className="player-v897-stats"><div className="club-section-title"><span>⚡ STATS SAISON</span><strong>Ligue 1</strong></div>{(() => { const detailed = seasonStats ? [["MATCHS JOUÉS", seasonStats.matchesOnPitch],["TITULARISATIONS", seasonStats.startingXI],["MINUTES", seasonStats.minutesPlayed],["BUTS", seasonStats.goals ?? apiProfile?.goals],["PASSES D.", seasonStats.assists ?? apiProfile?.assists],["JAUNES", apiProfile?.yellowCards],["ROUGES", apiProfile?.redCards]].filter(([,value]) => value != null) : [["MATCHS JOUÉS", apiProfile?.appearances],["BUTS", apiProfile?.goals ?? scorer?.goals],["PASSES D.", apiProfile?.assists ?? scorer?.assists],["JAUNES", apiProfile?.yellowCards],["ROUGES", apiProfile?.redCards]].filter(([,value]) => value != null); const stats = detailed; return stats.length ? <><div className="player-v897-stat-grid player-v822-stat-grid">{stats.map(([label,value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>{scorerRank ? <p className="player-v897-ranking">Classement des buteurs : <strong>#{scorerRank}</strong></p> : null}</> : <div className="player-v897-stat-unavailable"><strong>Statistiques de saison en attente</strong><span>Les chiffres sont affichés uniquement lorsqu’ils sont confirmés par la source sportive.</span></div>; })()}</section>
+    <section id="stats" className="player-v897-stats"><div className="club-section-title"><span>⚡ STATS SAISON</span><strong>Ligue 1</strong></div>{(() => { const stats = seasonStatRows(seasonStats, apiProfile, scorer); return stats.length ? <><div className="player-v897-stat-grid player-v822-stat-grid">{stats.map(([label,value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>{scorerRank ? <p className="player-v897-ranking">Classement des buteurs : <strong>#{scorerRank}</strong></p> : null}</> : <div className="player-v897-stat-unavailable"><strong>Statistiques de saison en attente</strong><span>Les chiffres sont affichés uniquement lorsqu’ils sont confirmés par la source sportive.</span></div>; })()}</section>
 
     <section className={`player-v822-status ${apiProfile?.injured ? "is-injured" : "is-available"}`}><span>{apiProfile?.injured ? "🚑" : "✅"}</span><div><small>ÉTAT DU JOUEUR</small><strong>{apiProfile?.injured ? "Blessé / indisponible" : apiProfile?.injuryKnown ? "Disponible" : "Aucune blessure signalée"}</strong><p>{apiProfile?.injured ? "Une indisponibilité est actuellement signalée par la source sportive." : "Aucune indisponibilité confirmée n’est actuellement remontée."}</p></div></section>
 
