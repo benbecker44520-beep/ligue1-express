@@ -983,7 +983,7 @@ export default function AdminPage() {
               <div className="prediction-admin-card" key={prediction.id}>
                 <div className="prediction-admin-main">
                   <div><span className="tag">{prediction.selection}</span><strong>{prediction.home_team} - {prediction.away_team}</strong></div>
-                  <small>{prediction.status === "published" ? "Publié" : "Brouillon"}{prediction.is_week_match ? " · ⭐ Match de la semaine" : ""}</small>
+                  <small>{prediction.status === "published" ? "Publié" : "Brouillon"}{prediction.is_automatic ? " · ⚙️ Automatique" : ""}{prediction.is_week_match ? " · ⭐ Match de la semaine" : ""}</small>
                   {prediction.comment && <p>{prediction.comment}</p>}
                 </div>
                 <div className="admin-actions">
@@ -1098,82 +1098,3 @@ export default function AdminPage() {
         <div className="scorers-admin-grid">
           <form className="admin-form scorer-form" onSubmit={addMatchEvent}>
             <label>
-              Match
-              <select value={selectedMatchId} onChange={e => setSelectedMatchId(e.target.value)}>
-                {finishedMatches.map(match => (
-                  <option key={match.id} value={match.id}>
-                    J{match.matchday || "—"} · {match.home.shortName || match.home.name} {match.score.home}-{match.score.away} {match.away.shortName || match.away.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="scorer-form-row">
-              <label>
-                Équipe
-                <select value={eventForm.team_side} onChange={e => setEventForm({...eventForm, team_side:e.target.value})}>
-                  <option value="home">{selectedMatch?.home?.shortName || selectedMatch?.home?.name || "Domicile"}</option>
-                  <option value="away">{selectedMatch?.away?.shortName || selectedMatch?.away?.name || "Extérieur"}</option>
-                </select>
-              </label>
-              <label>
-                Minute
-                <input type="number" min="0" max="130" value={eventForm.minute} onChange={e => setEventForm({...eventForm, minute:e.target.value})} placeholder="67" required />
-              </label>
-            </div>
-
-            <label>
-              Type d'action
-              <select value={eventForm.event_type} onChange={e => setEventForm({...eventForm, event_type:e.target.value})}>
-                <option value="goal">⚽ But</option>
-                <option value="disallowed_goal">🚫 But refusé / VAR</option>
-                <option value="yellow_card">🟨 Carton jaune</option>
-                <option value="red_card">🟥 Carton rouge</option>
-                <option value="substitution">🔄 Remplacement</option>
-              </select>
-            </label>
-
-            {eventForm.event_type === "substitution" ? <>
-              <label>Joueur sortant<input value={eventForm.player_out} onChange={e => setEventForm({...eventForm, player_out:e.target.value})} placeholder="Nom du joueur sortant" required /></label>
-              <label>Joueur entrant<input value={eventForm.player_in} onChange={e => setEventForm({...eventForm, player_in:e.target.value})} placeholder="Nom du joueur entrant" required /></label>
-            </> : <label>Joueur concerné<input value={eventForm.player_name} onChange={e => setEventForm({...eventForm, player_name:e.target.value})} placeholder="Nom du joueur" required /></label>}
-
-            <label>
-              Détail (facultatif)
-              <input value={eventForm.reason} onChange={e => setEventForm({...eventForm, reason:e.target.value})} placeholder="Ex. faute, contestation, VAR hors-jeu..." />
-            </label>
-
-            <button type="button" className="primary-button" onClick={addMatchEvent}>Ajouter l'action</button>
-          </form>
-
-          <div className="scorers-admin-list">
-            <h3>{selectedMatch ? `${selectedMatch.home.shortName || selectedMatch.home.name} ${selectedMatch.score.home}-${selectedMatch.score.away} ${selectedMatch.away.shortName || selectedMatch.away.name}` : "Sélectionne un match"}</h3>
-            {matchEvents.length === 0 ? <p className="scorers-empty">Aucune action manuelle enregistrée pour ce match.</p> : matchEvents.map(event => (
-              <div className="match-event-admin-row" key={event.id}>
-                <div>
-                  <span className={`scorer-side ${event.team_side}`}>{event.team_side === "home" ? "DOM" : "EXT"}</span>
-                  <strong>{event.minute}' · {eventTypeLabel(event.event_type)}</strong>
-                  {event.event_type === "substitution" ? <p>{event.player_out} sort · {event.player_in} entre</p> : <p>{event.player_name}</p>}
-                  {event.reason && <small>{event.reason}</small>}
-                </div>
-                <button className="mini-button danger" onClick={() => removeMatchEvent(event.id)}>Supprimer</button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>}
-
-      {adminSection === "social" && <SocialStudio articles={articles} predictions={predictions} upcomingMatches={upcomingMatches} finishedMatches={finishedMatches} transfers={transfers} />}
-
-      {adminSection === "analytics" && <AnalyticsAdmin />}
-
-      {adminSection === "newsletter" && <section className="predictions-admin-panel admin-panel-standalone">
-        <div className="panel-heading scorers-admin-heading">
-          <div><span className="eyebrow">NEWSLETTER · V5.8</span><h2>Newsletter Foot Français Express</h2><p>Prépare, teste et envoie une édition aux abonnés actifs.</p></div>
-        </div>
-        {newsletterMessage && <div className="admin-message-box">{newsletterMessage}</div>}
-        <NewsletterAdmin session={session} articles={articles} subscribers={newsletterSubscribers} onRefreshSubscribers={loadNewsletterSubscribers} onRemoveSubscriber={removeNewsletterSubscriber} />
-      </section>}
-    </div>
-  );
-}
