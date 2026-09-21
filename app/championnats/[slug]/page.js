@@ -89,8 +89,8 @@ export default async function ChampionshipPage({ params }) {
           </section>
 
           <div className="championship-side-stack">
-            <section className="championship-panel"><div className="panel-heading"><h2>Derniers résultats</h2></div>{result.recent.length ? result.recent.slice(0, 6).map((m) => <MatchLine key={`r-${m.id}`} match={m} championshipSlug={normalizedSlug} />) : <div className="champ-empty">Aucun résultat terminé disponible.</div>}</section>
-            <section className="championship-panel"><div className="panel-heading"><h2>Prochains matchs</h2></div>{result.upcoming.length ? result.upcoming.slice(0, 6).map((m) => <MatchLine key={`u-${m.id}`} match={m} championshipSlug={normalizedSlug} />) : <div className="champ-empty">Aucun match à venir disponible.</div>}</section>
+            <section className="championship-panel"><div className="panel-heading"><h2>Derniers résultats</h2></div>{result.recent.length ? result.recent.slice(0, Math.max(6, Math.floor(config.teamCount / 2))).map((m) => <MatchLine key={`r-${m.id}`} match={m} championshipSlug={normalizedSlug} />) : <div className="champ-empty">Aucun résultat terminé disponible.</div>}</section>
+            <section className="championship-panel"><div className="panel-heading"><h2>Prochains matchs</h2></div>{result.upcoming.length ? result.upcoming.slice(0, Math.max(6, Math.floor(config.teamCount / 2))).map((m) => <MatchLine key={`u-${m.id}`} match={m} championshipSlug={normalizedSlug} />) : <div className="champ-empty">Aucun match à venir disponible.</div>}</section>
           </div>
         </div>
 
