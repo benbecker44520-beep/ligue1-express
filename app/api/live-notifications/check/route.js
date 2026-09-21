@@ -4,6 +4,7 @@ import { getFrenchLiveMatches } from "@/lib/apifootball";
 import { getFrenchLineupCandidates } from "@/lib/lineups";
 import { broadcastPush, sendPush, serviceSupabase } from "@/lib/push-server";
 import { generatePostMatchDrafts } from "@/lib/automatic-articles";
+import { generateAutomaticPredictions } from "@/lib/automatic-predictions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -237,9 +238,16 @@ async function runCheck(request) {
     automaticArticles = { error: error?.message || "Génération automatique impossible" };
   }
 
+  let automaticPredictions = null;
+  try {
+    automaticPredictions = await generateAutomaticPredictions(supabase);
+  } catch (error) {
+    automaticPredictions = { error: error?.message || "Pronostics automatiques indisponibles" };
+  }
+
   const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   await supabase.from("live_notification_events").delete().lt("created_at", cutoff);
-  return NextResponse.json({ ok: true, live: { ok:live.ok, error:live.ok ? null : live.error }, liveMatches: live.ok ? live.data.length : 0, detected: candidates.length, newEvents, sent, articleNotifications, lineupNotifications, automaticArticles });
+  return NextResponse.json({ ok: true, live: { ok:live.ok, error:live.ok ? null : live.error }, liveMatches: live.ok ? live.data.length : 0, detected: candidates.length, newEvents, sent, articleNotifications, lineupNotifications, automaticArticles, automaticPredictions });
 }
 
 export async function GET(request) { return runCheck(request); }
